@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "106441953035",
+    "project_id": "passiondrivenbuilds-224e8",
+    "storage_bucket": "passiondrivenbuilds-224e8.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:106441953035:android:8eb7ec8bfb2ca6f5e4dc0e",
+        "android_client_info": {
+          "package_name": "com.passiondrivenbulds.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDvIlzJiFrtgZARctydBJssLnPcStBDO0o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
