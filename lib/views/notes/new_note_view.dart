@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:pd/services/auth/auth_service.dart';
 import 'package:pd/services/crud/notes_service.dart';
+import 'package:pd/services/auth/auth_service.dart';
+import 'package:pd/services/crud/notes_service.dart';
 
 class NewNoteView extends StatefulWidget {
-  const NewNoteView({super.key});
+  const NewNoteView({Key? key}) : super(key: key);
 
   @override
-  State<NewNoteView> createState() => _NewNoteViewState();
+  _NewNoteViewState createState() => _NewNoteViewState();
 }
 
 class _NewNoteViewState extends State<NewNoteView> {
@@ -38,7 +40,7 @@ class _NewNoteViewState extends State<NewNoteView> {
     _textController.addListener(_textControllerListener);
   }
 
-  Future<DatabaseNote?> createNewNote() async {
+  Future<DatabaseNote> createNewNote() async {
     final existingNote = _note;
     if (existingNote != null) {
       return existingNote;
@@ -93,7 +95,7 @@ class _NewNoteViewState extends State<NewNoteView> {
                 keyboardType: TextInputType.multiline,
                 maxLines: null,
                 decoration: const InputDecoration(
-                  hintText: 'Start typing note...',
+                  hintText: 'Start typing your note...',
                 ),
               );
             default:
