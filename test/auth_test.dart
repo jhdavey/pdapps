@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:pd/services/auth/auth_exceptions.dart';
 import 'package:pd/services/auth/auth_provider.dart';
 import 'package:pd/services/auth/auth_user.dart';
@@ -110,7 +108,10 @@ class MockAuthProvider implements AuthProvider {
     if (!isInitialized) throw NotInitializedException();
     if (email == 'foo@bar.com') throw InvalidCredentialsAuthException();
     if (password == 'foobar') throw InvalidCredentialsAuthException();
-    const user = AuthUser(isEmailVerified: false);
+    const user = AuthUser(
+      isEmailVerified: false,
+      email: 'foo@bar.com',
+    );
     _user = user;
     return Future.value(user);
   }
@@ -128,7 +129,10 @@ class MockAuthProvider implements AuthProvider {
     if (!isInitialized) throw NotInitializedException();
     final user = _user;
     if (user == null) throw InvalidCredentialsAuthException();
-    const newUser = AuthUser(isEmailVerified: true);
+    const newUser = AuthUser(
+      isEmailVerified: true,
+      email: 'foo@bar.com',
+    );
     _user = newUser;
   }
 }
