@@ -1,46 +1,46 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:pd/services/cloud/cloud_note.dart';
+import 'package:pd/services/cloud/cloud_build.dart';
 import 'package:pd/services/cloud/cloud_storage_constants.dart';
 import 'package:pd/services/cloud/cloud_storage_exceptions.dart';
 
 class FirebaseCloudStorage {
-  final notes = FirebaseFirestore.instance.collection('notes');
+  final builds = FirebaseFirestore.instance.collection('builds');
 
-  Future<void> deleteNote({required String documentId}) async {
+  Future<void> deleteBuild({required String documentId}) async {
     try {
-      await notes.doc(documentId).delete();
+      await builds.doc(documentId).delete();
     } catch (e) {
-      throw CouldNotDeleteNote();
+      throw CouldNotDeleteBuild();
     }
   }
 
-  Future<void> updateNote({
+  Future<void> updateBuild({
     required String documentId,
     required String text,
   }) async {
     try {
-      await notes.doc(documentId).update({textFieldName: text});
+      await builds.doc(documentId).update({buildMake: text});
     } catch (e) {
-      throw CouldNotUpdateNote();
+      throw CouldNotUpdateBuild();
     }
   }
 
-  Stream<Iterable<CloudNote>> allNotes({required String ownerUserId}) {
- final allNotes = notes
- .where(ownerUserIdFieldName, isEqualTo: ownerUserId)
-      .snapshots()
-      .map((event) => event.docs.map((doc) => CloudNote.fromSnapshot(doc)));
-          return allNotes;
+  Stream<Iterable<CloudBuild>> allBuilds({required String ownerUserId}) {
+    final allBuilds = builds
+        .where(ownerUserIdFieldName, isEqualTo: ownerUserId)
+        .snapshots()
+        .map((event) => event.docs.map((doc) => CloudBuild.fromSnapshot(doc)));
+    return allBuilds;
   }
 
-  Future<CloudNote> createNewNote({required String ownerUserId}) async {
-    final document = await notes.add({
+  Future<CloudBuild> createNewBuild({required String ownerUserId}) async {
+    final document = await builds.add({
       ownerUserIdFieldName: ownerUserId,
-      textFieldName: '',
+      buildMake: '',
     });
-    final fetchedNote = await document.get();
-    return CloudNote(
-      documentId: fetchedNote.id,
+    final fetchedBuild = await document.get();
+    return CloudBuild(
+      documentId: fetchedBuild.id,
       ownerUserId: ownerUserId,
       text: '',
     );

@@ -7,25 +7,25 @@ import 'package:pd/enums/menu_action.dart';
 import 'package:pd/services/auth/auth_service.dart';
 import 'package:pd/services/auth/bloc/auth_bloc.dart';
 import 'package:pd/services/auth/bloc/auth_event.dart';
-import 'package:pd/services/cloud/cloud_note.dart';
+import 'package:pd/services/cloud/cloud_build.dart';
 import 'package:pd/services/cloud/firebase_cloud_storage.dart';
 import 'package:pd/utilities/dialogs/logout_dialog.dart';
-import 'package:pd/views/notes/notes_list_view.dart';
+import 'package:pd/views/builds/builds_list_view.dart';
 
-class NotesView extends StatefulWidget {
-  const NotesView({super.key});
+class HomeView extends StatefulWidget {
+  const HomeView({super.key});
 
   @override
-  _NotesViewState createState() => _NotesViewState();
+  _HomeViewState createState() => _HomeViewState();
 }
 
-class _NotesViewState extends State<NotesView> {
-  late final FirebaseCloudStorage _notesService;
+class _HomeViewState extends State<HomeView> {
+  late final FirebaseCloudStorage _buildsService;
   String get userId => AuthService.firebase().currentUser!.id;
 
   @override
   void initState() {
-    _notesService = FirebaseCloudStorage();
+    _buildsService = FirebaseCloudStorage();
     super.initState();
   }
 
@@ -33,11 +33,11 @@ class _NotesViewState extends State<NotesView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Your Notes'),
+        title: const Text('Your Builds'),
         actions: [
           IconButton(
             onPressed: () {
-              Navigator.of(context).pushNamed(createOrUpdateNoteRoute);
+              Navigator.of(context).pushNamed(createOrUpdateBuildRoute);
             },
             icon: const Icon(Icons.add),
           ),
@@ -65,22 +65,23 @@ class _NotesViewState extends State<NotesView> {
         ],
       ),
       body: StreamBuilder(
-        stream: _notesService.allNotes(ownerUserId: userId),
+        stream: _buildsService.allBuilds(ownerUserId: userId),
         builder: (context, snapshot) {
           switch (snapshot.connectionState) {
             case ConnectionState.waiting:
             case ConnectionState.active:
               if (snapshot.hasData) {
-                final allNotes = snapshot.data as Iterable<CloudNote>;
-                return NotesListView(
-                  notes: allNotes,
-                  onDeleteNote: (note) async {
-                    await _notesService.deleteNote(documentId: note.documentId);
+                final allBuilds = snapshot.data as Iterable<CloudBuild>;
+                return BuildListView.BuildListView(
+                  builds: allBuilds,
+                  onDeleteBuild: (build) async {
+                    await _buildsService.deleteBuild(
+                        documentId: build.documentId);
                   },
-                  onTap: (note) {
+                  onTap: (build) {
                     Navigator.of(context).pushNamed(
-                      createOrUpdateNoteRoute,
-                      arguments: note,
+                      createOrUpdateBuildRoute,
+                      arguments: build,
                     );
                   },
                 );

@@ -3,18 +3,18 @@ import 'package:pd/services/cloud/cloud_storage_constants.dart';
 import 'package:flutter/foundation.dart';
 
 @immutable
-class CloudNote {
+class CloudBuild {
   final String documentId;
   final String ownerUserId;
   final String text;
-  const CloudNote({
+  const CloudBuild({
     required this.documentId,
     required this.ownerUserId,
     required this.text,
   });
 
-  CloudNote.fromSnapshot(QueryDocumentSnapshot<Map<String, dynamic>> snapshot)
+  CloudBuild.fromSnapshot(QueryDocumentSnapshot<Map<String, dynamic>> snapshot)
       : documentId = snapshot.id,
         ownerUserId = snapshot.data()[ownerUserIdFieldName],
-        text = snapshot.data()[textFieldName] as String;
+        text = snapshot.data()[buildMake] as String;
 }

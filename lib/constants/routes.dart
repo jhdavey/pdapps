@@ -1,1 +1,1 @@
-const createOrUpdateNoteRoute = '/notes/new-note/';
+const createOrUpdateBuildRoute = '/builds/new-build/';
