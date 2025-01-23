@@ -90,7 +90,8 @@ class _GarageViewState extends State<GarageView> {
                         child: ListTile(
                           contentPadding:
                               const EdgeInsets.symmetric(horizontal: 10.0),
-                          title: Text('${build.year} ${build.make} ${build.model}'),
+                          title: Text(
+                              '${build.year} ${build.make} ${build.model}'),
                           // Show delete icon only if we're viewing our own garage
                           trailing: (currentUserId == userId)
                               ? IconButton(
@@ -111,6 +112,8 @@ class _GarageViewState extends State<GarageView> {
                             Navigator.of(context).pushNamed(
                               '/build-view',
                               arguments: {
+                                'buildId': build.id,
+                                'userId': build.userId,
                                 'displayName': displayName,
                                 'year': build.year,
                                 'make': build.make,
