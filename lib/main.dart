@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:pd/services/api/auth_provider.dart'; // API-specific AuthProvider
-import 'package:pd/services/api/auth_service.dart'; // ApiAuthService
-import 'package:pd/services/auth/auth_provider.dart'; // General AuthProvider
+import 'package:pd/services/api/auth_provider.dart';
+import 'package:pd/services/api/auth_service.dart';
+import 'package:pd/services/auth/auth_provider.dart';
 import 'package:pd/services/auth/bloc/auth_bloc.dart';
 import 'package:pd/services/auth/bloc/auth_event.dart';
 import 'package:pd/services/auth/bloc/auth_state.dart';
 import 'package:pd/views/login_view.dart';
 import 'package:pd/views/home_view.dart';
 import 'package:pd/views/register_view.dart';
+import 'package:pd/views/builds/build_view.dart'; // Import the BuildView
 import 'package:pd/helpers/loading/loading_screen.dart';
 
 void main() {
@@ -64,6 +65,21 @@ class MyApp extends StatelessWidget {
           ),
           debugShowCheckedModeBanner: false,
           home: const AppNavigator(),
+          routes: {
+            '/build-view': (context) {
+              final args = ModalRoute.of(context)!.settings.arguments
+                  as Map<String, dynamic>?; // Allow null
+              if (args == null || !args.containsKey('id')) {
+                return const Scaffold(
+                  body: Center(
+                    child: Text('Invalid build ID'),
+                  ),
+                );
+              }
+              final buildId = args['id'] as int; // Safely extract the build ID
+              return const BuildView();
+            },
+          },
         ),
       ),
     );
