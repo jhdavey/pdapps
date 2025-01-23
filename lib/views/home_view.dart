@@ -48,7 +48,7 @@ class _HomeViewState extends State<HomeView> {
             return const Center(child: Text('No builds found.'));
           }
 
-          return ListView.builder(
+          return ListView.separated(
             itemCount: rows.length,
             itemBuilder: (context, index) {
               final row = rows[index];
@@ -58,17 +58,34 @@ class _HomeViewState extends State<HomeView> {
               final displayName = row['displayName'] as String;
               final userId = row['userId'] as int;
 
-              return ListTile(
-                title: Text('$year $make $model'),
-                subtitle: Text('Owned by $displayName'),
-                onTap: () {
-                  Navigator.of(context).pushNamed(
-                    '/garage',
-                    arguments: [userId, displayName],
-                  );
-                },
+              return Container(
+                margin: const EdgeInsets.symmetric(horizontal: 5.0),
+                decoration: BoxDecoration(
+                  color: Colors.grey[800],
+                  borderRadius: BorderRadius.circular(8.0), // Rounded corners
+                ),
+                child: ListTile(
+                  title: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        "$displayName's",
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                      Text('$year $make $model'),
+                    ],
+                  ),
+                  onTap: () {
+                    Navigator.of(context).pushNamed(
+                      '/garage',
+                      arguments: [userId, displayName],
+                    );
+                  },
+                ),
               );
             },
+            separatorBuilder: (context, index) => const SizedBox(height: 5),
           );
         },
       ),

@@ -4,6 +4,7 @@ import 'package:pd/services/auth/auth_service.dart';
 import 'package:pd/services/auth/bloc/auth_bloc.dart';
 import 'package:pd/services/auth/bloc/auth_event.dart';
 import 'package:pd/services/auth/bloc/auth_state.dart';
+import 'package:pd/views/builds/build_view.dart';
 import 'package:pd/views/login_view.dart';
 import 'package:pd/views/home_view.dart';
 import 'package:pd/views/register_view.dart';
@@ -25,17 +26,35 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Garage App',
-      theme: ThemeData.dark(),
+      title: 'Passion Driven',
+      theme: ThemeData.dark().copyWith(
+        inputDecorationTheme: const InputDecorationTheme(
+          border: UnderlineInputBorder(
+            borderSide: BorderSide(color: Colors.white),
+          ),
+          enabledBorder: UnderlineInputBorder(
+            borderSide: BorderSide(color: Colors.white),
+          ),
+          focusedBorder: UnderlineInputBorder(
+            borderSide: BorderSide(color: Colors.white),
+          ),
+          labelStyle: TextStyle(color: Colors.white),
+          hintStyle: TextStyle(color: Colors.white70),
+        ),
+        textSelectionTheme: const TextSelectionThemeData(
+          cursorColor: Colors.white,
+        ),
+      ),
       debugShowCheckedModeBanner: false,
       home: BlocProvider<AuthBloc>(
-        create: (_) => AuthBloc(AuthService.instance)..add(const AuthEventInitialize()),
-
+        create: (_) =>
+            AuthBloc(AuthService.instance)..add(const AuthEventInitialize()),
         child: const AppNavigator(),
       ),
       routes: {
         '/garage': (context) => const GarageView(),
         '/create-build': (context) => const CreateUpdateBuildView(),
+        '/build-view': (context) => const BuildDetailView(),
       },
     );
   }
