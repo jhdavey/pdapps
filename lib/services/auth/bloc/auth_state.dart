@@ -1,5 +1,4 @@
 // ignore_for_file: use_super_parameters
-
 import 'package:flutter/foundation.dart' show immutable;
 import 'package:pd/services/auth/auth_user.dart';
 import 'package:equatable/equatable.dart';
@@ -21,7 +20,7 @@ class AuthStateUninitialized extends AuthState {
 
 class AuthStateRegistering extends AuthState {
   final Exception? exception;
-  const AuthStateRegistering({required this.exception, required isLoading})
+  const AuthStateRegistering({required this.exception, required bool isLoading})
       : super(isLoading: isLoading);
 }
 
@@ -54,7 +53,7 @@ class AuthStateLoggedOut extends AuthState with EquatableMixin {
     required this.exception,
     required bool isLoading,
     String? loadingText,
-  }) : super(isLoading: isLoading);
+  }) : super(isLoading: isLoading, loadingText: loadingText);
 
   @override
   List<Object?> get props => [exception, isLoading];

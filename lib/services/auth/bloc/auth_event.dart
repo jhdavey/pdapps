@@ -35,6 +35,10 @@ class AuthEventShouldRegister extends AuthEvent {
   const AuthEventShouldRegister();
 }
 
+class AuthEventShouldLogIn extends AuthEvent {
+  const AuthEventShouldLogIn();
+}
+
 class AuthEventLogOut extends AuthEvent {
   const AuthEventLogOut();
 }

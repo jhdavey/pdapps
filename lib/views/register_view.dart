@@ -1,4 +1,3 @@
-// ignore_for_file: use_build_context_synchronously
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pd/services/auth/auth_exceptions.dart';
@@ -39,17 +38,21 @@ class _RegisterViewState extends State<RegisterView> {
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) async {
-        if (state is AuthStateRegistering) {
+        if (state is AuthStateRegistering && state.exception != null) {
           if (state.exception is WeakPasswordAuthException) {
+            if (!mounted) return;
             await showErrorDialog(context, 'Weak password');
           } else if (state.exception is DisplayNameAlreadyInUseAuthException) {
+            if (!mounted) return;
             await showErrorDialog(context, 'Display name is unavailable');
-          }
-          if (state.exception is EmailAlreadyInUseAuthException) {
+          } else if (state.exception is EmailAlreadyInUseAuthException) {
+            if (!mounted) return;
             await showErrorDialog(context, 'Email is unavailable');
           } else if (state.exception is InvalidEmailAuthException) {
+            if (!mounted) return;
             await showErrorDialog(context, 'Invalid email');
           } else if (state.exception is GenericAuthException) {
+            if (!mounted) return;
             await showErrorDialog(context, 'Failed to register');
           }
         }
@@ -72,16 +75,17 @@ class _RegisterViewState extends State<RegisterView> {
                     hintText: 'Enter your display name here',
                   ),
                 ),
+                const SizedBox(height: 16),
                 TextField(
                   controller: _email,
                   enableSuggestions: false,
                   autocorrect: false,
-                  autofocus: true,
                   keyboardType: TextInputType.emailAddress,
                   decoration: const InputDecoration(
                     hintText: 'Enter your email here',
                   ),
                 ),
+                const SizedBox(height: 16),
                 TextField(
                   controller: _password,
                   obscureText: true,
@@ -91,11 +95,23 @@ class _RegisterViewState extends State<RegisterView> {
                     hintText: 'Enter your password here',
                   ),
                 ),
-                TextButton(
+                const SizedBox(height: 24),
+                ElevatedButton(
                   onPressed: () async {
-                    final displayName = _displayName.text;
-                    final email = _email.text;
-                    final password = _password.text;
+                    final displayName = _displayName.text.trim();
+                    final email = _email.text.trim();
+                    final password = _password.text.trim();
+
+                    // Basic validation
+                    if (displayName.isEmpty ||
+                        email.isEmpty ||
+                        password.isEmpty) {
+                      if (!mounted) return;
+                      await showErrorDialog(
+                          context, 'Please fill in all fields.');
+                      return;
+                    }
+
                     context.read<AuthBloc>().add(
                           AuthEventRegister(
                             displayName,
@@ -107,12 +123,13 @@ class _RegisterViewState extends State<RegisterView> {
                   child: const Text('Register'),
                 ),
                 TextButton(
-                    onPressed: () {
-                      context.read<AuthBloc>().add(
-                            const AuthEventLogOut(),
-                          );
-                    },
-                    child: const Text('Already registered? Login here!')),
+                  onPressed: () {
+                    context.read<AuthBloc>().add(
+                          const AuthEventShouldLogIn(),
+                        );
+                  },
+                  child: const Text('Already registered? Login here!'),
+                ),
               ],
             ),
           ),

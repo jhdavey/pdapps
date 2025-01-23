@@ -1,5 +1,10 @@
+// ignore_for_file: library_private_types_in_public_api
+
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pd/services/local_database.dart';
+import 'package:pd/services/auth/bloc/auth_bloc.dart';
+import 'package:pd/services/auth/bloc/auth_event.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
@@ -26,6 +31,13 @@ class _HomeViewState extends State<HomeView> {
             icon: const Icon(Icons.garage),
             onPressed: () {
               Navigator.of(context).pushNamed('/garage');
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () {
+              // Trigger the logout event via AuthBloc
+              context.read<AuthBloc>().add(const AuthEventLogOut());
             },
           ),
         ],

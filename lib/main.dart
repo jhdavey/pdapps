@@ -1,61 +1,71 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:pd/services/auth/auth_service.dart';
+import 'package:pd/services/api/auth_provider.dart'; // API-specific AuthProvider
+import 'package:pd/services/api/auth_service.dart'; // ApiAuthService
+import 'package:pd/services/auth/auth_provider.dart'; // General AuthProvider
 import 'package:pd/services/auth/bloc/auth_bloc.dart';
 import 'package:pd/services/auth/bloc/auth_event.dart';
 import 'package:pd/services/auth/bloc/auth_state.dart';
-import 'package:pd/views/builds/build_view.dart';
 import 'package:pd/views/login_view.dart';
 import 'package:pd/views/home_view.dart';
 import 'package:pd/views/register_view.dart';
-import 'package:pd/views/verify_email_view.dart';
-import 'package:pd/views/builds/garage_view.dart';
-import 'package:pd/views/builds/create_update_build_view.dart';
-import 'package:pd/services/local_database.dart';
 import 'package:pd/helpers/loading/loading_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  LocalDatabase.instance;
-  runApp(const MyApp());
+
+  // Initialize ApiAuthProvider with your API base URL
+  final apiAuthProvider = ApiAuthProvider(
+    baseUrl: 'https://passiondrivenbuilds.com/api',
+  );
+
+  // Initialize ApiAuthService with the ApiAuthProvider
+  final apiAuthService = ApiAuthService(apiAuthProvider);
+
+  runApp(MyApp(
+    authService: apiAuthService,
+  ));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final AuthProvider authService;
+
+  const MyApp({
+    super.key,
+    required this.authService,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Passion Driven',
-      theme: ThemeData.dark().copyWith(
-        inputDecorationTheme: const InputDecorationTheme(
-          border: UnderlineInputBorder(
-            borderSide: BorderSide(color: Colors.white),
+    return RepositoryProvider<AuthProvider>(
+      create: (_) => authService,
+      child: BlocProvider<AuthBloc>(
+        create: (context) =>
+            AuthBloc(authService)..add(const AuthEventInitialize()),
+        child: MaterialApp(
+          title: 'Passion Driven',
+          theme: ThemeData.dark().copyWith(
+            inputDecorationTheme: const InputDecorationTheme(
+              border: UnderlineInputBorder(
+                borderSide: BorderSide(color: Colors.white),
+              ),
+              enabledBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: Colors.white),
+              ),
+              focusedBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: Colors.white),
+              ),
+              labelStyle: TextStyle(color: Colors.white),
+              hintStyle: TextStyle(color: Colors.white70),
+            ),
+            textSelectionTheme: const TextSelectionThemeData(
+              cursorColor: Colors.white,
+            ),
           ),
-          enabledBorder: UnderlineInputBorder(
-            borderSide: BorderSide(color: Colors.white),
-          ),
-          focusedBorder: UnderlineInputBorder(
-            borderSide: BorderSide(color: Colors.white),
-          ),
-          labelStyle: TextStyle(color: Colors.white),
-          hintStyle: TextStyle(color: Colors.white70),
-        ),
-        textSelectionTheme: const TextSelectionThemeData(
-          cursorColor: Colors.white,
+          debugShowCheckedModeBanner: false,
+          home: const AppNavigator(),
         ),
       ),
-      debugShowCheckedModeBanner: false,
-      home: BlocProvider<AuthBloc>(
-        create: (_) =>
-            AuthBloc(AuthService.instance)..add(const AuthEventInitialize()),
-        child: const AppNavigator(),
-      ),
-      routes: {
-        '/garage': (context) => const GarageView(),
-        '/create-build': (context) => const CreateUpdateBuildView(),
-        '/build-view': (context) => const BuildDetailView(),
-      },
     );
   }
 }
@@ -78,8 +88,6 @@ class AppNavigator extends StatelessWidget {
           return const HomeView();
         } else if (state is AuthStateRegistering) {
           return const RegisterView();
-        } else if (state is AuthStateNeedsVerification) {
-          return const VerifyEmailView();
         } else {
           return const LoginView();
         }
