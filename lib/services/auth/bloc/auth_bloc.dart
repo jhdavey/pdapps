@@ -6,8 +6,7 @@ import 'package:pd/services/auth/bloc/auth_state.dart';
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   AuthBloc(AuthProvider provider)
       : super(const AuthStateUninitialized(isLoading: true)) {
-
-    //Go to register view 
+    //Go to register view
     on<AuthEventShouldRegister>((event, emit) {
       emit(const AuthStateRegistering(
         exception: null,
@@ -58,10 +57,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(state);
     });
     on<AuthEventRegister>((event, emit) async {
+      final displayName = event.displayName;
       final email = event.email;
       final password = event.password;
       try {
         await provider.createUser(
+          displayName: displayName,
           email: email,
           password: password,
         );
@@ -142,7 +143,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         );
       }
     });
-    
+
     // log out
     on<AuthEventLogOut>((event, emit) async {
       try {

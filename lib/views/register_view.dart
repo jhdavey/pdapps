@@ -15,11 +15,13 @@ class RegisterView extends StatefulWidget {
 }
 
 class _RegisterViewState extends State<RegisterView> {
+  late final TextEditingController _displayName;
   late final TextEditingController _email;
   late final TextEditingController _password;
 
   @override
   void initState() {
+    _displayName = TextEditingController();
     _email = TextEditingController();
     _password = TextEditingController();
     super.initState();
@@ -27,6 +29,7 @@ class _RegisterViewState extends State<RegisterView> {
 
   @override
   void dispose() {
+    _displayName.dispose();
     _email.dispose();
     _password.dispose();
     super.dispose();
@@ -39,7 +42,10 @@ class _RegisterViewState extends State<RegisterView> {
         if (state is AuthStateRegistering) {
           if (state.exception is WeakPasswordAuthException) {
             await showErrorDialog(context, 'Weak password');
-          } else if (state.exception is EmailAlreadyInUseAuthException) {
+          } else if (state.exception is DisplayNameAlreadyInUseAuthException) {
+            await showErrorDialog(context, 'Display name is unavailable');
+          }
+          if (state.exception is EmailAlreadyInUseAuthException) {
             await showErrorDialog(context, 'Email is unavailable');
           } else if (state.exception is InvalidEmailAuthException) {
             await showErrorDialog(context, 'Invalid email');
@@ -57,6 +63,15 @@ class _RegisterViewState extends State<RegisterView> {
           child: SingleChildScrollView(
             child: Column(
               children: [
+                TextField(
+                  controller: _displayName,
+                  enableSuggestions: false,
+                  autocorrect: false,
+                  autofocus: true,
+                  decoration: const InputDecoration(
+                    hintText: 'Enter your display name here',
+                  ),
+                ),
                 TextField(
                   controller: _email,
                   enableSuggestions: false,
@@ -78,10 +93,12 @@ class _RegisterViewState extends State<RegisterView> {
                 ),
                 TextButton(
                   onPressed: () async {
+                    final displayName = _displayName.text;
                     final email = _email.text;
                     final password = _password.text;
                     context.read<AuthBloc>().add(
                           AuthEventRegister(
+                            displayName,
                             email,
                             password,
                           ),

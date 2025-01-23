@@ -37,6 +37,7 @@ void main() {
 
     test('Create user should delgate to login function', () async {
       final badCredUser = provider.createUser(
+        displayName: 'tester',
         email: 'foo@bar.com',
         password: 'foobar',
       );
@@ -44,6 +45,7 @@ void main() {
           throwsA(const TypeMatcher<InvalidCredentialsAuthException>()));
 
       final user = await provider.createUser(
+        displayName: 'tester',
         email: 'foo',
         password: 'bar',
       );
@@ -80,6 +82,7 @@ class MockAuthProvider implements AuthProvider {
 
   @override
   Future<AuthUser> createUser({
+    required String displayName,
     required String email,
     required String password,
   }) async {
@@ -109,10 +112,10 @@ class MockAuthProvider implements AuthProvider {
     if (email == 'foo@bar.com') throw InvalidCredentialsAuthException();
     if (password == 'foobar') throw InvalidCredentialsAuthException();
     const user = AuthUser(
-      id: 'my_id',
-      isEmailVerified: false,
-      email: 'foo@bar.com',
-    );
+        id: 1,
+        isEmailVerified: false,
+        email: 'foo@bar.com',
+        displayName: 'tester');
     _user = user;
     return Future.value(user);
   }
@@ -131,13 +134,14 @@ class MockAuthProvider implements AuthProvider {
     final user = _user;
     if (user == null) throw InvalidCredentialsAuthException();
     const newUser = AuthUser(
-      id: 'my_id',
+      id: 1,
       isEmailVerified: true,
       email: 'foo@bar.com',
+      displayName: 'tester',
     );
     _user = newUser;
   }
-  
+
   @override
   Future<void> sendPasswordReset({required String toEmail}) {
     // add test logic
