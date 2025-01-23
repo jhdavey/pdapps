@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:pd/services/auth/auth_exceptions.dart';
+import 'package:pd/services/api/auth_exception.dart';
 import 'package:pd/services/auth/bloc/auth_bloc.dart';
 import 'package:pd/services/auth/bloc/auth_event.dart';
 import 'package:pd/services/auth/bloc/auth_state.dart';
@@ -39,19 +39,19 @@ class _RegisterViewState extends State<RegisterView> {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) async {
         if (state is AuthStateRegistering && state.exception != null) {
-          if (state.exception is WeakPasswordAuthException) {
+          if (state.exception is WeakPasswordException) {
             if (!mounted) return;
             await showErrorDialog(context, 'Weak password');
-          } else if (state.exception is DisplayNameAlreadyInUseAuthException) {
+          } else if (state.exception is InvalidCredentialsException) {
             if (!mounted) return;
             await showErrorDialog(context, 'Display name is unavailable');
-          } else if (state.exception is EmailAlreadyInUseAuthException) {
+          } else if (state.exception is EmailAlreadyInUseException) {
             if (!mounted) return;
             await showErrorDialog(context, 'Email is unavailable');
-          } else if (state.exception is InvalidEmailAuthException) {
+          } else if (state.exception is InvalidEmailException) {
             if (!mounted) return;
             await showErrorDialog(context, 'Invalid email');
-          } else if (state.exception is GenericAuthException) {
+          } else if (state.exception is GenericApiException) {
             if (!mounted) return;
             await showErrorDialog(context, 'Failed to register');
           }

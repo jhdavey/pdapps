@@ -22,6 +22,15 @@ class AuthUser extends Equatable {
     );
   }
 
+   Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'displayName': displayName,
+      'email': email,
+      'isEmailVerified': isEmailVerified,
+    };
+  }
+
   @override
   List<Object?> get props => [id, displayName, email, isEmailVerified];
 }

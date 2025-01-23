@@ -1,11 +1,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:pd/services/auth/auth_user.dart';
-import 'package:pd/services/auth/auth_provider.dart';
+import 'package:pd/services/api/auth_user.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pd/services/api/auth_exception.dart';
 
-class ApiAuthProvider implements AuthProvider {
+class ApiAuthProvider {
   final String baseUrl;
   String? _token;
 
@@ -31,7 +30,6 @@ class ApiAuthProvider implements AuthProvider {
     _token = null;
   }
 
-  @override
   Future<void> register({
     required String displayName,
     required String email,
@@ -48,12 +46,8 @@ class ApiAuthProvider implements AuthProvider {
       }),
     );
 
-    final responseData = jsonDecode(response.body);
-
-    if (response.statusCode == 201) {
-      // Registration successful
-      // Optionally, you can auto-login the user here
-    } else {
+    if (response.statusCode != 201) {
+      final responseData = jsonDecode(response.body);
       throw ApiException(
         message: responseData['message'] ?? 'Registration failed',
         code: responseData['code'] ?? 'registration_failed',
@@ -61,7 +55,6 @@ class ApiAuthProvider implements AuthProvider {
     }
   }
 
-  @override
   Future<void> logIn({
     required String email,
     required String password,
@@ -76,12 +69,12 @@ class ApiAuthProvider implements AuthProvider {
       }),
     );
 
-    final responseData = jsonDecode(response.body);
-
     if (response.statusCode == 200) {
+      final responseData = jsonDecode(response.body);
       final token = responseData['token'] as String;
       await _saveToken(token);
     } else {
+      final responseData = jsonDecode(response.body);
       throw ApiException(
         message: responseData['message'] ?? 'Login failed',
         code: responseData['code'] ?? 'login_failed',
@@ -89,7 +82,6 @@ class ApiAuthProvider implements AuthProvider {
     }
   }
 
-  @override
   Future<void> logOut() async {
     if (_token == null) return;
 
@@ -112,7 +104,6 @@ class ApiAuthProvider implements AuthProvider {
     }
   }
 
-  @override
   Future<AuthUser?> getCurrentUser() async {
     await _loadToken();
     if (_token == null) return null;
@@ -134,9 +125,10 @@ class ApiAuthProvider implements AuthProvider {
     }
   }
 
-  @override
   Future<void> sendEmailVerification() async {
-    if (_token == null) throw ApiException(message: 'User not logged in', code: 'not_logged_in');
+    if (_token == null) {
+      throw ApiException(message: 'User not logged in', code: 'not_logged_in');
+    }
 
     final url = Uri.parse('$baseUrl/send-email-verification');
     final response = await http.post(
@@ -147,9 +139,8 @@ class ApiAuthProvider implements AuthProvider {
       },
     );
 
-    final responseData = jsonDecode(response.body);
-
     if (response.statusCode != 200) {
+      final responseData = jsonDecode(response.body);
       throw ApiException(
         message: responseData['message'] ?? 'Failed to send email verification',
         code: responseData['code'] ?? 'email_verification_failed',
@@ -157,7 +148,6 @@ class ApiAuthProvider implements AuthProvider {
     }
   }
 
-  @override
   Future<void> sendPasswordReset({required String toEmail}) async {
     final url = Uri.parse('$baseUrl/password-reset');
     final response = await http.post(
@@ -166,9 +156,8 @@ class ApiAuthProvider implements AuthProvider {
       body: jsonEncode({'email': toEmail}),
     );
 
-    final responseData = jsonDecode(response.body);
-
     if (response.statusCode != 200) {
+      final responseData = jsonDecode(response.body);
       throw ApiException(
         message: responseData['message'] ?? 'Password reset failed',
         code: responseData['code'] ?? 'password_reset_failed',
@@ -176,7 +165,6 @@ class ApiAuthProvider implements AuthProvider {
     }
   }
 
-  @override
   Future<void> initialize() async {
     await _loadToken();
   }

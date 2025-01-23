@@ -1,27 +1,28 @@
+// ignore_for_file: unused_local_variable
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pd/services/api/auth_provider.dart';
 import 'package:pd/services/api/auth_service.dart';
-import 'package:pd/services/auth/auth_provider.dart';
 import 'package:pd/services/auth/bloc/auth_bloc.dart';
 import 'package:pd/services/auth/bloc/auth_event.dart';
 import 'package:pd/services/auth/bloc/auth_state.dart';
 import 'package:pd/views/login_view.dart';
 import 'package:pd/views/home_view.dart';
+import 'package:pd/views/builds/garage_view.dart';
 import 'package:pd/views/register_view.dart';
-import 'package:pd/views/builds/build_view.dart'; // Import the BuildView
+import 'package:pd/views/builds/build_view.dart';
 import 'package:pd/helpers/loading/loading_screen.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize ApiAuthProvider with your API base URL
+  // Initialize ApiAuthProvider and ApiAuthService
   final apiAuthProvider = ApiAuthProvider(
     baseUrl: 'https://passiondrivenbuilds.com/api',
   );
-
-  // Initialize ApiAuthService with the ApiAuthProvider
   final apiAuthService = ApiAuthService(apiAuthProvider);
+
+  await apiAuthService.initialize();
 
   runApp(MyApp(
     authService: apiAuthService,
@@ -29,7 +30,7 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
-  final AuthProvider authService;
+  final ApiAuthService authService;
 
   const MyApp({
     super.key,
@@ -38,7 +39,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return RepositoryProvider<AuthProvider>(
+    return RepositoryProvider<ApiAuthService>(
       create: (_) => authService,
       child: BlocProvider<AuthBloc>(
         create: (context) =>
@@ -68,7 +69,7 @@ class MyApp extends StatelessWidget {
           routes: {
             '/build-view': (context) {
               final args = ModalRoute.of(context)!.settings.arguments
-                  as Map<String, dynamic>?; // Allow null
+                  as Map<String, dynamic>?;
               if (args == null || !args.containsKey('id')) {
                 return const Scaffold(
                   body: Center(
@@ -76,9 +77,10 @@ class MyApp extends StatelessWidget {
                   ),
                 );
               }
-              final buildId = args['id'] as int; // Safely extract the build ID
+              final buildId = args['id'] as int;
               return const BuildView();
             },
+            '/garage': (context) => const GarageView(),
           },
         ),
       ),
@@ -101,11 +103,11 @@ class AppNavigator extends StatelessWidget {
       },
       builder: (context, state) {
         if (state is AuthStateLoggedIn) {
-          return const HomeView();
+          return const HomeView(); // Redirect to HomeView if logged in
         } else if (state is AuthStateRegistering) {
-          return const RegisterView();
+          return const RegisterView(); // Redirect to RegisterView if registering
         } else {
-          return const LoginView();
+          return const LoginView(); // Default to LoginView if logged out
         }
       },
     );

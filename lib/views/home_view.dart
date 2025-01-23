@@ -1,5 +1,9 @@
+// ignore_for_file: library_private_types_in_public_api
+
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http/http.dart' as http;
+import 'package:pd/services/api/auth_service.dart';
 import 'dart:convert';
 import 'package:pd/widgets/custom_scaffold.dart';
 
@@ -20,7 +24,6 @@ class _HomeViewState extends State<HomeView> {
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
-      print('Build Data Response: $data'); // Debugging API response
       return data;
     } else {
       throw Exception('Failed to load builds');
@@ -35,6 +38,16 @@ class _HomeViewState extends State<HomeView> {
 
   @override
   Widget build(BuildContext context) {
+    // Use RepositoryProvider to access ApiAuthService
+    final authService = RepositoryProvider.of<ApiAuthService>(context);
+
+    // Fetch the current user using the authService
+    authService.getCurrentUser().then((user) {
+      if (user != null) {
+      } else {
+      }
+    });
+
     return CustomScaffold(
       title: 'Passion Driven Builds',
       body: FutureBuilder<Map<String, dynamic>>(
@@ -147,9 +160,10 @@ class _HomeViewState extends State<HomeView> {
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: columns,
-        crossAxisSpacing: 10,
-        mainAxisSpacing: 10,
-        childAspectRatio: 4 / 3,
+        crossAxisSpacing: 8,
+        mainAxisSpacing: 8,
+        childAspectRatio:
+            3 / 4, // Allows space for image, username, and build info
       ),
       itemCount: items.length,
       itemBuilder: (context, index) {
@@ -168,7 +182,6 @@ class _HomeViewState extends State<HomeView> {
               '/build-view',
               arguments: item, // Pass the entire item
             );
-            print('Navigating to BuildView with data: $item');
           },
           child: Card(
             clipBehavior: Clip.hardEdge,
@@ -176,22 +189,40 @@ class _HomeViewState extends State<HomeView> {
               borderRadius: BorderRadius.circular(10),
             ),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Expanded(
+                // Image with aspect ratio
+                AspectRatio(
+                  aspectRatio: 4 / 3,
                   child: Image.network(
                     item['image'] ?? 'https://via.placeholder.com/150',
                     fit: BoxFit.cover,
-                    width: double.infinity,
                   ),
                 ),
+                // User's name
                 Padding(
-                  padding: const EdgeInsets.all(8.0),
+                  padding: const EdgeInsets.symmetric(vertical: 4.0),
                   child: Text(
-                    '${item['year']} ${item['make']} ${item['model']}',
+                    item['user'] != null && item['user']['name'] != null
+                        ? "${item['user']['name']}'s"
+                        : 'Unknown User',
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                     ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                // Build year, make, and model
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: Text(
+                    '${item['year']} ${item['make']} ${item['model']}',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.normal,
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 2, // Prevent overflow
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],

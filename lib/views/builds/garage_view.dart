@@ -1,7 +1,8 @@
+// ignore_for_file: library_private_types_in_public_api
+
 import 'package:flutter/material.dart';
-import 'package:pd/models/build.dart';
-import 'package:pd/services/auth/auth_service.dart';
-import 'package:pd/services/local_database.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class GarageView extends StatefulWidget {
   const GarageView({super.key});
@@ -11,235 +12,283 @@ class GarageView extends StatefulWidget {
 }
 
 class _GarageViewState extends State<GarageView> {
-  final LocalDatabase _localDatabase = LocalDatabase.instance;
+  late Future<Map<String, dynamic>> _garageData;
 
-  Future<List<Build>> _getUserBuilds(int userId) async {
-    final db = await _localDatabase.database;
-    final buildMaps = await db.query(
-      'builds',
-      where: 'userId = ?',
-      whereArgs: [userId],
-    );
-    return buildMaps.map((map) => Build.fromMap(map)).toList();
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Access userId passed via Navigator arguments
+    final userId = ModalRoute.of(context)?.settings.arguments as int?;
+    if (userId != null) {
+      _garageData = _fetchGarageData(userId);
+    } else {
+      throw Exception('User ID not provided');
+    }
+  }
+
+  Future<Map<String, dynamic>> _fetchGarageData(int userId) async {
+    final String apiUrl = 'https://passiondrivenbuilds.com/api/garage/$userId';
+    final response = await http.get(Uri.parse(apiUrl));
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      print('Error: ${response.statusCode}, Body: ${response.body}');
+      throw Exception('Failed to load garage data');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Determine which user's garage we are viewing
-    final args = ModalRoute.of(context)?.settings.arguments;
-    int userId;
-    String displayName;
-    if (args is List) {
-      userId = args[0] as int;
-      displayName = args[1] as String;
-    } else {
-      userId = AuthService.instance.currentUser?.id ?? 0;
-      displayName = AuthService.instance.currentUser?.displayName ?? 'You';
-    }
-
-    // The currently logged-in user
-    final currentUserId = AuthService.instance.currentUser?.id ?? 0;
-
     return Scaffold(
       appBar: AppBar(
-        title: Text('Garage of $displayName'),
-        // Show plus button only if viewing your own garage
-        actions: [
-          if (currentUserId == userId)
-            IconButton(
-              icon: const Icon(Icons.add),
-              onPressed: () {
-                Navigator.of(context).pushNamed(
-                  '/create-build',
-                  arguments: {
-                    'isEdit': false,
-                    'buildId': null,
-                  },
-                );
-              },
-            ),
-        ],
+        title: const Text("My Garage"),
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            _buildProfileSection(displayName),
-            const SizedBox(height: 8),
-            FutureBuilder<List<Build>>(
-              future: _getUserBuilds(userId),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                } else if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-                  final builds = snapshot.data!;
-                  return ListView.separated(
+      body: FutureBuilder<Map<String, dynamic>>(
+        future: _garageData,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(
+              child: Text('Error: ${snapshot.error}'),
+            );
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(child: Text('No builds found.'));
+          }
+
+          final data = snapshot.data!;
+          final user = data['user'];
+          final builds = data['builds'] as List<dynamic>? ?? [];
+
+          return SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Profile Section
+                _buildProfileSection(user),
+                const SizedBox(height: 10),
+
+                // List of Builds
+                if (builds.isNotEmpty)
+                  ListView.builder(
                     physics: const NeverScrollableScrollPhysics(),
                     shrinkWrap: true,
                     itemCount: builds.length,
-                    separatorBuilder: (context, _) => const SizedBox(height: 8),
                     itemBuilder: (context, index) {
                       final build = builds[index];
-                      return Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 5.0),
-                        decoration: BoxDecoration(
-                          color: Colors.grey[800],
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                        child: ListTile(
-                          contentPadding:
-                              const EdgeInsets.symmetric(horizontal: 10.0),
-                          title: Text(
-                              '${build.year} ${build.make} ${build.model}'),
-                          // Show delete icon only if we're viewing our own garage
-                          trailing: (currentUserId == userId)
-                              ? IconButton(
-                                  icon: const Icon(Icons.delete),
-                                  onPressed: () async {
-                                    final db = await _localDatabase.database;
-                                    await db.delete(
-                                      'builds',
-                                      where: 'id = ?',
-                                      whereArgs: [build.id],
-                                    );
-                                    setState(() {});
-                                  },
-                                )
-                              : null,
-                          // Tap on any build to view its details (read-only or your own)
-                          onTap: () {
-                            Navigator.of(context).pushNamed(
-                              '/build-view',
-                              arguments: {
-                                'buildId': build.id,
-                                'userId': build.userId,
-                                'displayName': displayName,
-                                'year': build.year,
-                                'make': build.make,
-                                'model': build.model,
-                              },
-                            );
-                          },
-                        ),
-                      );
+                      return _buildTile(build);
                     },
-                  );
-                } else {
-                  return const Center(child: Text('No builds found.'));
-                }
-              },
+                  )
+                else
+                  const Center(
+                    child: Text("You haven't created any builds yet."),
+                  ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
 
-  Widget _buildProfileSection(String displayName) {
+  Widget _buildProfileSection(Map<String, dynamic> user) {
+    final socialMedia = {
+      'instagram': user['instagram'],
+      'facebook': user['facebook'],
+      'tiktok': user['tiktok'],
+      'youtube': user['youtube'],
+    };
+
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 5.0, vertical: 8.0),
-      padding: const EdgeInsets.all(8.0),
+      padding: const EdgeInsets.all(10.0),
       decoration: BoxDecoration(
-        color: Colors.grey[800],
-        borderRadius: BorderRadius.circular(8.0),
+        color: Colors.grey[850],
+        borderRadius: BorderRadius.circular(16.0),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Top row: Profile pic, display name, follower/following
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               CircleAvatar(
-                radius: 28,
-                backgroundImage:
-                    const NetworkImage('https://via.placeholder.com/150'),
+                radius: 40,
+                backgroundImage: user['profile_image'] != null
+                    ? NetworkImage(
+                        user['profile_image'])
+                    : const NetworkImage('https://via.placeholder.com/150'),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 16),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    displayName,
-                    style: Theme.of(context).textTheme.bodyLarge,
+                    "${user['name']}'s Garage",
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
                   const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const Text(
-                        'Followers: 9999',
-                        style: TextStyle(color: Colors.white70),
-                      ),
-                      const SizedBox(width: 10),
-                      const Text(
-                        'Following: 345',
-                        style: TextStyle(color: Colors.white70),
-                      ),
-                    ],
+                  Text(
+                    "Followers: ${user['followers'] ?? 0} | Following: ${user['following'] ?? 0}",
+                    style: const TextStyle(color: Colors.white70),
                   ),
                 ],
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          // Bio
-          const Text(
-            'I love building cars! And this is the most amazing app I have ever seen! Thank you!',
-            style: TextStyle(color: Colors.white),
+          const SizedBox(height: 16),
+          Text(
+            user['bio'] ?? "No bio available.",
+            style: const TextStyle(color: Colors.white70),
           ),
-          const SizedBox(height: 8),
-          // Social links
+          const SizedBox(height: 16),
           Row(
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Row(
-                    children: [
-                      Icon(Icons.link, color: Colors.white70),
-                      SizedBox(width: 4),
-                      Text('IG: @somehandle',
-                          style: TextStyle(color: Colors.white70)),
-                    ],
+            children: socialMedia.entries
+                .where((entry) => entry.value != null && entry.value.isNotEmpty)
+                .map(
+                  (entry) => Padding(
+                    padding: const EdgeInsets.only(right: 8.0),
+                    child: ElevatedButton(
+                      onPressed: () {
+                        final url = _getSocialMediaUrl(entry.key, entry.value);
+                        // Open the link (You need a package like `url_launcher` for this)
+                        print('Opening URL: $url');
+                      },
+                      child: Text(entry.key.toUpperCase()),
+                    ),
                   ),
-                  const SizedBox(height: 4),
-                  const Row(
-                    children: [
-                      Icon(Icons.link, color: Colors.white70),
-                      SizedBox(width: 4),
-                      Text('FB: @somehandle',
-                          style: TextStyle(color: Colors.white70)),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(width: 10),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Row(
-                    children: [
-                      Icon(Icons.link, color: Colors.white70),
-                      SizedBox(width: 4),
-                      Text('YT: ChannelName',
-                          style: TextStyle(color: Colors.white70)),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  const Row(
-                    children: [
-                      Icon(Icons.link, color: Colors.white70),
-                      SizedBox(width: 4),
-                      Text('TT: @someotherhandle',
-                          style: TextStyle(color: Colors.white70)),
-                    ],
-                  ),
-                ],
-              ),
-            ],
+                )
+                .toList(),
           ),
         ],
+      ),
+    );
+  }
+
+  String _getSocialMediaUrl(String platform, String username) {
+    switch (platform) {
+      case 'instagram':
+        return 'https://instagram.com/$username';
+      case 'facebook':
+        return 'https://facebook.com/$username';
+      case 'tiktok':
+        return 'https://tiktok.com/@$username';
+      case 'youtube':
+        return 'https://youtube.com/$username';
+      default:
+        return '';
+    }
+  }
+
+  Widget _buildTile(Map<String, dynamic> build) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).pushNamed(
+          '/build-view',
+          arguments: build,
+        );
+      },
+      child: Card(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10.0),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Image on the left, taking up 30% of the tile width
+              Container(
+                width: MediaQuery.of(context).size.width *
+                    0.3, // 30% of the screen width
+                height: 120, // Full height of the tile
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  image: DecorationImage(
+                    image: NetworkImage(
+                      build['image'] ?? 'https://via.placeholder.com/150',
+                    ),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16), // Space between the image and text
+              // Text content
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Category in the top right corner
+                    Align(
+                      alignment: Alignment.topRight,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[850],
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          build['build_category'] ?? 'Unknown Category',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    // Year, Make, Model
+                    Text(
+                      "${build['year']} ${build['make']} ${build['model']}",
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    // Horsepower and Torque
+                    Row(
+                      children: [
+                        Text(
+                          "HP: ${build['horsepower'] ?? 'N/A'}",
+                          style:
+                              const TextStyle(fontSize: 14, color: Colors.grey),
+                        ),
+                        const SizedBox(width: 16),
+                        Text(
+                          "Torque: ${build['torque'] ?? 'N/A'}",
+                          style:
+                              const TextStyle(fontSize: 14, color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    // "Click for Details" in the bottom right corner
+                    Align(
+                      alignment: Alignment.bottomRight,
+                      child: Text(
+                        "Click for details",
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

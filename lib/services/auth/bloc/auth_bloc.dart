@@ -1,13 +1,12 @@
 import 'package:bloc/bloc.dart';
-import 'package:pd/services/auth/auth_provider.dart';
+import 'package:pd/services/api/auth_service.dart';
 import 'package:pd/services/auth/bloc/auth_event.dart';
 import 'package:pd/services/auth/bloc/auth_state.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
-  final AuthProvider provider;
+  final ApiAuthService authService;
 
-  AuthBloc(this.provider)
-      : super(const AuthStateUninitialized(isLoading: true)) {
+  AuthBloc(this.authService) : super(const AuthStateUninitialized(isLoading: true)) {
     // Handle register navigation
     on<AuthEventShouldRegister>((event, emit) {
       emit(const AuthStateRegistering(
@@ -28,15 +27,15 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       ));
 
       try {
-        await provider.register(
+        await authService.register(
           displayName: displayName,
           email: email,
           password: password,
         );
 
         // Automatically log in after registration
-        await provider.logIn(email: email, password: password);
-        final user = await provider.getCurrentUser();
+        await authService.logIn(email: email, password: password);
+        final user = await authService.getCurrentUser();
 
         emit(AuthStateLoggedIn(user: user!, isLoading: false));
       } on Exception catch (e) {
@@ -52,8 +51,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(const AuthStateUninitialized(isLoading: true));
 
       try {
-        await provider.initialize();
-        final user = await provider.getCurrentUser();
+        await authService.initialize();
+        final user = await authService.getCurrentUser();
 
         if (user == null) {
           emit(const AuthStateLoggedOut(exception: null, isLoading: false));
@@ -81,12 +80,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       ));
 
       try {
-        await provider.logIn(
+        await authService.logIn(
           email: event.email,
           password: event.password,
         );
 
-        final user = await provider.getCurrentUser();
+        final user = await authService.getCurrentUser();
 
         if (user == null) {
           emit(const AuthStateLoggedOut(exception: null, isLoading: false));
@@ -107,7 +106,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       ));
 
       try {
-        await provider.logOut();
+        await authService.logOut();
         emit(const AuthStateLoggedOut(exception: null, isLoading: false));
       } on Exception catch (e) {
         emit(AuthStateLoggedOut(exception: e, isLoading: false));
@@ -134,7 +133,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       ));
 
       try {
-        await provider.sendPasswordReset(toEmail: email);
+        await authService.sendPasswordReset(toEmail: email);
         emit(const AuthStateForgotPassword(
           exception: null,
           hasSentEmail: true,
