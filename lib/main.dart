@@ -6,6 +6,7 @@ import 'package:pd/services/api/auth_service.dart';
 import 'package:pd/services/auth/bloc/auth_bloc.dart';
 import 'package:pd/services/auth/bloc/auth_event.dart';
 import 'package:pd/services/auth/bloc/auth_state.dart';
+import 'package:pd/views/builds/create_update_build_view.dart';
 import 'package:pd/views/login_view.dart';
 import 'package:pd/views/home_view.dart';
 import 'package:pd/views/builds/garage_view.dart';
@@ -81,6 +82,11 @@ class MyApp extends StatelessWidget {
               return const BuildView();
             },
             '/garage': (context) => const GarageView(),
+            '/create-update-build': (context) {
+              final args = ModalRoute.of(context)?.settings.arguments
+                  as Map<String, dynamic>?;
+              return CreateUpdateBuildView(build: args);
+            },
           },
         ),
       ),

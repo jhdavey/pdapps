@@ -1,5 +1,3 @@
-// ignore_for_file: library_private_types_in_public_api
-
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -43,6 +41,35 @@ class _GarageViewState extends State<GarageView> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("My Garage"),
+        actions: [
+          // Add the "+" icon button for the garage owner
+          FutureBuilder<Map<String, dynamic>>(
+            future: _garageData,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting ||
+                  snapshot.hasError ||
+                  !snapshot.hasData) {
+                return const SizedBox();
+              }
+
+              final data = snapshot.data!;
+              final userId = ModalRoute.of(context)?.settings.arguments as int?;
+              final isOwner = userId == data['user']['id'];
+
+              if (isOwner) {
+                return IconButton(
+                  icon: const Icon(Icons.add),
+                  onPressed: () {
+                    // Navigate to CreateUpdateBuildView with no build data (new build)
+                    Navigator.of(context).pushNamed('/create-update-build');
+                  },
+                );
+              } else {
+                return const SizedBox(); // Do not show the button for non-owners
+              }
+            },
+          ),
+        ],
       ),
       body: FutureBuilder<Map<String, dynamic>>(
         future: _garageData,
@@ -114,8 +141,7 @@ class _GarageViewState extends State<GarageView> {
               CircleAvatar(
                 radius: 40,
                 backgroundImage: user['profile_image'] != null
-                    ? NetworkImage(
-                        user['profile_image'])
+                    ? NetworkImage(user['profile_image'])
                     : const NetworkImage('https://via.placeholder.com/150'),
               ),
               const SizedBox(width: 16),
@@ -203,8 +229,7 @@ class _GarageViewState extends State<GarageView> {
             children: [
               // Image on the left, taking up 30% of the tile width
               Container(
-                width: MediaQuery.of(context).size.width *
-                    0.3, // 30% of the screen width
+                width: MediaQuery.of(context).size.width * 0.3,
                 height: 120, // Full height of the tile
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(8),
@@ -216,13 +241,12 @@ class _GarageViewState extends State<GarageView> {
                   ),
                 ),
               ),
-              const SizedBox(width: 16), // Space between the image and text
+              const SizedBox(width: 16),
               // Text content
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Category in the top right corner
                     Align(
                       alignment: Alignment.topRight,
                       child: Container(
@@ -245,7 +269,6 @@ class _GarageViewState extends State<GarageView> {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    // Year, Make, Model
                     Text(
                       "${build['year']} ${build['make']} ${build['model']}",
                       style: const TextStyle(
@@ -254,29 +277,25 @@ class _GarageViewState extends State<GarageView> {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    // Horsepower and Torque
                     Row(
                       children: [
                         Text(
                           "HP: ${build['horsepower'] ?? 'N/A'}",
-                          style:
-                              const TextStyle(fontSize: 14, color: Colors.grey),
+                          style: const TextStyle(fontSize: 14, color: Colors.grey),
                         ),
                         const SizedBox(width: 16),
                         Text(
                           "Torque: ${build['torque'] ?? 'N/A'}",
-                          style:
-                              const TextStyle(fontSize: 14, color: Colors.grey),
+                          style: const TextStyle(fontSize: 14, color: Colors.grey),
                         ),
                       ],
                     ),
                     const SizedBox(height: 8),
-                    // "Click for Details" in the bottom right corner
                     Align(
                       alignment: Alignment.bottomRight,
                       child: Text(
                         "Click for details",
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 12,
                           color: Colors.grey,
                           fontWeight: FontWeight.bold,

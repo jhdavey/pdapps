@@ -72,7 +72,7 @@ class _HomeViewState extends State<HomeView> {
 
           return SingleChildScrollView(
             child: Padding(
-              padding: const EdgeInsets.all(10.0),
+              padding: const EdgeInsets.symmetric(horizontal: 10),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -88,8 +88,6 @@ class _HomeViewState extends State<HomeView> {
                     const SizedBox(height: 10),
                     _buildGrid(featuredBuilds, 3),
                   ],
-
-                  const SizedBox(height: 20),
                   const Divider(),
 
                   // Following Builds
