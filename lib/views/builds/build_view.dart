@@ -32,7 +32,7 @@ class BuildView extends StatelessWidget {
                   },
                 ),
               ]
-            : null,
+            : null, // Do not show actions if the user is not the owner
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),

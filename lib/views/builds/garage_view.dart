@@ -88,6 +88,8 @@ class _GarageViewState extends State<GarageView> {
           final data = snapshot.data!;
           final user = data['user'];
           final builds = data['builds'] as List<dynamic>? ?? [];
+          final userId = ModalRoute.of(context)?.settings.arguments as int?;
+          final isOwner = userId == user['id'];
 
           return SingleChildScrollView(
             child: Column(
@@ -106,7 +108,10 @@ class _GarageViewState extends State<GarageView> {
                     itemBuilder: (context, index) {
                       final build = builds[index];
                       return _buildTile(
-                          build: build, user: user); // Use named arguments
+                        build: build,
+                        user: user,
+                        isOwner: isOwner,
+                      );
                     },
                   )
                 else
@@ -213,18 +218,19 @@ class _GarageViewState extends State<GarageView> {
   Widget _buildTile({
     required Map<String, dynamic> build,
     required Map<String, dynamic> user,
+    required bool isOwner,
   }) {
     return GestureDetector(
       onTap: () {
-        // Merge user into the build object for consistency in BuildView
         final buildWithUser = {
           ...build,
-          'user': user, // Add user data to the build object
+          'user': user,
+          'is_owner': isOwner, // Include isOwner
         };
 
         Navigator.of(context).pushNamed(
           '/build-view',
-          arguments: buildWithUser, // Pass merged object
+          arguments: buildWithUser,
         );
       },
       child: Card(
