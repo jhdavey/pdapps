@@ -29,9 +29,10 @@ class _GarageViewState extends State<GarageView> {
     final response = await http.get(Uri.parse(apiUrl));
 
     if (response.statusCode == 200) {
-      return json.decode(response.body);
+      final decodedResponse = json.decode(response.body);
+      print('Garage data response: $decodedResponse');
+      return decodedResponse;
     } else {
-      print('Error: ${response.statusCode}, Body: ${response.body}');
       throw Exception('Failed to load garage data');
     }
   }
@@ -104,12 +105,14 @@ class _GarageViewState extends State<GarageView> {
                     itemCount: builds.length,
                     itemBuilder: (context, index) {
                       final build = builds[index];
-                      return _buildTile(build);
+                      return _buildTile(
+                          build: build, user: user); // Use named arguments
                     },
                   )
                 else
                   const Center(
-                    child: Text("You haven't created any builds yet."),
+                    child: Text(
+                        "Add your first build by tapping the plus icon in the top right."),
                   ),
               ],
             ),
@@ -179,9 +182,7 @@ class _GarageViewState extends State<GarageView> {
                     padding: const EdgeInsets.only(right: 8.0),
                     child: ElevatedButton(
                       onPressed: () {
-                        final url = _getSocialMediaUrl(entry.key, entry.value);
-                        // Open the link (You need a package like `url_launcher` for this)
-                        print('Opening URL: $url');
+                        _getSocialMediaUrl(entry.key, entry.value);
                       },
                       child: Text(entry.key.toUpperCase()),
                     ),
@@ -209,12 +210,21 @@ class _GarageViewState extends State<GarageView> {
     }
   }
 
-  Widget _buildTile(Map<String, dynamic> build) {
+  Widget _buildTile({
+    required Map<String, dynamic> build,
+    required Map<String, dynamic> user,
+  }) {
     return GestureDetector(
       onTap: () {
+        // Merge user into the build object for consistency in BuildView
+        final buildWithUser = {
+          ...build,
+          'user': user, // Add user data to the build object
+        };
+
         Navigator.of(context).pushNamed(
           '/build-view',
-          arguments: build,
+          arguments: buildWithUser, // Pass merged object
         );
       },
       child: Card(
@@ -227,10 +237,9 @@ class _GarageViewState extends State<GarageView> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Image on the left, taking up 30% of the tile width
               Container(
                 width: MediaQuery.of(context).size.width * 0.3,
-                height: 120, // Full height of the tile
+                height: 120,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(8),
                   image: DecorationImage(
@@ -242,7 +251,6 @@ class _GarageViewState extends State<GarageView> {
                 ),
               ),
               const SizedBox(width: 16),
-              // Text content
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -280,13 +288,19 @@ class _GarageViewState extends State<GarageView> {
                     Row(
                       children: [
                         Text(
-                          "HP: ${build['horsepower'] ?? 'N/A'}",
-                          style: const TextStyle(fontSize: 14, color: Colors.grey),
+                          "HP: ${build['hp'] ?? 'N/A'}",
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey,
+                          ),
                         ),
                         const SizedBox(width: 16),
                         Text(
                           "Torque: ${build['torque'] ?? 'N/A'}",
-                          style: const TextStyle(fontSize: 14, color: Colors.grey),
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey,
+                          ),
                         ),
                       ],
                     ),

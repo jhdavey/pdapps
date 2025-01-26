@@ -5,24 +5,36 @@ class BuildView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Expecting a Map<String, dynamic> from the navigation arguments
     final Map<String, dynamic> build =
         ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
 
-    // Access the user's name safely
-    final userName = build['user'] != null && build['user']['name'] != null
-        ? build['user']['name']
-        : 'Unknown User';
+    // Safely access user data from the build object
+    final user = build['user'] ?? {};
+    final userName = user['name'] ?? 'Unknown User';
 
-        print('Additional Images: ${build['additional_images']}');
-
+    final bool isOwner = build['is_owner'] ?? false;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Build Details'),
+        title: Text("$userName's Build"),
+        actions: isOwner
+            ? [
+                IconButton(
+                  icon: const Icon(Icons.edit),
+                  onPressed: () {
+                    Navigator.pushNamed(
+                      context,
+                      '/edit-build-view',
+                      arguments: {
+                        'build': build, // Pass the full build data directly
+                      },
+                    );
+                  },
+                ),
+              ]
+            : null,
       ),
       body: SingleChildScrollView(
-        
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

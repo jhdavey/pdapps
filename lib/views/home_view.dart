@@ -152,7 +152,7 @@ class _HomeViewState extends State<HomeView> {
   }
 
   // Helper function to build grid view
-  Widget _buildGrid(List<dynamic> items, int columns) {
+  Widget _buildGrid(List<dynamic> builds, int columns) {
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -163,12 +163,12 @@ class _HomeViewState extends State<HomeView> {
         childAspectRatio:
             3 / 4, // Allows space for image, username, and build info
       ),
-      itemCount: items.length,
+      itemCount: builds.length,
       itemBuilder: (context, index) {
-        final item = items[index];
+        final build = builds[index];
 
         // Safeguard against invalid data
-        if (item is! Map<String, dynamic>) {
+        if (build is! Map<String, dynamic>) {
           return const Center(
             child: Text('Invalid build data.'),
           );
@@ -178,7 +178,7 @@ class _HomeViewState extends State<HomeView> {
           onTap: () {
             Navigator.of(context).pushNamed(
               '/build-view',
-              arguments: item, // Pass the entire item
+              arguments: build,
             );
           },
           child: Card(
@@ -189,11 +189,10 @@ class _HomeViewState extends State<HomeView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Image with aspect ratio
                 AspectRatio(
                   aspectRatio: 4 / 3,
                   child: Image.network(
-                    item['image'] ?? 'https://via.placeholder.com/150',
+                    build['image'] ?? 'https://via.placeholder.com/150',
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -201,8 +200,8 @@ class _HomeViewState extends State<HomeView> {
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 4.0),
                   child: Text(
-                    item['user'] != null && item['user']['name'] != null
-                        ? "${item['user']['name']}'s"
+                    build['user'] != null && build['user']['name'] != null
+                        ? "${build['user']['name']}'s"
                         : 'Unknown User',
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
@@ -214,7 +213,7 @@ class _HomeViewState extends State<HomeView> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8.0),
                   child: Text(
-                    '${item['year']} ${item['make']} ${item['model']}',
+                    '${build['year']} ${build['make']} ${build['model']}',
                     style: const TextStyle(
                       fontWeight: FontWeight.normal,
                     ),
