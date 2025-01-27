@@ -66,12 +66,16 @@ class BuildView extends StatelessWidget {
                     runSpacing: 8,
                     children: (build['additional_images'] as List<dynamic>)
                         .map((image) {
-                      return Image.network(
-                        image ?? 'https://via.placeholder.com/150',
-                        width: 100,
-                        height: 100,
-                        fit: BoxFit.cover,
-                      );
+                      if (image is String) {
+                        return Image.network(
+                          image,
+                          width: 100,
+                          height: 100,
+                          fit: BoxFit.cover,
+                        );
+                      } else {
+                        return const SizedBox(); // Safeguard for non-string values
+                      }
                     }).toList(),
                   ),
                 ],

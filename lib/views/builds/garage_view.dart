@@ -30,7 +30,7 @@ class _GarageViewState extends State<GarageView> {
 
     if (response.statusCode == 200) {
       final decodedResponse = json.decode(response.body);
-      print('Garage data response: $decodedResponse');
+
       return decodedResponse;
     } else {
       throw Exception('Failed to load garage data');
@@ -61,12 +61,11 @@ class _GarageViewState extends State<GarageView> {
                 return IconButton(
                   icon: const Icon(Icons.add),
                   onPressed: () {
-                    // Navigate to CreateUpdateBuildView with no build data (new build)
                     Navigator.of(context).pushNamed('/create-update-build');
                   },
                 );
               } else {
-                return const SizedBox(); // Do not show the button for non-owners
+                return const SizedBox();
               }
             },
           ),
