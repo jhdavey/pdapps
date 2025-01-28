@@ -89,6 +89,7 @@ class _GarageViewState extends State<GarageView> {
           final builds = data['builds'] as List<dynamic>? ?? [];
           final userId = ModalRoute.of(context)?.settings.arguments as int?;
           final isOwner = userId == user['id'];
+          
 
           return SingleChildScrollView(
             child: Column(

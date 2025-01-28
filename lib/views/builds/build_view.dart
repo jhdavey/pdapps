@@ -14,6 +14,8 @@ class BuildView extends StatelessWidget {
 
     final bool isOwner = build['is_owner'] ?? false;
 
+    print(build); // Debugging the build data
+
     return Scaffold(
       appBar: AppBar(
         title: Text("$userName's Build"),
@@ -44,45 +46,52 @@ class BuildView extends StatelessWidget {
               "$userName's ${build['year']} ${build['make']} ${build['model']} ${build['trim'] ?? ''}",
               style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
+            Text(
+              "${build['build_category']} Build",
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 10),
             Image.network(
               build['image'] ?? 'https://via.placeholder.com/780',
               fit: BoxFit.cover,
               width: double.infinity,
             ),
+            const SizedBox(height: 20),
+
             // Additional Images Section
             if (build['additional_images'] != null &&
                 (build['additional_images'] as List<dynamic>).isNotEmpty)
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Additional Images',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 10),
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
                     children: (build['additional_images'] as List<dynamic>)
                         .map((image) {
-                      if (image is String) {
-                        return Image.network(
-                          image,
-                          width: 100,
-                          height: 100,
-                          fit: BoxFit.cover,
+                      if (image is String && image.isNotEmpty) {
+                        return ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.network(
+                            image,
+                            width: 100,
+                            height: 100,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                const Icon(Icons.error),
+                          ),
                         );
                       } else {
-                        return const SizedBox(); // Safeguard for non-string values
+                        return const SizedBox();
                       }
                     }).toList(),
                   ),
                 ],
               ),
 
-            // Vehicle Specs
             const SizedBox(height: 20),
+
+            // Vehicle Specs
             const Text(
               'Vehicle Specs',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
@@ -127,6 +136,7 @@ class BuildView extends StatelessWidget {
       {'label': 'Horsepower', 'value': build['hp']},
       {'label': 'Wheel HP', 'value': build['whp']},
       {'label': 'Torque', 'value': build['torque']},
+      {'label': 'Weight', 'value': build['weight']},
     ];
 
     return Column(

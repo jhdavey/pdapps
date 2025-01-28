@@ -70,26 +70,29 @@ class _EditBuildViewState extends State<EditBuildView> {
   }
 
   void _initializeFormFields() {
-    _yearController.text = widget.build['year'] ?? '';
-    _makeController.text = widget.build['make'] ?? '';
-    _modelController.text = widget.build['model'] ?? '';
-    _trimController.text = widget.build['trim'] ?? '';
-    _hpController.text = widget.build['hp'] ?? '';
-    _whpController.text = widget.build['whp'] ?? '';
-    _torqueController.text = widget.build['torque'] ?? '';
-    _weightController.text = widget.build['weight'] ?? '';
-    _vehicleLayoutController.text = widget.build['vehicleLayout'] ?? '';
-    _fuelController.text = widget.build['fuel'] ?? '';
-    _zeroSixtyController.text = widget.build['zeroSixty'] ?? '';
-    _zeroOneHundredController.text = widget.build['zeroOneHundred'] ?? '';
-    _quarterMileController.text = widget.build['quarterMile'] ?? '';
-    _engineTypeController.text = widget.build['engineType'] ?? '';
-    _engineCodeController.text = widget.build['engineCode'] ?? '';
-    _forcedInductionController.text = widget.build['forcedInduction'] ?? '';
-    _transController.text = widget.build['trans'] ?? '';
-    _suspensionController.text = widget.build['suspension'] ?? '';
-    _brakesController.text = widget.build['brakes'] ?? '';
-    _selectedCategory = widget.build['build_category'];
+    _yearController.text = widget.build['year']?.toString() ?? '';
+    _makeController.text = widget.build['make']?.toString() ?? '';
+    _modelController.text = widget.build['model']?.toString() ?? '';
+    _trimController.text = widget.build['trim']?.toString() ?? '';
+    _hpController.text = widget.build['hp']?.toString() ?? '';
+    _whpController.text = widget.build['whp']?.toString() ?? '';
+    _torqueController.text = widget.build['torque']?.toString() ?? '';
+    _weightController.text = widget.build['weight']?.toString() ?? '';
+    _vehicleLayoutController.text =
+        widget.build['vehicleLayout']?.toString() ?? '';
+    _fuelController.text = widget.build['fuel']?.toString() ?? '';
+    _zeroSixtyController.text = widget.build['zeroSixty']?.toString() ?? '';
+    _zeroOneHundredController.text =
+        widget.build['zeroOneHundred']?.toString() ?? '';
+    _quarterMileController.text = widget.build['quarterMile']?.toString() ?? '';
+    _engineTypeController.text = widget.build['engineType']?.toString() ?? '';
+    _engineCodeController.text = widget.build['engineCode']?.toString() ?? '';
+    _forcedInductionController.text =
+        widget.build['forcedInduction']?.toString() ?? '';
+    _transController.text = widget.build['trans']?.toString() ?? '';
+    _suspensionController.text = widget.build['suspension']?.toString() ?? '';
+    _brakesController.text = widget.build['brakes']?.toString() ?? '';
+    _selectedCategory = widget.build['build_category']?.toString();
   }
 
   Future<void> _pickImage() async {
@@ -99,81 +102,89 @@ class _EditBuildViewState extends State<EditBuildView> {
     if (pickedFile != null) {
       setState(() {
         _selectedImage = File(pickedFile.path);
+        widget.build['image'] = pickedFile.path;
       });
     }
   }
 
   Future<void> _updateBuild() async {
-  if (!_formKey.currentState!.validate()) {
-    print('Form validation failed');
-    return;
-  }
+    if (!_formKey.currentState!.validate()) {
+      print('Form validation failed');
+      return;
+    }
 
-  final prefs = await SharedPreferences.getInstance();
-  final token = prefs.getString('auth_token');
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('auth_token');
 
-  if (token == null) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Error: User not authenticated')),
-    );
-    return;
-  }
-
-  final url = 'https://passiondrivenbuilds.com/api/builds/${widget.build['id']}';
-
-  try {
-    final body = {
-      'year': _yearController.text.trim(),
-      'make': _makeController.text.trim(),
-      'model': _modelController.text.trim(),
-      'trim': _trimController.text.trim(),
-      'build_category': _selectedCategory ?? '',
-      'hp': _hpController.text.trim(),
-      'whp': _whpController.text.trim(),
-      'torque': _torqueController.text.trim(),
-      'weight': _weightController.text.trim(),
-      'vehicleLayout': _vehicleLayoutController.text.trim(),
-      'fuel': _fuelController.text.trim(),
-      'zeroSixty': _zeroSixtyController.text.trim(),
-      'zeroOneHundred': _zeroOneHundredController.text.trim(),
-      'quarterMile': _quarterMileController.text.trim(),
-      'engineType': _engineTypeController.text.trim(),
-      'engineCode': _engineCodeController.text.trim(),
-      'forcedInduction': _forcedInductionController.text.trim(),
-      'trans': _transController.text.trim(),
-      'suspension': _suspensionController.text.trim(),
-      'brakes': _brakesController.text.trim(),
-    };
-
-
-    final response = await http.put(
-      Uri.parse(url),
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode(body),
-    );
-
-
-    if (response.statusCode == 200) {
+    if (token == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Build updated successfully!')),
+        const SnackBar(content: Text('Error: User not authenticated')),
       );
-      Navigator.pop(context);
-    } else {
-      final error = jsonDecode(response.body)['message'] ?? 'An error occurred';
+      return;
+    }
+
+    final url =
+        'https://passiondrivenbuilds.com/api/builds/${widget.build['id']}';
+
+    try {
+      // Prepare the request body
+      final body = {
+        'year': _yearController.text.trim(),
+        'make': _makeController.text.trim(),
+        'model': _modelController.text.trim(),
+        'trim': _trimController.text.trim(),
+        'build_category': _selectedCategory ?? '',
+        'hp': _hpController.text.trim(),
+        'whp': _whpController.text.trim(),
+        'torque': _torqueController.text.trim(),
+        'weight': _weightController.text.trim(),
+        'vehicleLayout': _vehicleLayoutController.text.trim(),
+        'fuel': _fuelController.text.trim(),
+        'zeroSixty': _zeroSixtyController.text.trim(),
+        'zeroOneHundred': _zeroOneHundredController.text.trim(),
+        'quarterMile': _quarterMileController.text.trim(),
+        'engineType': _engineTypeController.text.trim(),
+        'engineCode': _engineCodeController.text.trim(),
+        'forcedInduction': _forcedInductionController.text.trim(),
+        'trans': _transController.text.trim(),
+        'suspension': _suspensionController.text.trim(),
+        'brakes': _brakesController.text.trim(),
+      };
+
+      // If an image is selected, encode it as Base64 and add it to the request body
+      if (_selectedImage != null) {
+        final bytes = await _selectedImage!.readAsBytes();
+        body['image'] = base64Encode(bytes);
+      }
+
+      final response = await http.put(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(body),
+      );
+
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Build updated successfully!')),
+        );
+        Navigator.pop(context);
+      } else {
+        final error =
+            jsonDecode(response.body)['message'] ?? 'An error occurred';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $error')),
+        );
+      }
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $error')),
+        SnackBar(content: Text('Error: $e')),
       );
     }
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Error: $e')),
-    );
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -187,16 +198,30 @@ class _EditBuildViewState extends State<EditBuildView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildTextField(controller: _yearController, label: 'Year', isRequired: true),
-                _buildTextField(controller: _makeController, label: 'Make', isRequired: true),
-                _buildTextField(controller: _modelController, label: 'Model', isRequired: true),
+                _buildTextField(
+                    controller: _yearController,
+                    label: 'Year',
+                    isRequired: true),
+                _buildTextField(
+                    controller: _makeController,
+                    label: 'Make',
+                    isRequired: true),
+                _buildTextField(
+                    controller: _modelController,
+                    label: 'Model',
+                    isRequired: true),
                 _buildTextField(controller: _trimController, label: 'Trim'),
                 _buildDropdownField(),
-                _buildTextField(controller: _hpController, label: 'Horsepower (HP)'),
-                _buildTextField(controller: _whpController, label: 'Wheel Horsepower (WHP)'),
+                _buildTextField(
+                    controller: _hpController, label: 'Horsepower (HP)'),
+                _buildTextField(
+                    controller: _whpController,
+                    label: 'Wheel Horsepower (WHP)'),
                 _buildTextField(controller: _torqueController, label: 'Torque'),
                 _buildTextField(controller: _weightController, label: 'Weight'),
-                _buildTextField(controller: _vehicleLayoutController, label: 'Vehicle Layout'),
+                _buildTextField(
+                    controller: _vehicleLayoutController,
+                    label: 'Vehicle Layout'),
                 _buildTextField(controller: _fuelController, label: 'Fuel'),
                 _buildImageSection(),
                 const SizedBox(height: 20),
@@ -212,11 +237,17 @@ class _EditBuildViewState extends State<EditBuildView> {
     );
   }
 
-  Widget _buildTextField({required TextEditingController controller, required String label, bool isRequired = false}) {
+  Widget _buildTextField(
+      {required TextEditingController controller,
+      required String label,
+      bool isRequired = false}) {
     return TextFormField(
       controller: controller,
       decoration: InputDecoration(labelText: label),
-      validator: isRequired ? (value) => value == null || value.isEmpty ? '$label is required' : null : null,
+      validator: isRequired
+          ? (value) =>
+              value == null || value.isEmpty ? '$label is required' : null
+          : null,
     );
   }
 
@@ -224,21 +255,64 @@ class _EditBuildViewState extends State<EditBuildView> {
     return DropdownButtonFormField<String>(
       decoration: const InputDecoration(labelText: 'Build Category'),
       value: _selectedCategory,
-      items: _categories.map((category) => DropdownMenuItem(value: category, child: Text(category))).toList(),
+      items: _categories
+          .map((category) =>
+              DropdownMenuItem(value: category, child: Text(category)))
+          .toList(),
       onChanged: (value) {
         setState(() {
           _selectedCategory = value;
         });
       },
-      validator: (value) => value == null || value.isEmpty ? 'Category is required' : null,
+      validator: (value) =>
+          value == null || value.isEmpty ? 'Category is required' : null,
     );
   }
 
   Widget _buildImageSection() {
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (widget.build['image'] != null)
-          Image.network(widget.build['image'], width: 100, height: 100, fit: BoxFit.cover),
+        // Restrict the image size
+        if (_selectedImage != null)
+          Container(
+            width: 100,
+            height: 100,
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey),
+              borderRadius: BorderRadius.circular(8),
+              image: DecorationImage(
+                image: FileImage(_selectedImage!),
+                fit: BoxFit.cover,
+              ),
+            ),
+          )
+        else if (widget.build['image'] != null)
+          Container(
+            width: 100,
+            height: 100,
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey),
+              borderRadius: BorderRadius.circular(8),
+              image: DecorationImage(
+                image: NetworkImage(widget.build['image']),
+                fit: BoxFit.cover,
+              ),
+            ),
+          )
+        else
+          // Placeholder for when no image is available
+          Container(
+            width: 100,
+            height: 100,
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey),
+              borderRadius: BorderRadius.circular(8),
+              color: Colors.grey[300],
+            ),
+            child: const Icon(Icons.image, color: Colors.grey),
+          ),
+        const SizedBox(height: 10), // Space between image and button
         ElevatedButton(
           onPressed: _pickImage,
           child: const Text('Replace Featured Image'),
