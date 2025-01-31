@@ -1,5 +1,5 @@
-import 'package:pd/services/auth/auth_exceptions.dart';
-import 'package:pd/services/auth/auth_provider.dart';
+import 'package:pd/services/api/auth_exception.dart';
+import 'package:pd/services/api/auth_provider.dart';
 import 'package:pd/services/api/auth_user.dart';
 import 'package:test/test.dart';
 
@@ -42,7 +42,7 @@ void main() {
         password: 'foobar',
       );
       expect(badCredUser,
-          throwsA(const TypeMatcher<InvalidCredentialsAuthException>()));
+          throwsA(const TypeMatcher<InvalidCredentialsException>()));
 
       final user = await provider.createUser(
         displayName: 'tester',
@@ -74,13 +74,12 @@ void main() {
 
 class NotInitializedException implements Exception {}
 
-class MockAuthProvider implements AuthProvider {
+class MockAuthProvider implements ApiAuthProvider {
   AuthUser? _user;
 
   var _isInitialized = false;
   bool get isInitialized => _isInitialized;
 
-  @override
   Future<AuthUser> createUser({
     required String displayName,
     required String email,
@@ -94,7 +93,6 @@ class MockAuthProvider implements AuthProvider {
     );
   }
 
-  @override
   AuthUser? get currentUser => _user;
 
   @override
@@ -109,10 +107,10 @@ class MockAuthProvider implements AuthProvider {
     required String password,
   }) {
     if (!isInitialized) throw NotInitializedException();
-    if (email == 'foo@bar.com') throw InvalidCredentialsAuthException();
-    if (password == 'foobar') throw InvalidCredentialsAuthException();
+    if (email == 'foo@bar.com') throw InvalidCredentialsException();
+    if (password == 'foobar') throw InvalidCredentialsException();
     const user = AuthUser(
-        id: 1,
+        id: '1',
         isEmailVerified: false,
         email: 'foo@bar.com',
         displayName: 'tester');
@@ -123,7 +121,7 @@ class MockAuthProvider implements AuthProvider {
   @override
   Future<void> logOut() async {
     if (!isInitialized) throw NotInitializedException();
-    if (_user == null) throw InvalidCredentialsAuthException();
+    if (_user == null) throw InvalidCredentialsException();
     await Future.delayed(const Duration(seconds: 1));
     _user = null;
   }
@@ -132,9 +130,9 @@ class MockAuthProvider implements AuthProvider {
   Future<void> sendEmailVerification() async {
     if (!isInitialized) throw NotInitializedException();
     final user = _user;
-    if (user == null) throw InvalidCredentialsAuthException();
+    if (user == null) throw InvalidCredentialsException();
     const newUser = AuthUser(
-      id: 1,
+      id: '1',
       isEmailVerified: true,
       email: 'foo@bar.com',
       displayName: 'tester',
@@ -147,4 +145,14 @@ class MockAuthProvider implements AuthProvider {
     // add test logic
     throw UnimplementedError();
   }
+  
+  @override
+  Future<AuthUser?> getCurrentUser() => throw UnimplementedError();
+  
+  @override
+  Future<void> register({required String displayName, required String email, required String password}) => throw UnimplementedError();
+  
+  @override
+  // TODO: implement baseUrl
+  String get baseUrl => throw UnimplementedError();
 }

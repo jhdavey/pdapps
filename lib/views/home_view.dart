@@ -44,8 +44,7 @@ class _HomeViewState extends State<HomeView> {
     // Fetch the current user using the authService
     authService.getCurrentUser().then((user) {
       if (user != null) {
-      } else {
-      }
+      } else {}
     });
 
     return CustomScaffold(

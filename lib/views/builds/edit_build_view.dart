@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -41,6 +43,10 @@ class _EditBuildViewState extends State<EditBuildView> {
   String? _selectedCategory;
   File? _selectedImage;
 
+  List<String> _existingAdditionalImages = [];
+List<String> _removedAdditionalImages = [];
+
+
   final List<String> _categories = [
     'Classic/Antique',
     'Drag',
@@ -70,30 +76,29 @@ class _EditBuildViewState extends State<EditBuildView> {
   }
 
   void _initializeFormFields() {
-    _yearController.text = widget.build['year']?.toString() ?? '';
-    _makeController.text = widget.build['make']?.toString() ?? '';
-    _modelController.text = widget.build['model']?.toString() ?? '';
-    _trimController.text = widget.build['trim']?.toString() ?? '';
-    _hpController.text = widget.build['hp']?.toString() ?? '';
-    _whpController.text = widget.build['whp']?.toString() ?? '';
-    _torqueController.text = widget.build['torque']?.toString() ?? '';
-    _weightController.text = widget.build['weight']?.toString() ?? '';
-    _vehicleLayoutController.text =
-        widget.build['vehicleLayout']?.toString() ?? '';
-    _fuelController.text = widget.build['fuel']?.toString() ?? '';
-    _zeroSixtyController.text = widget.build['zeroSixty']?.toString() ?? '';
-    _zeroOneHundredController.text =
-        widget.build['zeroOneHundred']?.toString() ?? '';
-    _quarterMileController.text = widget.build['quarterMile']?.toString() ?? '';
-    _engineTypeController.text = widget.build['engineType']?.toString() ?? '';
-    _engineCodeController.text = widget.build['engineCode']?.toString() ?? '';
-    _forcedInductionController.text =
-        widget.build['forcedInduction']?.toString() ?? '';
-    _transController.text = widget.build['trans']?.toString() ?? '';
-    _suspensionController.text = widget.build['suspension']?.toString() ?? '';
-    _brakesController.text = widget.build['brakes']?.toString() ?? '';
-    _selectedCategory = widget.build['build_category']?.toString();
-  }
+  _yearController.text = widget.build['year']?.toString() ?? '';
+  _makeController.text = widget.build['make']?.toString() ?? '';
+  _modelController.text = widget.build['model']?.toString() ?? '';
+  _trimController.text = widget.build['trim']?.toString() ?? '';
+  _hpController.text = widget.build['hp']?.toString() ?? '';
+  _whpController.text = widget.build['whp']?.toString() ?? '';
+  _torqueController.text = widget.build['torque']?.toString() ?? '';
+  _weightController.text = widget.build['weight']?.toString() ?? '';
+  _vehicleLayoutController.text = widget.build['vehicleLayout']?.toString() ?? '';
+  _fuelController.text = widget.build['fuel']?.toString() ?? '';
+  _zeroSixtyController.text = widget.build['zeroSixty']?.toString() ?? '';
+  _zeroOneHundredController.text = widget.build['zeroOneHundred']?.toString() ?? '';
+  _quarterMileController.text = widget.build['quarterMile']?.toString() ?? '';
+  _engineTypeController.text = widget.build['engineType']?.toString() ?? '';
+  _engineCodeController.text = widget.build['engineCode']?.toString() ?? '';
+  _forcedInductionController.text = widget.build['forcedInduction']?.toString() ?? '';
+  _transController.text = widget.build['trans']?.toString() ?? '';
+  _suspensionController.text = widget.build['suspension']?.toString() ?? '';
+  _brakesController.text = widget.build['brakes']?.toString() ?? '';
+  _selectedCategory = widget.build['build_category']?.toString();
+  _existingAdditionalImages = List<String>.from(widget.build['additional_images'] ?? []);
+}
+
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
@@ -107,84 +112,91 @@ class _EditBuildViewState extends State<EditBuildView> {
     }
   }
 
-  Future<void> _updateBuild() async {
-    if (!_formKey.currentState!.validate()) {
-      print('Form validation failed');
-      return;
-    }
-
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('auth_token');
-
-    if (token == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error: User not authenticated')),
-      );
-      return;
-    }
-
-    final url =
-        'https://passiondrivenbuilds.com/api/builds/${widget.build['id']}';
-
-    try {
-      // Prepare the request body
-      final body = {
-        'year': _yearController.text.trim(),
-        'make': _makeController.text.trim(),
-        'model': _modelController.text.trim(),
-        'trim': _trimController.text.trim(),
-        'build_category': _selectedCategory ?? '',
-        'hp': _hpController.text.trim(),
-        'whp': _whpController.text.trim(),
-        'torque': _torqueController.text.trim(),
-        'weight': _weightController.text.trim(),
-        'vehicleLayout': _vehicleLayoutController.text.trim(),
-        'fuel': _fuelController.text.trim(),
-        'zeroSixty': _zeroSixtyController.text.trim(),
-        'zeroOneHundred': _zeroOneHundredController.text.trim(),
-        'quarterMile': _quarterMileController.text.trim(),
-        'engineType': _engineTypeController.text.trim(),
-        'engineCode': _engineCodeController.text.trim(),
-        'forcedInduction': _forcedInductionController.text.trim(),
-        'trans': _transController.text.trim(),
-        'suspension': _suspensionController.text.trim(),
-        'brakes': _brakesController.text.trim(),
-      };
-
-      // If an image is selected, encode it as Base64 and add it to the request body
-      if (_selectedImage != null) {
-        final bytes = await _selectedImage!.readAsBytes();
-        body['image'] = base64Encode(bytes);
-      }
-
-      final response = await http.put(
-        Uri.parse(url),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode(body),
-      );
-
-      if (response.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Build updated successfully!')),
-        );
-        Navigator.pop(context);
-      } else {
-        final error =
-            jsonDecode(response.body)['message'] ?? 'An error occurred';
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $error')),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
-    }
+  void _removeAdditionalImage(int index) {
+    setState(() {
+      _removedAdditionalImages.add(_existingAdditionalImages[index]);
+      _existingAdditionalImages.removeAt(index);
+    });
   }
+
+  Future<void> _updateBuild() async {
+  if (!_formKey.currentState!.validate()) {
+    // Form validation failed exception goes here...
+    return;
+  }
+
+  final prefs = await SharedPreferences.getInstance();
+  final token = prefs.getString('auth_token');
+
+  if (token == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Error: User not authenticated')),
+    );
+    return;
+  }
+
+  final url = 'https://passiondrivenbuilds.com/api/builds/${widget.build['id']}';
+
+  try {
+    final body = {
+      'year': _yearController.text.trim(),
+      'make': _makeController.text.trim(),
+      'model': _modelController.text.trim(),
+      'trim': _trimController.text.trim(),
+      'build_category': _selectedCategory ?? '',
+      'hp': _hpController.text.trim(),
+      'whp': _whpController.text.trim(),
+      'torque': _torqueController.text.trim(),
+      'weight': _weightController.text.trim(),
+      'vehicleLayout': _vehicleLayoutController.text.trim(),
+      'fuel': _fuelController.text.trim(),
+      'zeroSixty': _zeroSixtyController.text.trim(),
+      'zeroOneHundred': _zeroOneHundredController.text.trim(),
+      'quarterMile': _quarterMileController.text.trim(),
+      'engineType': _engineTypeController.text.trim(),
+      'engineCode': _engineCodeController.text.trim(),
+      'forcedInduction': _forcedInductionController.text.trim(),
+      'trans': _transController.text.trim(),
+      'suspension': _suspensionController.text.trim(),
+      'brakes': _brakesController.text.trim(),
+      'removed_images': _removedAdditionalImages.isNotEmpty ? _removedAdditionalImages : [],
+    };
+
+    if (_selectedImage != null) {
+      final bytes = await _selectedImage!.readAsBytes();
+      body['image'] = base64Encode(bytes);
+    }
+
+    final response = await http.put(
+      Uri.parse(url),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(body),
+    );
+
+    if (response.statusCode == 200) {
+      final updatedBuild = jsonDecode(response.body)['build'];
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Build updated successfully!')),
+      );
+
+      Navigator.pop(context, updatedBuild);
+    } else {
+      final error = jsonDecode(response.body)['message'] ?? 'An error occurred';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $error')),
+      );
+    }
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error: $e')),
+    );
+  }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -200,15 +212,15 @@ class _EditBuildViewState extends State<EditBuildView> {
               children: [
                 _buildTextField(
                     controller: _yearController,
-                    label: 'Year',
+                    label: 'Year*',
                     isRequired: true),
                 _buildTextField(
                     controller: _makeController,
-                    label: 'Make',
+                    label: 'Make*',
                     isRequired: true),
                 _buildTextField(
                     controller: _modelController,
-                    label: 'Model',
+                    label: 'Model*',
                     isRequired: true),
                 _buildTextField(controller: _trimController, label: 'Trim'),
                 _buildDropdownField(),
@@ -223,8 +235,134 @@ class _EditBuildViewState extends State<EditBuildView> {
                     controller: _vehicleLayoutController,
                     label: 'Vehicle Layout'),
                 _buildTextField(controller: _fuelController, label: 'Fuel'),
-                _buildImageSection(),
+                _buildTextField(
+                    controller: _zeroSixtyController, label: '0-60 mph Time'),
+                _buildTextField(
+                    controller: _zeroOneHundredController,
+                    label: '0-100 mph Time'),
+                _buildTextField(
+                    controller: _quarterMileController,
+                    label: 'Quarter Mile Time'),
+                _buildTextField(
+                    controller: _engineTypeController, label: 'Engine Type'),
+                _buildTextField(
+                    controller: _engineCodeController, label: 'Engine Code'),
+                _buildTextField(
+                    controller: _forcedInductionController,
+                    label: 'Forced Induction'),
+                _buildTextField(
+                    controller: _transController, label: 'Transmission'),
+                _buildTextField(
+                    controller: _suspensionController, label: 'Suspension'),
+                _buildTextField(controller: _brakesController, label: 'Brakes'),
+
+                const SizedBox(
+                    height: 20),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Image preview container
+                    if (_selectedImage != null)
+                      Container(
+                        width: 100,
+                        height: 100,
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey),
+                          borderRadius: BorderRadius.circular(8),
+                          image: DecorationImage(
+                            image: FileImage(_selectedImage!),
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      )
+                    else if (widget.build['image'] != null)
+                      Container(
+                        width: 100,
+                        height: 100,
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey),
+                          borderRadius: BorderRadius.circular(8),
+                          image: DecorationImage(
+                            image: NetworkImage(widget.build['image']),
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      )
+                    else
+                      Container(
+                        width: 100,
+                        height: 100,
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey),
+                          borderRadius: BorderRadius.circular(8),
+                          color: Colors.grey[300],
+                        ),
+                        child: const Icon(Icons.image, color: Colors.grey),
+                      ),
+                    const SizedBox(width: 16),
+                    ElevatedButton(
+                      onPressed: _pickImage,
+                      child: const Text('Replace Featured Image'),
+                    ),
+                  ],
+                ),
+                const SizedBox(
+                    height: 20),
+                const Text(
+                  'Additional Images',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
                 const SizedBox(height: 20),
+                const Text(
+                  'Additional Images',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 10),
+
+                // Additional Images Grid
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children:
+                      _existingAdditionalImages.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final imageUrl = entry.value;
+
+                    return Stack(
+                      children: [
+                        Container(
+                          width: 100,
+                          height: 100,
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey),
+                            borderRadius: BorderRadius.circular(8),
+                            image: DecorationImage(
+                              image: NetworkImage(imageUrl),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          top: 4,
+                          right: 4,
+                          child: GestureDetector(
+                            onTap: () => _removeAdditionalImage(index),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.red,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.close,
+                                  color: Colors.white, size: 20),
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  }).toList(),
+                ),
+
+                const SizedBox(height: 10),
                 ElevatedButton(
                   onPressed: _updateBuild,
                   child: const Text('Update Build'),
@@ -266,58 +404,6 @@ class _EditBuildViewState extends State<EditBuildView> {
       },
       validator: (value) =>
           value == null || value.isEmpty ? 'Category is required' : null,
-    );
-  }
-
-  Widget _buildImageSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Restrict the image size
-        if (_selectedImage != null)
-          Container(
-            width: 100,
-            height: 100,
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey),
-              borderRadius: BorderRadius.circular(8),
-              image: DecorationImage(
-                image: FileImage(_selectedImage!),
-                fit: BoxFit.cover,
-              ),
-            ),
-          )
-        else if (widget.build['image'] != null)
-          Container(
-            width: 100,
-            height: 100,
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey),
-              borderRadius: BorderRadius.circular(8),
-              image: DecorationImage(
-                image: NetworkImage(widget.build['image']),
-                fit: BoxFit.cover,
-              ),
-            ),
-          )
-        else
-          // Placeholder for when no image is available
-          Container(
-            width: 100,
-            height: 100,
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey),
-              borderRadius: BorderRadius.circular(8),
-              color: Colors.grey[300],
-            ),
-            child: const Icon(Icons.image, color: Colors.grey),
-          ),
-        const SizedBox(height: 10), // Space between image and button
-        ElevatedButton(
-          onPressed: _pickImage,
-          child: const Text('Replace Featured Image'),
-        ),
-      ],
     );
   }
 }

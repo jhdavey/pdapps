@@ -91,7 +91,8 @@ class _CreateBuildViewState extends State<CreateBuildView> {
         Navigator.pop(context);
       } else {
         final responseBody = await response.stream.bytesToString();
-        final error = jsonDecode(responseBody)['message'] ?? 'An error occurred';
+        final error =
+            jsonDecode(responseBody)['message'] ?? 'An error occurred';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: $error')),
         );
@@ -119,26 +120,30 @@ class _CreateBuildViewState extends State<CreateBuildView> {
                   controller: _yearController,
                   decoration: const InputDecoration(labelText: 'Year *'),
                   keyboardType: TextInputType.number,
-                  validator: (value) =>
-                      (value == null || value.isEmpty) ? 'Year is required' : null,
+                  validator: (value) => (value == null || value.isEmpty)
+                      ? 'Year is required'
+                      : null,
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _makeController,
                   decoration: const InputDecoration(labelText: 'Make *'),
-                  validator: (value) =>
-                      (value == null || value.isEmpty) ? 'Make is required' : null,
+                  validator: (value) => (value == null || value.isEmpty)
+                      ? 'Make is required'
+                      : null,
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _modelController,
                   decoration: const InputDecoration(labelText: 'Model *'),
-                  validator: (value) =>
-                      (value == null || value.isEmpty) ? 'Model is required' : null,
+                  validator: (value) => (value == null || value.isEmpty)
+                      ? 'Model is required'
+                      : null,
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  decoration: const InputDecoration(labelText: 'Build Category *'),
+                  decoration:
+                      const InputDecoration(labelText: 'Build Category *'),
                   value: _selectedCategory,
                   items: _categories
                       .map((category) => DropdownMenuItem(
@@ -151,8 +156,9 @@ class _CreateBuildViewState extends State<CreateBuildView> {
                       _selectedCategory = value;
                     });
                   },
-                  validator: (value) =>
-                      (value == null || value.isEmpty) ? 'Category is required' : null,
+                  validator: (value) => (value == null || value.isEmpty)
+                      ? 'Category is required'
+                      : null,
                 ),
                 const SizedBox(height: 12),
                 Center(
