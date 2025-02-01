@@ -1,4 +1,6 @@
-// garage_view.dart
+
+// ignore_for_file: library_private_types_in_public_api, prefer_final_fields
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http/http.dart' as http;
@@ -15,8 +17,7 @@ class GarageView extends StatefulWidget {
 
 class _GarageViewState extends State<GarageView> {
   late Future<Map<String, dynamic>> _garageData;
-  String? _currentUserId;
-  late Future<List<dynamic>> _followers;
+  int? _currentUserId;
   bool _isFollowing = false;
 
   @override
@@ -26,13 +27,12 @@ class _GarageViewState extends State<GarageView> {
     final profileUserId = ModalRoute.of(context)?.settings.arguments as int?;
     if (profileUserId != null) {
       _garageData = _fetchGarageData(profileUserId);
-      _followers = _fetchFollowers(profileUserId);
       // Get current logged-in user id using your ApiAuthService.
       RepositoryProvider.of<ApiAuthService>(context)
           .getCurrentUser()
           .then((currentUser) {
         setState(() {
-          _currentUserId = currentUser?.id;
+          _currentUserId = int.tryParse(currentUser?.id.toString() ?? '');
         });
       });
     } else {
@@ -83,9 +83,7 @@ class _GarageViewState extends State<GarageView> {
 
     if (response.statusCode == 200) {
       // After toggling, refresh the followers list.
-      setState(() {
-        _followers = _fetchFollowers(profileUserId);
-      });
+      setState(() {});
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: ${response.body}')),
@@ -145,15 +143,7 @@ class _GarageViewState extends State<GarageView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Wrap the profile section in a FutureBuilder for followers.
-                FutureBuilder<List<dynamic>>(
-                  future: _followers,
-                  builder: (context, snapshotFollowers) {
-                    // Even if waiting or error, default to an empty list so the profile appears.
-                    final followers = snapshotFollowers.data ?? [];
-                    return _buildProfileSection(user, followers);
-                  },
-                ),
+                _buildProfileSection(user, user['followers'] ?? 0),
                 const SizedBox(height: 10),
                 // List of Builds
                 if (builds.isNotEmpty)
@@ -183,114 +173,109 @@ class _GarageViewState extends State<GarageView> {
     );
   }
 
-  Widget _buildProfileSection(
-      Map<String, dynamic> user, List<dynamic> followers) {
-    final Map<String, String> socialMedia = {
-      'IG': user['instagram'] ?? '',
-      'FB': user['facebook'] ?? '',
-      'TT': user['tiktok'] ?? '',
-      'YT': user['youtube'] ?? '',
-    };
+Widget _buildProfileSection(Map<String, dynamic> user, int followerCount) {
+  final Map<String, String> socialMedia = {
+    'IG': user['instagram'] ?? '',
+    'FB': user['facebook'] ?? '',
+    'TT': user['tiktok'] ?? '',
+    'YT': user['youtube'] ?? '',
+  };
 
-    final availableSocialMedia = socialMedia.entries
-        .where((entry) => entry.value.trim().isNotEmpty)
-        .toList();
+  final availableSocialMedia = socialMedia.entries
+      .where((entry) => entry.value.trim().isNotEmpty)
+      .toList();
 
-    final followerCount = followers.length;
-    // Determine follow status: if _currentUserId is present and is among the followers.
-    _isFollowing = _currentUserId != null &&
-        followers.any((follower) => follower['id'] == _currentUserId);
-
-    return Container(
-      padding: const EdgeInsets.all(10.0),
-      decoration: BoxDecoration(
-        color: Colors.grey[850],
-        borderRadius: BorderRadius.circular(16.0),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 40,
-                backgroundImage: user['profile_image'] != null
-                    ? NetworkImage(user['profile_image'])
-                    : const NetworkImage('https://via.placeholder.com/150'),
+  return Container(
+    padding: const EdgeInsets.all(10.0),
+    decoration: BoxDecoration(
+      color: Colors.grey[850],
+      borderRadius: BorderRadius.circular(16.0),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            CircleAvatar(
+              radius: 40,
+              backgroundImage: user['profile_image'] != null
+                  ? NetworkImage(user['profile_image'])
+                  : const NetworkImage('https://via.placeholder.com/150'),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "${user['name']}'s Garage",
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    "Followers: $followerCount | Following: ${user['following'] ?? 0}",
+                    style: const TextStyle(color: Colors.white70),
+                  ),
+                ],
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "${user['name']}'s Garage",
+            ),
+            // Only show the follow/unfollow button if the current user is not the profile user.
+            if (_currentUserId != null && _currentUserId != user['id'])
+              ElevatedButton(
+                onPressed: () => _toggleFollow(user['id']),
+                child: Text(_isFollowing ? 'Unfollow' : 'Follow'),
+              ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Text(
+          user['bio'] ?? "No bio available.",
+          style: const TextStyle(color: Colors.white70),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: availableSocialMedia.map((entry) {
+            return Padding(
+              padding: const EdgeInsets.only(right: 8.0),
+              child: GestureDetector(
+                onTap: () async {
+                  final url = _getSocialMediaUrl(entry.key, entry.value);
+                  final Uri uri = Uri.parse(url);
+                  if (await canLaunchUrl(uri)) {
+                    await launchUrl(uri, mode: LaunchMode.externalApplication);
+                  } else {
+                    debugPrint("Could not launch $url");
+                  }
+                },
+                child: Chip(
+                  visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                  label: Container(
+                    height: 28,
+                    alignment: Alignment.center,
+                    child: Text(
+                      '${entry.key}: ${entry.value}',
                       style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 10,
                         color: Colors.white,
+                        height: 1.0,
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      "Followers: $followerCount | Following: ${user['following'] ?? 0}",
-                      style: const TextStyle(color: Colors.white70),
-                    ),
-                  ],
-                ),
-              ),
-              if (_currentUserId != null && _currentUserId != user['id'])
-                ElevatedButton(
-                  onPressed: () => _toggleFollow(user['id']),
-                  child: Text(_isFollowing ? 'Unfollow' : 'Follow'),
-                ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            user['bio'] ?? "No bio available.",
-            style: const TextStyle(color: Colors.white70),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: availableSocialMedia.map((entry) {
-              return Padding(
-                padding: const EdgeInsets.only(right: 8.0),
-                child: GestureDetector(
-                  onTap: () async {
-                    final url = _getSocialMediaUrl(entry.key, entry.value);
-                    final Uri uri = Uri.parse(url);
-                    if (await canLaunchUrl(uri)) {
-                      await launchUrl(uri);
-                    } else {
-                      throw 'Could not launch $url';
-                    }
-                  },
-                  child: Chip(
-                    visualDensity: VisualDensity.compact,
-                    padding: EdgeInsets.zero,
-                    label: Container(
-                      height: 28,
-                      alignment: Alignment.center,
-                      child: Text(
-                        '${entry.key}: ${entry.value}',
-                        style: const TextStyle(
-                          fontSize: 10,
-                          color: Colors.white,
-                          height: 1.0,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
+                      textAlign: TextAlign.center,
                     ),
                   ),
                 ),
-              );
-            }).toList(),
-          ),
-        ],
-      ),
-    );
-  }
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    ),
+  );
+}
 
   String _getSocialMediaUrl(String platform, String username) {
     switch (platform) {

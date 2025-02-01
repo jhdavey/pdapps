@@ -30,6 +30,11 @@ class ApiAuthProvider {
     _token = null;
   }
 
+  Future<String?> getToken() async {
+  await _loadToken();
+  return _token;
+}
+
   Future<void> register({
     required String displayName,
     required String email,

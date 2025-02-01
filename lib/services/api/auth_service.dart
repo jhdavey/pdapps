@@ -1,3 +1,4 @@
+// api_auth_service.dart
 import 'package:pd/services/api/auth_user.dart';
 import 'package:pd/services/api/auth_provider.dart';
 
@@ -43,5 +44,10 @@ class ApiAuthService {
 
   Future<void> initialize() async {
     await _apiAuthProvider.initialize();
+  }
+
+  // Add this method to expose the token from the underlying provider.
+  Future<String?> getToken() async {
+    return await _apiAuthProvider.getToken();
   }
 }

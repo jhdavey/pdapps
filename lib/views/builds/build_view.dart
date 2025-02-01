@@ -1,4 +1,3 @@
-// build_view.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pd/services/api/auth_service.dart';
@@ -55,7 +54,14 @@ class _BuildViewState extends State<BuildView> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text("$userName's Build"),
+        title: GestureDetector(
+    onTap: () {
+      // Assuming that the user info is available in a variable `user`
+      // and that user['id'] holds the profile user's id.
+      Navigator.pushNamed(context, '/garage', arguments: user['id']);
+    },
+    child: Text("$userName's ${_build['build_category'] ?? ''}"),
+  ),
         actions: isOwner
             ? [
                 IconButton(
@@ -90,10 +96,6 @@ class _BuildViewState extends State<BuildView> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          "$userName's ${_build['build_category'] ?? ''}",
-          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-        ),
         Text(
           "${_build['year'] ?? ''} ${_build['make'] ?? ''} ${_build['model'] ?? ''}"
           "${_build['trim'] != null ? ' ${_build['trim']}' : ''}",

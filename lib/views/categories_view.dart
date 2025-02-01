@@ -54,7 +54,7 @@ class _CategoriesViewState extends State<CategoriesView> {
           return GridView.builder(
             padding: const EdgeInsets.all(8.0),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2, // same as in TagView/HomeView grid
+              crossAxisCount: 3, // same as in TagView/HomeView grid
               crossAxisSpacing: 8,
               mainAxisSpacing: 8,
               childAspectRatio: 3 / 4,
