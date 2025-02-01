@@ -1,7 +1,10 @@
 // garage_view.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:pd/services/api/auth_service.dart';
 
 class GarageView extends StatefulWidget {
   const GarageView({super.key});
@@ -12,14 +15,26 @@ class GarageView extends StatefulWidget {
 
 class _GarageViewState extends State<GarageView> {
   late Future<Map<String, dynamic>> _garageData;
+  String? _currentUserId;
+  late Future<List<dynamic>> _followers;
+  bool _isFollowing = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Access userId passed via Navigator arguments
-    final userId = ModalRoute.of(context)?.settings.arguments as int?;
-    if (userId != null) {
-      _garageData = _fetchGarageData(userId);
+    // Access userId passed via Navigator arguments (this is the profile user's id)
+    final profileUserId = ModalRoute.of(context)?.settings.arguments as int?;
+    if (profileUserId != null) {
+      _garageData = _fetchGarageData(profileUserId);
+      _followers = _fetchFollowers(profileUserId);
+      // Get current logged-in user id using your ApiAuthService.
+      RepositoryProvider.of<ApiAuthService>(context)
+          .getCurrentUser()
+          .then((currentUser) {
+        setState(() {
+          _currentUserId = currentUser?.id;
+        });
+      });
     } else {
       throw Exception('User ID not provided');
     }
@@ -36,13 +51,55 @@ class _GarageViewState extends State<GarageView> {
     }
   }
 
+  // Fetch followers list for a given user.
+  Future<List<dynamic>> _fetchFollowers(int userId) async {
+    final String apiUrl =
+        'https://passiondrivenbuilds.com/api/users/$userId/followers';
+    final response = await http.get(Uri.parse(apiUrl));
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      return (data['followers'] as List<dynamic>?) ?? [];
+    } else {
+      throw Exception('Failed to load followers');
+    }
+  }
+
+  // Toggle follow status for a given user.
+  Future<void> _toggleFollow(int profileUserId) async {
+    // Determine whether to follow or unfollow.
+    final bool follow = !_isFollowing;
+    final String apiUrl;
+    http.Response response;
+
+    if (follow) {
+      apiUrl =
+          'https://passiondrivenbuilds.com/api/users/$profileUserId/follow';
+      response = await http.post(Uri.parse(apiUrl));
+    } else {
+      apiUrl =
+          'https://passiondrivenbuilds.com/api/users/$profileUserId/unfollow';
+      response = await http.delete(Uri.parse(apiUrl));
+    }
+
+    if (response.statusCode == 200) {
+      // After toggling, refresh the followers list.
+      setState(() {
+        _followers = _fetchFollowers(profileUserId);
+      });
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${response.body}')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text("My Garage"),
         actions: [
-          // Add the "+" icon button for the garage owner
+          // Add the "+" icon button for the garage owner.
           FutureBuilder<Map<String, dynamic>>(
             future: _garageData,
             builder: (context, snapshot) {
@@ -81,14 +138,22 @@ class _GarageViewState extends State<GarageView> {
           final data = snapshot.data!;
           final user = data['user'];
           final builds = data['builds'] as List<dynamic>? ?? [];
-          final userId = ModalRoute.of(context)?.settings.arguments as int?;
-          final isOwner = userId == user['id'];
+          final profileUserId =
+              ModalRoute.of(context)?.settings.arguments as int?;
+          final isOwner = profileUserId == user['id'];
           return SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Profile Section
-                _buildProfileSection(user),
+                // Wrap the profile section in a FutureBuilder for followers.
+                FutureBuilder<List<dynamic>>(
+                  future: _followers,
+                  builder: (context, snapshotFollowers) {
+                    // Even if waiting or error, default to an empty list so the profile appears.
+                    final followers = snapshotFollowers.data ?? [];
+                    return _buildProfileSection(user, followers);
+                  },
+                ),
                 const SizedBox(height: 10),
                 // List of Builds
                 if (builds.isNotEmpty)
@@ -118,13 +183,24 @@ class _GarageViewState extends State<GarageView> {
     );
   }
 
-  Widget _buildProfileSection(Map<String, dynamic> user) {
-    final socialMedia = {
-      'instagram': user['instagram'],
-      'facebook': user['facebook'],
-      'tiktok': user['tiktok'],
-      'youtube': user['youtube'],
+  Widget _buildProfileSection(
+      Map<String, dynamic> user, List<dynamic> followers) {
+    final Map<String, String> socialMedia = {
+      'IG': user['instagram'] ?? '',
+      'FB': user['facebook'] ?? '',
+      'TT': user['tiktok'] ?? '',
+      'YT': user['youtube'] ?? '',
     };
+
+    final availableSocialMedia = socialMedia.entries
+        .where((entry) => entry.value.trim().isNotEmpty)
+        .toList();
+
+    final followerCount = followers.length;
+    // Determine follow status: if _currentUserId is present and is among the followers.
+    _isFollowing = _currentUserId != null &&
+        followers.any((follower) => follower['id'] == _currentUserId);
+
     return Container(
       padding: const EdgeInsets.all(10.0),
       decoration: BoxDecoration(
@@ -143,24 +219,31 @@ class _GarageViewState extends State<GarageView> {
                     : const NetworkImage('https://via.placeholder.com/150'),
               ),
               const SizedBox(width: 16),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "${user['name']}'s Garage",
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "${user['name']}'s Garage",
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    "Followers: ${user['followers'] ?? 0} | Following: ${user['following'] ?? 0}",
-                    style: const TextStyle(color: Colors.white70),
-                  ),
-                ],
+                    const SizedBox(height: 4),
+                    Text(
+                      "Followers: $followerCount | Following: ${user['following'] ?? 0}",
+                      style: const TextStyle(color: Colors.white70),
+                    ),
+                  ],
+                ),
               ),
+              if (_currentUserId != null && _currentUserId != user['id'])
+                ElevatedButton(
+                  onPressed: () => _toggleFollow(user['id']),
+                  child: Text(_isFollowing ? 'Unfollow' : 'Follow'),
+                ),
             ],
           ),
           const SizedBox(height: 16),
@@ -170,20 +253,39 @@ class _GarageViewState extends State<GarageView> {
           ),
           const SizedBox(height: 16),
           Row(
-            children: socialMedia.entries
-                .where((entry) => entry.value != null && entry.value.isNotEmpty)
-                .map(
-                  (entry) => Padding(
-                    padding: const EdgeInsets.only(right: 8.0),
-                    child: ElevatedButton(
-                      onPressed: () {
-                        _getSocialMediaUrl(entry.key, entry.value);
-                      },
-                      child: Text(entry.key.toUpperCase()),
+            children: availableSocialMedia.map((entry) {
+              return Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: GestureDetector(
+                  onTap: () async {
+                    final url = _getSocialMediaUrl(entry.key, entry.value);
+                    final Uri uri = Uri.parse(url);
+                    if (await canLaunchUrl(uri)) {
+                      await launchUrl(uri);
+                    } else {
+                      throw 'Could not launch $url';
+                    }
+                  },
+                  child: Chip(
+                    visualDensity: VisualDensity.compact,
+                    padding: EdgeInsets.zero,
+                    label: Container(
+                      height: 28,
+                      alignment: Alignment.center,
+                      child: Text(
+                        '${entry.key}: ${entry.value}',
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: Colors.white,
+                          height: 1.0,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
                     ),
                   ),
-                )
-                .toList(),
+                ),
+              );
+            }).toList(),
           ),
         ],
       ),
@@ -192,13 +294,13 @@ class _GarageViewState extends State<GarageView> {
 
   String _getSocialMediaUrl(String platform, String username) {
     switch (platform) {
-      case 'instagram':
+      case 'IG':
         return 'https://instagram.com/$username';
-      case 'facebook':
+      case 'FB':
         return 'https://facebook.com/$username';
-      case 'tiktok':
+      case 'TT':
         return 'https://tiktok.com/@$username';
-      case 'youtube':
+      case 'YT':
         return 'https://youtube.com/$username';
       default:
         return '';
@@ -217,7 +319,8 @@ class _GarageViewState extends State<GarageView> {
     };
     return GestureDetector(
       onTap: () {
-        Navigator.of(context).pushNamed('/build-view', arguments: buildWithUser);
+        Navigator.of(context)
+            .pushNamed('/build-view', arguments: buildWithUser);
       },
       child: Card(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -250,7 +353,8 @@ class _GarageViewState extends State<GarageView> {
                     Align(
                       alignment: Alignment.topRight,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
                           color: Colors.grey[850],
                           borderRadius: BorderRadius.circular(12),
@@ -268,19 +372,22 @@ class _GarageViewState extends State<GarageView> {
                     const SizedBox(height: 4),
                     Text(
                       "${build['year']} ${build['make']} ${build['model']}",
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 4),
                     Row(
                       children: [
                         Text(
                           "HP: ${build['hp'] ?? 'N/A'}",
-                          style: const TextStyle(fontSize: 14, color: Colors.grey),
+                          style:
+                              const TextStyle(fontSize: 14, color: Colors.grey),
                         ),
                         const SizedBox(width: 16),
                         Text(
                           "Torque: ${build['torque'] ?? 'N/A'}",
-                          style: const TextStyle(fontSize: 14, color: Colors.grey),
+                          style:
+                              const TextStyle(fontSize: 14, color: Colors.grey),
                         ),
                       ],
                     ),
@@ -300,7 +407,6 @@ class _GarageViewState extends State<GarageView> {
     );
   }
 
-  // Helper widget to display tags as a horizontal row with clickable chips.
   Widget _buildTags(Map<String, dynamic> build) {
     final List tagList = build['tags'] is List ? build['tags'] : [];
     if (tagList.isEmpty) return const SizedBox.shrink();
@@ -311,7 +417,8 @@ class _GarageViewState extends State<GarageView> {
           padding: const EdgeInsets.only(left: 4.0),
           child: GestureDetector(
             onTap: () {
-              Navigator.of(context).pushNamed('/tag-view', arguments: {'tag': tag});
+              Navigator.of(context)
+                  .pushNamed('/tag-view', arguments: {'tag': tag});
             },
             child: Chip(
               visualDensity: VisualDensity.compact,
@@ -321,7 +428,8 @@ class _GarageViewState extends State<GarageView> {
                 alignment: Alignment.center,
                 child: Text(
                   tag['name'] ?? 'Tag',
-                  style: const TextStyle(fontSize: 10, color: Colors.white, height: 1.0),
+                  style: const TextStyle(
+                      fontSize: 10, color: Colors.white, height: 1.0),
                   textAlign: TextAlign.center,
                 ),
               ),

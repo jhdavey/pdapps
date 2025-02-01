@@ -9,13 +9,13 @@ import 'package:pd/services/auth/bloc/auth_event.dart';
 import 'package:pd/services/auth/bloc/auth_state.dart';
 import 'package:pd/views/builds/create_build_view.dart';
 import 'package:pd/views/builds/edit_build_view.dart';
-import 'package:pd/views/login_view.dart';
+import 'package:pd/views/auth/login_view.dart';
 import 'package:pd/views/home_view.dart';
-import 'package:pd/views/builds/garage_view.dart';
+import 'package:pd/views/garage_view.dart';
 import 'package:pd/views/builds/build_view.dart';
-import 'package:pd/views/register_view.dart';
-import 'package:pd/views/builds/tag_view.dart';
-import 'package:pd/views/builds/categories_view.dart';
+import 'package:pd/views/auth/register_view.dart';
+import 'package:pd/views/tag_view.dart';
+import 'package:pd/views/categories_view.dart';
 import 'package:pd/helpers/loading/loading_screen.dart';
 
 void main() async {
