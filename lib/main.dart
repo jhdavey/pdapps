@@ -1,3 +1,4 @@
+// main.dart
 // ignore_for_file: unused_local_variable
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -13,7 +14,8 @@ import 'package:pd/views/home_view.dart';
 import 'package:pd/views/builds/garage_view.dart';
 import 'package:pd/views/builds/build_view.dart';
 import 'package:pd/views/register_view.dart';
-import 'package:pd/views/tag_view.dart';
+import 'package:pd/views/builds/tag_view.dart';
+import 'package:pd/views/builds/categories_view.dart';
 import 'package:pd/helpers/loading/loading_screen.dart';
 
 void main() async {
@@ -71,8 +73,8 @@ class MyApp extends StatelessWidget {
           home: const AppNavigator(),
           routes: {
             '/build-view': (context) {
-              final args = ModalRoute.of(context)!.settings.arguments
-                  as Map<String, dynamic>?;
+              final args =
+                  ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
               if (args == null || !args.containsKey('id')) {
                 return const Scaffold(
                   body: Center(
@@ -80,14 +82,14 @@ class MyApp extends StatelessWidget {
                   ),
                 );
               }
-              final buildId = args['id'] as int;
+              // You may retrieve the build ID if needed
               return const BuildView();
             },
             '/garage': (context) => const GarageView(),
             '/create-update-build': (context) => CreateBuildView(),
             '/edit-build-view': (context) {
-              final args = ModalRoute.of(context)!.settings.arguments
-                  as Map<String, dynamic>?;
+              final args =
+                  ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
               if (args == null || !args.containsKey('build')) {
                 return const Scaffold(
                   body: Center(
@@ -99,8 +101,8 @@ class MyApp extends StatelessWidget {
               return EditBuildView(build: build);
             },
             '/tag-view': (context) {
-              final args = ModalRoute.of(context)!.settings.arguments
-                  as Map<String, dynamic>?;
+              final args =
+                  ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
               if (args == null || !args.containsKey('tag')) {
                 return const Scaffold(
                   body: Center(child: Text('Invalid tag data')),
@@ -108,6 +110,17 @@ class MyApp extends StatelessWidget {
               }
               final tag = args['tag'];
               return TagView(tag: tag);
+            },
+            '/categories-view': (context) {
+              final args =
+                  ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
+              if (args == null || !args.containsKey('category')) {
+                return const Scaffold(
+                  body: Center(child: Text('Invalid category data')),
+                );
+              }
+              final category = args['category'] as String;
+              return CategoriesView(category: category);
             },
           },
         ),
@@ -131,11 +144,11 @@ class AppNavigator extends StatelessWidget {
       },
       builder: (context, state) {
         if (state is AuthStateLoggedIn) {
-          return const HomeView(); // Redirect to HomeView if logged in
+          return const HomeView();
         } else if (state is AuthStateRegistering) {
-          return const RegisterView(); // Redirect to RegisterView if registering
+          return const RegisterView();
         } else {
-          return const LoginView(); // Default to LoginView if logged out
+          return const LoginView();
         }
       },
     );

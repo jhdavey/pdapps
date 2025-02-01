@@ -1,4 +1,3 @@
-// home_view.dart
 // ignore_for_file: library_private_types_in_public_api
 
 import 'package:flutter/material.dart';
@@ -7,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:pd/services/api/auth_service.dart';
 import 'package:pd/widgets/custom_scaffold.dart';
+import 'package:pd/data/build_categories.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
@@ -41,7 +41,7 @@ class _HomeViewState extends State<HomeView> {
     // Use RepositoryProvider to access ApiAuthService
     final authService = RepositoryProvider.of<ApiAuthService>(context);
     authService.getCurrentUser().then((user) {
-      // Optionally, use user info if needed.
+      //
     });
 
     return CustomScaffold(
@@ -58,10 +58,16 @@ class _HomeViewState extends State<HomeView> {
           }
 
           final data = snapshot.data!;
+          final apiCategories = data['categories'] as List<dynamic>? ?? [];
+          final availableCategories = staticCategories
+              .where((cat) => apiCategories
+                  .any((apiCat) => apiCat['build_category'] == cat))
+              .toList();
+
           final featuredBuilds = data['featuredBuilds'] as List<dynamic>? ?? [];
           final builds = data['builds'] as List<dynamic>? ?? [];
-          final followingBuilds = data['followingBuilds'] as List<dynamic>? ?? [];
-          final categories = data['categories'] as List<dynamic>? ?? [];
+          final followingBuilds =
+              data['followingBuilds'] as List<dynamic>? ?? [];
           final tags = data['tags'] as List<dynamic>? ?? [];
 
           return SingleChildScrollView(
@@ -70,48 +76,50 @@ class _HomeViewState extends State<HomeView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Featured Builds
-                  if (featuredBuilds.isNotEmpty) ...[
-                    const Text(
-                      'Featured Builds',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 10),
-                    _buildGrid(featuredBuilds, 3),
-                  ],
-                  const Divider(),
-
-                  // Following Builds
-                  const Text(
-                    'Following',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 10),
-                  if (followingBuilds.isEmpty)
-                    const Text('You are not following any builds yet.')
-                  else
-                    _buildGrid(followingBuilds, 3),
-
-                  const SizedBox(height: 20),
-                  const Divider(),
-
-                  // Browse by Categories
+                  // Categories Section (Horizontal Scroll)
                   const Text(
                     'Browse by Categories',
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 10),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: categories.map((category) {
-                      return Chip(
-                        label: Text(category['build_category'] ?? 'Unknown'),
-                      );
-                    }).toList(),
+                  SizedBox(
+                    height: 40,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: availableCategories.length,
+                      itemBuilder: (context, index) {
+                        final category = availableCategories[index];
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8.0),
+                          child: GestureDetector(
+                            onTap: () {
+                              Navigator.of(context).pushNamed(
+                                '/categories-view',
+                                arguments: {'category': category},
+                              );
+                            },
+                            child: Chip(
+                              visualDensity: VisualDensity.compact,
+                              padding: EdgeInsets.zero,
+                              label: Container(
+                                height: double.infinity,
+                                alignment: Alignment.center,
+                                child: Text(
+                                  category,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.white,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
                   ),
 
-                  const SizedBox(height: 20),
                   const Divider(),
 
                   // Browse by Tags (Horizontal Scroll)
@@ -121,7 +129,7 @@ class _HomeViewState extends State<HomeView> {
                   ),
                   const SizedBox(height: 10),
                   SizedBox(
-                    height: 40, // Fixed height for horizontal tag chips
+                    height: 40,
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,
                       itemCount: tags.length,
@@ -158,7 +166,31 @@ class _HomeViewState extends State<HomeView> {
                     ),
                   ),
 
-                  const SizedBox(height: 20),
+                  const Divider(),
+
+                  // Featured Builds
+                  if (featuredBuilds.isNotEmpty) ...[
+                    const Text(
+                      'Featured Builds',
+                      style:
+                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 10),
+                    _buildGrid(featuredBuilds, 3),
+                  ],
+                  const Divider(),
+
+                  // Following Builds
+                  const Text(
+                    'Following',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 10),
+                  if (followingBuilds.isEmpty)
+                    const Text('You are not following any builds yet.')
+                  else
+                    _buildGrid(followingBuilds, 3),
+
                   const Divider(),
 
                   // Browse Builds
@@ -218,7 +250,8 @@ class _HomeViewState extends State<HomeView> {
                 Expanded(
                   flex: 4,
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -274,7 +307,8 @@ class _HomeViewState extends State<HomeView> {
           final tag = tagList[idx];
           return GestureDetector(
             onTap: () {
-              Navigator.of(context).pushNamed('/tag-view', arguments: {'tag': tag});
+              Navigator.of(context)
+                  .pushNamed('/tag-view', arguments: {'tag': tag});
             },
             child: Chip(
               visualDensity: VisualDensity.compact,
