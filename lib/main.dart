@@ -11,8 +11,9 @@ import 'package:pd/views/builds/edit_build_view.dart';
 import 'package:pd/views/login_view.dart';
 import 'package:pd/views/home_view.dart';
 import 'package:pd/views/builds/garage_view.dart';
-import 'package:pd/views/register_view.dart';
 import 'package:pd/views/builds/build_view.dart';
+import 'package:pd/views/register_view.dart';
+import 'package:pd/views/tag_view.dart';
 import 'package:pd/helpers/loading/loading_screen.dart';
 
 void main() async {
@@ -96,6 +97,17 @@ class MyApp extends StatelessWidget {
               }
               final build = args['build'];
               return EditBuildView(build: build);
+            },
+            '/tag-view': (context) {
+              final args = ModalRoute.of(context)!.settings.arguments
+                  as Map<String, dynamic>?;
+              if (args == null || !args.containsKey('tag')) {
+                return const Scaffold(
+                  body: Center(child: Text('Invalid tag data')),
+                );
+              }
+              final tag = args['tag'];
+              return TagView(tag: tag);
             },
           },
         ),
