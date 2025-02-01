@@ -1,3 +1,4 @@
+// garage_view.dart
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -27,10 +28,8 @@ class _GarageViewState extends State<GarageView> {
   Future<Map<String, dynamic>> _fetchGarageData(int userId) async {
     final String apiUrl = 'https://passiondrivenbuilds.com/api/garage/$userId';
     final response = await http.get(Uri.parse(apiUrl));
-
     if (response.statusCode == 200) {
       final decodedResponse = json.decode(response.body);
-
       return decodedResponse;
     } else {
       throw Exception('Failed to load garage data');
@@ -52,11 +51,9 @@ class _GarageViewState extends State<GarageView> {
                   !snapshot.hasData) {
                 return const SizedBox();
               }
-
               final data = snapshot.data!;
               final userId = ModalRoute.of(context)?.settings.arguments as int?;
               final isOwner = userId == data['user']['id'];
-
               if (isOwner) {
                 return IconButton(
                   icon: const Icon(Icons.add),
@@ -77,19 +74,15 @@ class _GarageViewState extends State<GarageView> {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
-            return Center(
-              child: Text('Error: ${snapshot.error}'),
-            );
+            return Center(child: Text('Error: ${snapshot.error}'));
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
             return const Center(child: Text('No builds found.'));
           }
-
           final data = snapshot.data!;
           final user = data['user'];
           final builds = data['builds'] as List<dynamic>? ?? [];
           final userId = ModalRoute.of(context)?.settings.arguments as int?;
           final isOwner = userId == user['id'];
-
           return SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -97,7 +90,6 @@ class _GarageViewState extends State<GarageView> {
                 // Profile Section
                 _buildProfileSection(user),
                 const SizedBox(height: 10),
-
                 // List of Builds
                 if (builds.isNotEmpty)
                   ListView.builder(
@@ -133,7 +125,6 @@ class _GarageViewState extends State<GarageView> {
       'tiktok': user['tiktok'],
       'youtube': user['youtube'],
     };
-
     return Container(
       padding: const EdgeInsets.all(10.0),
       decoration: BoxDecoration(
@@ -219,18 +210,14 @@ class _GarageViewState extends State<GarageView> {
     required Map<String, dynamic> user,
     required bool isOwner,
   }) {
+    // Merge the build data with the user data.
+    final buildWithUser = {
+      ...build,
+      'user': user,
+    };
     return GestureDetector(
       onTap: () {
-        final buildWithUser = {
-          ...build,
-          'user': user,
-          'is_owner': isOwner, // Include isOwner
-        };
-
-        Navigator.of(context).pushNamed(
-          '/build-view',
-          arguments: buildWithUser,
-        );
+        Navigator.of(context).pushNamed('/build-view', arguments: buildWithUser);
       },
       child: Card(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

@@ -44,8 +44,8 @@ class _EditBuildViewState extends State<EditBuildView> {
   File? _selectedImage;
 
   List<String> _existingAdditionalImages = [];
-List<String> _removedAdditionalImages = [];
-
+  List<String> _removedAdditionalImages = [];
+  List<File> _newAdditionalImages = [];
 
   final List<String> _categories = [
     'Classic/Antique',
@@ -76,29 +76,32 @@ List<String> _removedAdditionalImages = [];
   }
 
   void _initializeFormFields() {
-  _yearController.text = widget.build['year']?.toString() ?? '';
-  _makeController.text = widget.build['make']?.toString() ?? '';
-  _modelController.text = widget.build['model']?.toString() ?? '';
-  _trimController.text = widget.build['trim']?.toString() ?? '';
-  _hpController.text = widget.build['hp']?.toString() ?? '';
-  _whpController.text = widget.build['whp']?.toString() ?? '';
-  _torqueController.text = widget.build['torque']?.toString() ?? '';
-  _weightController.text = widget.build['weight']?.toString() ?? '';
-  _vehicleLayoutController.text = widget.build['vehicleLayout']?.toString() ?? '';
-  _fuelController.text = widget.build['fuel']?.toString() ?? '';
-  _zeroSixtyController.text = widget.build['zeroSixty']?.toString() ?? '';
-  _zeroOneHundredController.text = widget.build['zeroOneHundred']?.toString() ?? '';
-  _quarterMileController.text = widget.build['quarterMile']?.toString() ?? '';
-  _engineTypeController.text = widget.build['engineType']?.toString() ?? '';
-  _engineCodeController.text = widget.build['engineCode']?.toString() ?? '';
-  _forcedInductionController.text = widget.build['forcedInduction']?.toString() ?? '';
-  _transController.text = widget.build['trans']?.toString() ?? '';
-  _suspensionController.text = widget.build['suspension']?.toString() ?? '';
-  _brakesController.text = widget.build['brakes']?.toString() ?? '';
-  _selectedCategory = widget.build['build_category']?.toString();
-  _existingAdditionalImages = List<String>.from(widget.build['additional_images'] ?? []);
-}
-
+    _yearController.text = widget.build['year']?.toString() ?? '';
+    _makeController.text = widget.build['make']?.toString() ?? '';
+    _modelController.text = widget.build['model']?.toString() ?? '';
+    _trimController.text = widget.build['trim']?.toString() ?? '';
+    _hpController.text = widget.build['hp']?.toString() ?? '';
+    _whpController.text = widget.build['whp']?.toString() ?? '';
+    _torqueController.text = widget.build['torque']?.toString() ?? '';
+    _weightController.text = widget.build['weight']?.toString() ?? '';
+    _vehicleLayoutController.text =
+        widget.build['vehicleLayout']?.toString() ?? '';
+    _fuelController.text = widget.build['fuel']?.toString() ?? '';
+    _zeroSixtyController.text = widget.build['zeroSixty']?.toString() ?? '';
+    _zeroOneHundredController.text =
+        widget.build['zeroOneHundred']?.toString() ?? '';
+    _quarterMileController.text = widget.build['quarterMile']?.toString() ?? '';
+    _engineTypeController.text = widget.build['engineType']?.toString() ?? '';
+    _engineCodeController.text = widget.build['engineCode']?.toString() ?? '';
+    _forcedInductionController.text =
+        widget.build['forcedInduction']?.toString() ?? '';
+    _transController.text = widget.build['trans']?.toString() ?? '';
+    _suspensionController.text = widget.build['suspension']?.toString() ?? '';
+    _brakesController.text = widget.build['brakes']?.toString() ?? '';
+    _selectedCategory = widget.build['build_category']?.toString();
+    _existingAdditionalImages =
+        List<String>.from(widget.build['additional_images'] ?? []);
+  }
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
@@ -119,84 +122,107 @@ List<String> _removedAdditionalImages = [];
     });
   }
 
+  Future<void> _pickAdditionalImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      setState(() {
+        _newAdditionalImages.add(File(pickedFile.path));
+      });
+    }
+  }
+
   Future<void> _updateBuild() async {
-  if (!_formKey.currentState!.validate()) {
-    // Form validation failed exception goes here...
-    return;
-  }
-
-  final prefs = await SharedPreferences.getInstance();
-  final token = prefs.getString('auth_token');
-
-  if (token == null) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Error: User not authenticated')),
-    );
-    return;
-  }
-
-  final url = 'https://passiondrivenbuilds.com/api/builds/${widget.build['id']}';
-
-  try {
-    final body = {
-      'year': _yearController.text.trim(),
-      'make': _makeController.text.trim(),
-      'model': _modelController.text.trim(),
-      'trim': _trimController.text.trim(),
-      'build_category': _selectedCategory ?? '',
-      'hp': _hpController.text.trim(),
-      'whp': _whpController.text.trim(),
-      'torque': _torqueController.text.trim(),
-      'weight': _weightController.text.trim(),
-      'vehicleLayout': _vehicleLayoutController.text.trim(),
-      'fuel': _fuelController.text.trim(),
-      'zeroSixty': _zeroSixtyController.text.trim(),
-      'zeroOneHundred': _zeroOneHundredController.text.trim(),
-      'quarterMile': _quarterMileController.text.trim(),
-      'engineType': _engineTypeController.text.trim(),
-      'engineCode': _engineCodeController.text.trim(),
-      'forcedInduction': _forcedInductionController.text.trim(),
-      'trans': _transController.text.trim(),
-      'suspension': _suspensionController.text.trim(),
-      'brakes': _brakesController.text.trim(),
-      'removed_images': _removedAdditionalImages.isNotEmpty ? _removedAdditionalImages : [],
-    };
-
-    if (_selectedImage != null) {
-      final bytes = await _selectedImage!.readAsBytes();
-      body['image'] = base64Encode(bytes);
+    if (!_formKey.currentState!.validate()) {
+      // Form validation failed exception goes here...
+      return;
     }
 
-    final response = await http.put(
-      Uri.parse(url),
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode(body),
-    );
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('auth_token');
 
-    if (response.statusCode == 200) {
-      final updatedBuild = jsonDecode(response.body)['build'];
-
+    if (token == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Build updated successfully!')),
+        const SnackBar(content: Text('Error: User not authenticated')),
+      );
+      return;
+    }
+
+    final url =
+        'https://passiondrivenbuilds.com/api/builds/${widget.build['id']}';
+
+    try {
+      final body = {
+        'year': _yearController.text.trim(),
+        'make': _makeController.text.trim(),
+        'model': _modelController.text.trim(),
+        'trim': _trimController.text.trim(),
+        'build_category': _selectedCategory ?? '',
+        'hp': _hpController.text.trim(),
+        'whp': _whpController.text.trim(),
+        'torque': _torqueController.text.trim(),
+        'weight': _weightController.text.trim(),
+        'vehicleLayout': _vehicleLayoutController.text.trim(),
+        'fuel': _fuelController.text.trim(),
+        'zeroSixty': _zeroSixtyController.text.trim(),
+        'zeroOneHundred': _zeroOneHundredController.text.trim(),
+        'quarterMile': _quarterMileController.text.trim(),
+        'engineType': _engineTypeController.text.trim(),
+        'engineCode': _engineCodeController.text.trim(),
+        'forcedInduction': _forcedInductionController.text.trim(),
+        'trans': _transController.text.trim(),
+        'suspension': _suspensionController.text.trim(),
+        'brakes': _brakesController.text.trim(),
+        'removed_images':
+            _removedAdditionalImages.isNotEmpty ? _removedAdditionalImages : [],
+      };
+
+      if (_selectedImage != null) {
+        final bytes = await _selectedImage!.readAsBytes();
+        body['image'] = base64Encode(bytes);
+      }
+
+      if (_newAdditionalImages.isNotEmpty) {
+        final List<String> newImagesBase64 = [];
+        for (final file in _newAdditionalImages) {
+          final bytes = await file.readAsBytes();
+          newImagesBase64.add(base64Encode(bytes));
+        }
+        body['added_images'] = newImagesBase64;
+      }
+
+      final response = await http.put(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(body),
       );
 
-      Navigator.pop(context, updatedBuild);
-    } else {
-      final error = jsonDecode(response.body)['message'] ?? 'An error occurred';
+      if (response.statusCode == 200) {
+        final updatedBuild = jsonDecode(response.body)['build'];
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Build updated successfully!')),
+        );
+
+        Navigator.pop(context, updatedBuild);
+      } else {
+        final error =
+            jsonDecode(response.body)['message'] ?? 'An error occurred';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $error')),
+        );
+      }
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $error')),
+        SnackBar(content: Text('Error: $e')),
       );
     }
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Error: $e')),
-    );
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -256,8 +282,7 @@ List<String> _removedAdditionalImages = [];
                     controller: _suspensionController, label: 'Suspension'),
                 _buildTextField(controller: _brakesController, label: 'Brakes'),
 
-                const SizedBox(
-                    height: 20),
+                const SizedBox(height: 20),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
@@ -306,8 +331,7 @@ List<String> _removedAdditionalImages = [];
                     ),
                   ],
                 ),
-                const SizedBox(
-                    height: 20),
+                const SizedBox(height: 20),
                 const Text(
                   'Additional Images',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -318,8 +342,11 @@ List<String> _removedAdditionalImages = [];
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 10),
-
-                // Additional Images Grid
+                // Additional Images
+                ElevatedButton(
+                  onPressed: _pickAdditionalImage,
+                  child: const Text('Add Additional Image'),
+                ),
                 Wrap(
                   spacing: 10,
                   runSpacing: 10,
@@ -349,6 +376,51 @@ List<String> _removedAdditionalImages = [];
                             onTap: () => _removeAdditionalImage(index),
                             child: Container(
                               decoration: BoxDecoration(
+                                color: Colors.red,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.close,
+                                  color: Colors.white, size: 20),
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  }).toList(),
+                ),
+
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: _newAdditionalImages.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final file = entry.value; // A File from ImagePicker
+
+                    return Stack(
+                      children: [
+                        Container(
+                          width: 100,
+                          height: 100,
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey),
+                            borderRadius: BorderRadius.circular(8),
+                            image: DecorationImage(
+                              image: FileImage(file),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          top: 4,
+                          right: 4,
+                          child: GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _newAdditionalImages.removeAt(index);
+                              });
+                            },
+                            child: Container(
+                              decoration: const BoxDecoration(
                                 color: Colors.red,
                                 shape: BoxShape.circle,
                               ),
