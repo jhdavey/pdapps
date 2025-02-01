@@ -33,14 +33,9 @@ class _BuildViewState extends State<BuildView> {
         if (currentUser != null) {
           final buildUser = _build['user'] as Map<String, dynamic>?;
           if (buildUser != null && buildUser.containsKey('id')) {
-            // Convert both IDs to strings before comparing
             final buildUserId = buildUser['id'].toString();
             final currentUserId = currentUser.id.toString();
-
-            // Debug print to check values (remove when no longer needed)
-            debugPrint(
-                'buildUser id: $buildUserId vs currentUser id: $currentUserId');
-
+            debugPrint('buildUser id: $buildUserId vs currentUser id: $currentUserId');
             _build['is_owner'] = buildUserId == currentUserId;
           } else {
             _build['is_owner'] = false;
@@ -66,7 +61,6 @@ class _BuildViewState extends State<BuildView> {
                 IconButton(
                   icon: const Icon(Icons.edit),
                   onPressed: () async {
-                    // Navigate to the edit build view and await updated data.
                     final updatedBuild = await Navigator.pushNamed(
                       context,
                       '/edit-build-view',
@@ -113,6 +107,8 @@ class _BuildViewState extends State<BuildView> {
         ),
         const SizedBox(height: 20),
         _buildAdditionalImagesSection(),
+        // Display associated tags under additional images.
+        _buildTags(_build),
         _buildSection(
           title: 'Specs',
           dataPoints: [
@@ -149,8 +145,7 @@ class _BuildViewState extends State<BuildView> {
         ),
         const SizedBox(height: 10),
         if (_build['modificationsByCategory'] != null &&
-            (_build['modificationsByCategory'] as Map<String, dynamic>)
-                .isNotEmpty)
+            (_build['modificationsByCategory'] as Map<String, dynamic>).isNotEmpty)
           ...(_build['modificationsByCategory'] as Map<String, dynamic>)
               .entries
               .map((entry) {
@@ -215,12 +210,8 @@ class _BuildViewState extends State<BuildView> {
     }
   }
 
-  Widget _buildSection({
-    required String title,
-    required List<Map<String, dynamic>> dataPoints,
-  }) {
-    final filteredData =
-        dataPoints.where((data) => data['value'] != null).toList();
+  Widget _buildSection({required String title, required List<Map<String, dynamic>> dataPoints}) {
+    final filteredData = dataPoints.where((data) => data['value'] != null).toList();
     if (filteredData.isEmpty) {
       return const SizedBox();
     }
@@ -236,8 +227,7 @@ class _BuildViewState extends State<BuildView> {
             children: [
               Text(
                 title,
-                style:
-                    const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               ...filteredData.map(
@@ -256,11 +246,7 @@ class _BuildViewState extends State<BuildView> {
     );
   }
 
-  void _showImageDialog(
-    BuildContext context,
-    List<String> images,
-    int initialIndex,
-  ) {
+  void _showImageDialog(BuildContext context, List<String> images, int initialIndex) {
     showDialog(
       context: context,
       barrierDismissible: true,
@@ -287,10 +273,8 @@ class _BuildViewState extends State<BuildView> {
                               child: CircularProgressIndicator(),
                             );
                           },
-                          errorBuilder: (context, error, stackTrace) =>
-                              const Center(
-                            child: Icon(Icons.error,
-                                size: 50, color: Colors.white),
+                          errorBuilder: (context, error, stackTrace) => const Center(
+                            child: Icon(Icons.error, size: 50, color: Colors.white),
                           ),
                         ),
                       ),
@@ -314,6 +298,38 @@ class _BuildViewState extends State<BuildView> {
           ),
         );
       },
+    );
+  }
+
+  // Helper widget to display tags as a horizontal row with clickable chips.
+  Widget _buildTags(Map<String, dynamic> build) {
+    final List tagList = build['tags'] is List ? build['tags'] : [];
+    if (tagList.isEmpty) return const SizedBox.shrink();
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: tagList.map<Widget>((tag) {
+        return Padding(
+          padding: const EdgeInsets.only(left: 4.0),
+          child: GestureDetector(
+            onTap: () {
+              Navigator.of(context).pushNamed('/tag-view', arguments: {'tag': tag});
+            },
+            child: Chip(
+              visualDensity: VisualDensity.compact,
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+              label: Container(
+                height: 28,
+                alignment: Alignment.center,
+                child: Text(
+                  tag['name'] ?? 'Tag',
+                  style: const TextStyle(fontSize: 10, color: Colors.white, height: 1.0),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+          ),
+        );
+      }).toList(),
     );
   }
 }

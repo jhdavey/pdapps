@@ -139,7 +139,6 @@ class _HomeViewState extends State<HomeView> {
                             child: Chip(
                               visualDensity: VisualDensity.compact,
                               padding: EdgeInsets.zero,
-                              backgroundColor: Colors.blueGrey,
                               label: Container(
                                 height: double.infinity,
                                 alignment: Alignment.center,
@@ -280,7 +279,6 @@ class _HomeViewState extends State<HomeView> {
             child: Chip(
               visualDensity: VisualDensity.compact,
               padding: EdgeInsets.zero,
-              backgroundColor: Colors.blueGrey,
               label: Container(
                 height: double.infinity,
                 alignment: Alignment.center,

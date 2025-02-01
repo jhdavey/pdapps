@@ -250,10 +250,7 @@ class _GarageViewState extends State<GarageView> {
                     Align(
                       alignment: Alignment.topRight,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
                           color: Colors.grey[850],
                           borderRadius: BorderRadius.circular(12),
@@ -271,42 +268,27 @@ class _GarageViewState extends State<GarageView> {
                     const SizedBox(height: 4),
                     Text(
                       "${build['year']} ${build['make']} ${build['model']}",
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 4),
                     Row(
                       children: [
                         Text(
                           "HP: ${build['hp'] ?? 'N/A'}",
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey,
-                          ),
+                          style: const TextStyle(fontSize: 14, color: Colors.grey),
                         ),
                         const SizedBox(width: 16),
                         Text(
                           "Torque: ${build['torque'] ?? 'N/A'}",
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey,
-                          ),
+                          style: const TextStyle(fontSize: 14, color: Colors.grey),
                         ),
                       ],
                     ),
                     const SizedBox(height: 8),
+                    // Display tags at bottom right
                     Align(
                       alignment: Alignment.bottomRight,
-                      child: Text(
-                        "Click for details",
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                      child: _buildTags(build),
                     ),
                   ],
                 ),
@@ -315,6 +297,38 @@ class _GarageViewState extends State<GarageView> {
           ),
         ),
       ),
+    );
+  }
+
+  // Helper widget to display tags as a horizontal row with clickable chips.
+  Widget _buildTags(Map<String, dynamic> build) {
+    final List tagList = build['tags'] is List ? build['tags'] : [];
+    if (tagList.isEmpty) return const SizedBox.shrink();
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: tagList.map<Widget>((tag) {
+        return Padding(
+          padding: const EdgeInsets.only(left: 4.0),
+          child: GestureDetector(
+            onTap: () {
+              Navigator.of(context).pushNamed('/tag-view', arguments: {'tag': tag});
+            },
+            child: Chip(
+              visualDensity: VisualDensity.compact,
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+              label: Container(
+                height: 28,
+                alignment: Alignment.center,
+                child: Text(
+                  tag['name'] ?? 'Tag',
+                  style: const TextStyle(fontSize: 10, color: Colors.white, height: 1.0),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+          ),
+        );
+      }).toList(),
     );
   }
 }
