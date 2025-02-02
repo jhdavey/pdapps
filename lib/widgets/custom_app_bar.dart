@@ -1,5 +1,3 @@
-// ignore_for_file: use_build_context_synchronously
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pd/services/api/auth_service.dart';
@@ -8,10 +6,13 @@ import 'package:pd/services/auth/bloc/auth_event.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
+  // Callback to notify the parent when GarageView returns a result.
+  final void Function(bool socialDataChanged)? onGarageResult;
 
   const CustomAppBar({
     super.key,
     required this.title,
+    this.onGarageResult,
   });
 
   @override
@@ -27,15 +28,18 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           onPressed: () async {
             final user = await authService.getCurrentUser();
             if (user != null) {
-              Navigator.of(context).pushNamed(
+              // Await the result from GarageView.
+              final result = await Navigator.of(context).pushNamed(
                 '/garage',
                 arguments: int.tryParse(user.id),
               );
-            } else {
+              // If a result is returned and it's true, call the callback.
+              if (result == true && onGarageResult != null) {
+                onGarageResult!(true);
+              }
             }
           },
         ),
-
         // Three-Dot Menu
         PopupMenuButton<String>(
           onSelected: (value) {

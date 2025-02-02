@@ -24,7 +24,7 @@ class _BuildViewState extends State<BuildView> {
       } else {
         _build = {};
       }
-      
+
       // Get the current user and determine ownership.
       RepositoryProvider.of<ApiAuthService>(context)
           .getCurrentUser()
@@ -34,7 +34,8 @@ class _BuildViewState extends State<BuildView> {
           if (buildUser != null && buildUser.containsKey('id')) {
             final buildUserId = buildUser['id'].toString();
             final currentUserId = currentUser.id.toString();
-            debugPrint('buildUser id: $buildUserId vs currentUser id: $currentUserId');
+            debugPrint(
+                'buildUser id: $buildUserId vs currentUser id: $currentUserId');
             _build['is_owner'] = buildUserId == currentUserId;
           } else {
             _build['is_owner'] = false;
@@ -55,13 +56,13 @@ class _BuildViewState extends State<BuildView> {
     return Scaffold(
       appBar: AppBar(
         title: GestureDetector(
-    onTap: () {
-      // Assuming that the user info is available in a variable `user`
-      // and that user['id'] holds the profile user's id.
-      Navigator.pushNamed(context, '/garage', arguments: user['id']);
-    },
-    child: Text("$userName's ${_build['build_category'] ?? ''}"),
-  ),
+          onTap: () {
+            // Assuming that the user info is available in a variable `user`
+            // and that user['id'] holds the profile user's id.
+            Navigator.pushNamed(context, '/garage', arguments: user['id']);
+          },
+          child: Text("$userName's ${_build['build_category'] ?? ''} Build"),
+        ),
         actions: isOwner
             ? [
                 IconButton(
@@ -90,9 +91,6 @@ class _BuildViewState extends State<BuildView> {
   }
 
   Widget _buildContent() {
-    final user = _build['user'] ?? {};
-    final userName = user['name'] ?? 'Unknown User';
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -101,15 +99,16 @@ class _BuildViewState extends State<BuildView> {
           "${_build['trim'] != null ? ' ${_build['trim']}' : ''}",
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
-        const SizedBox(height: 10),
-        Image.network(
-          _build['image'] ?? 'https://via.placeholder.com/780',
-          fit: BoxFit.cover,
-          width: double.infinity,
+        const SizedBox(height: 8),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Image.network(
+            _build['image'] ?? 'https://via.placeholder.com/780',
+            fit: BoxFit.cover,
+            width: double.infinity,
+          ),
         ),
-        const SizedBox(height: 20),
         _buildAdditionalImagesSection(),
-        // Display associated tags under additional images.
         _buildTags(_build),
         _buildSection(
           title: 'Specs',
@@ -147,7 +146,8 @@ class _BuildViewState extends State<BuildView> {
         ),
         const SizedBox(height: 10),
         if (_build['modificationsByCategory'] != null &&
-            (_build['modificationsByCategory'] as Map<String, dynamic>).isNotEmpty)
+            (_build['modificationsByCategory'] as Map<String, dynamic>)
+                .isNotEmpty)
           ...(_build['modificationsByCategory'] as Map<String, dynamic>)
               .entries
               .map((entry) {
@@ -162,7 +162,7 @@ class _BuildViewState extends State<BuildView> {
                 );
               }).toList(),
             );
-          }).toList()
+          })
         else
           const Text('No modifications have been added yet.'),
       ],
@@ -184,7 +184,7 @@ class _BuildViewState extends State<BuildView> {
               physics: const NeverScrollableScrollPhysics(),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 3,
-                crossAxisSpacing: 8,
+                crossAxisSpacing: 4,
                 mainAxisSpacing: 8,
                 childAspectRatio: 1,
               ),
@@ -212,8 +212,10 @@ class _BuildViewState extends State<BuildView> {
     }
   }
 
-  Widget _buildSection({required String title, required List<Map<String, dynamic>> dataPoints}) {
-    final filteredData = dataPoints.where((data) => data['value'] != null).toList();
+  Widget _buildSection(
+      {required String title, required List<Map<String, dynamic>> dataPoints}) {
+    final filteredData =
+        dataPoints.where((data) => data['value'] != null).toList();
     if (filteredData.isEmpty) {
       return const SizedBox();
     }
@@ -229,7 +231,8 @@ class _BuildViewState extends State<BuildView> {
             children: [
               Text(
                 title,
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                style:
+                    const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               ...filteredData.map(
@@ -248,13 +251,13 @@ class _BuildViewState extends State<BuildView> {
     );
   }
 
-  void _showImageDialog(BuildContext context, List<String> images, int initialIndex) {
+  void _showImageDialog(
+      BuildContext context, List<String> images, int initialIndex) {
     showDialog(
       context: context,
       barrierDismissible: true,
       builder: (BuildContext context) {
         return Scaffold(
-          backgroundColor: Colors.black.withOpacity(0.9),
           body: Stack(
             children: [
               PageView.builder(
@@ -275,8 +278,10 @@ class _BuildViewState extends State<BuildView> {
                               child: CircularProgressIndicator(),
                             );
                           },
-                          errorBuilder: (context, error, stackTrace) => const Center(
-                            child: Icon(Icons.error, size: 50, color: Colors.white),
+                          errorBuilder: (context, error, stackTrace) =>
+                              const Center(
+                            child: Icon(Icons.error,
+                                size: 50, color: Colors.white),
                           ),
                         ),
                       ),
@@ -314,7 +319,8 @@ class _BuildViewState extends State<BuildView> {
           padding: const EdgeInsets.only(left: 4.0),
           child: GestureDetector(
             onTap: () {
-              Navigator.of(context).pushNamed('/tag-view', arguments: {'tag': tag});
+              Navigator.of(context)
+                  .pushNamed('/tag-view', arguments: {'tag': tag});
             },
             child: Chip(
               visualDensity: VisualDensity.compact,
@@ -324,7 +330,8 @@ class _BuildViewState extends State<BuildView> {
                 alignment: Alignment.center,
                 child: Text(
                   tag['name'] ?? 'Tag',
-                  style: const TextStyle(fontSize: 10, color: Colors.white, height: 1.0),
+                  style: const TextStyle(
+                      fontSize: 10, color: Colors.white, height: 1.0),
                   textAlign: TextAlign.center,
                 ),
               ),

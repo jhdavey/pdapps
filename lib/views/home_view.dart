@@ -9,6 +9,7 @@ import 'package:pd/services/api/auth_service.dart';
 import 'package:pd/widgets/build_grid.dart';
 import 'package:pd/widgets/custom_scaffold.dart';
 import 'package:pd/data/build_categories.dart';
+import 'package:pd/main.dart'; // This should import the global routeObserver
 
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
@@ -17,18 +18,16 @@ class HomeView extends StatefulWidget {
   _HomeViewState createState() => _HomeViewState();
 }
 
-class _HomeViewState extends State<HomeView> {
+class _HomeViewState extends State<HomeView> with RouteAware {
   late Future<Map<String, dynamic>> _buildData;
 
-  // Fetch build data from the API
+  // Fetch build data from the API.
   Future<Map<String, dynamic>> _fetchBuildData() async {
     const String apiUrl = 'https://passiondrivenbuilds.com/api/builds';
 
-    // Retrieve the ApiAuthService instance.
     final authService = RepositoryProvider.of<ApiAuthService>(context);
     final token = await authService.getToken();
 
-    // Debug print the token to check if it's being retrieved correctly.
     debugPrint('Token: $token');
 
     final response = await http.get(
@@ -53,9 +52,33 @@ class _HomeViewState extends State<HomeView> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Subscribe HomeView to the global route observer.
+    routeObserver.subscribe(this, ModalRoute.of(context)! as PageRoute);
+  }
+
+  @override
+  void dispose() {
+    routeObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+    // Called when HomeView becomes visible again.
+    // Refresh build data.
+    setState(() {
+      _buildData = _fetchBuildData();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // Optionally, get the current user if needed.
-    RepositoryProvider.of<ApiAuthService>(context).getCurrentUser().then((user) {
+    // Optionally, you can fetch current user here if needed.
+    RepositoryProvider.of<ApiAuthService>(context)
+        .getCurrentUser()
+        .then((user) {
       // Use user info if needed.
     });
 
@@ -91,7 +114,7 @@ class _HomeViewState extends State<HomeView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Categories Section (Horizontal Scroll)
+                  // Categories Section
                   const Text(
                     'Browse by Categories',
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
@@ -134,10 +157,9 @@ class _HomeViewState extends State<HomeView> {
                       },
                     ),
                   ),
-
                   const Divider(),
 
-                  // Browse by Tags (Horizontal Scroll)
+                  // Browse by Tags Section
                   const Text(
                     'Browse by Tags',
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
@@ -208,7 +230,7 @@ class _HomeViewState extends State<HomeView> {
 
                   const Divider(),
 
-                  // Browse Builds
+                  // Recently Updated Builds
                   const Text(
                     'Recently Updated',
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),

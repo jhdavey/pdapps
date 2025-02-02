@@ -1,7 +1,10 @@
 // categories_view.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+
+import 'package:pd/services/api/auth_service.dart';
 
 class CategoriesView extends StatefulWidget {
   final String category;
@@ -15,10 +18,23 @@ class _CategoriesViewState extends State<CategoriesView> {
   late Future<List<dynamic>> _builds;
 
   Future<List<dynamic>> _fetchBuildsByCategory() async {
+    // Retrieve the token using your ApiAuthService.
+    final authService = RepositoryProvider.of<ApiAuthService>(context);
+    final token = await authService.getToken();
+
     // Interpolate the category into the URL.
     final String apiUrl =
         'https://passiondrivenbuilds.com/api/categories/${Uri.encodeComponent(widget.category)}';
-    final response = await http.get(Uri.parse(apiUrl));
+
+    final response = await http.get(
+      Uri.parse(apiUrl),
+      headers: {
+        'Content-Type': 'application/json',
+        if (token != null) 'Authorization': 'Bearer $token',
+      },
+    );
+
+    print("Categories response: ${response.statusCode} ${response.body}");
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       // Assuming the API returns a JSON object with a "builds" key.
@@ -48,7 +64,8 @@ class _CategoriesViewState extends State<CategoriesView> {
           } else if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text('No builds found for this category.'));
+            return const Center(
+                child: Text('No builds found for this category.'));
           }
           final builds = snapshot.data!;
           return GridView.builder(
@@ -67,7 +84,8 @@ class _CategoriesViewState extends State<CategoriesView> {
               }
               return GestureDetector(
                 onTap: () {
-                  Navigator.of(context).pushNamed('/build-view', arguments: build);
+                  Navigator.of(context)
+                      .pushNamed('/build-view', arguments: build);
                 },
                 child: Card(
                   clipBehavior: Clip.hardEdge,
@@ -89,13 +107,15 @@ class _CategoriesViewState extends State<CategoriesView> {
                       Expanded(
                         flex: 4,
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 4),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               // User's name
                               Text(
-                                build['user'] != null && build['user']['name'] != null
+                                build['user'] != null &&
+                                        build['user']['name'] != null
                                     ? "${build['user']['name']}'s"
                                     : 'Unknown User',
                                 style: const TextStyle(
@@ -159,7 +179,8 @@ class _CategoriesViewState extends State<CategoriesView> {
                 alignment: Alignment.center,
                 child: Text(
                   tag['name'] ?? 'Tag',
-                  style: const TextStyle(fontSize: 10, color: Colors.white, height: 1.0),
+                  style: const TextStyle(
+                      fontSize: 10, color: Colors.white, height: 1.0),
                   textAlign: TextAlign.center,
                 ),
               ),

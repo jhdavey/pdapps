@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import 'package:pd/services/api/auth_service.dart';
+
 class TagView extends StatefulWidget {
-  final Map<String, dynamic> tag; // The tag object passed in
+  final Map<String, dynamic> tag;
 
   const TagView({Key? key, required this.tag}) : super(key: key);
 
@@ -14,11 +17,21 @@ class TagView extends StatefulWidget {
 class _TagViewState extends State<TagView> {
   late Future<Map<String, dynamic>> _tagData;
 
-  // Fetch tag data (including builds) from the API.
   Future<Map<String, dynamic>> _fetchTagData() async {
     final tagId = widget.tag['id'];
     final String apiUrl = 'https://passiondrivenbuilds.com/api/tags/$tagId';
-    final response = await http.get(Uri.parse(apiUrl));
+
+    final authService = RepositoryProvider.of<ApiAuthService>(context);
+    final token = await authService.getToken();
+
+    final response = await http.get(
+      Uri.parse(apiUrl),
+      headers: {
+        'Content-Type': 'application/json',
+        if (token != null) 'Authorization': 'Bearer $token',
+      },
+    );
+
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       return data;

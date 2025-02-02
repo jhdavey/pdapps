@@ -18,6 +18,8 @@ import 'package:pd/views/tag_view.dart';
 import 'package:pd/views/categories_view.dart';
 import 'package:pd/helpers/loading/loading_screen.dart';
 
+final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -50,6 +52,7 @@ class MyApp extends StatelessWidget {
         create: (context) =>
             AuthBloc(authService)..add(const AuthEventInitialize()),
         child: MaterialApp(
+          navigatorObservers: [routeObserver],
           title: 'Passion Driven',
           theme: ThemeData.dark().copyWith(
             inputDecorationTheme: const InputDecorationTheme(
