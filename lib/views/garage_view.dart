@@ -43,7 +43,6 @@ class _GarageViewState extends State<GarageView> {
   }
 
   Future<Map<String, dynamic>> _fetchGarageData(int userId) async {
-    // Retrieve the token using your ApiAuthService
     final authService = RepositoryProvider.of<ApiAuthService>(context);
     final token = await authService.getToken();
 
@@ -375,84 +374,81 @@ class _GarageViewState extends State<GarageView> {
             .pushNamed('/build-view', arguments: buildWithUser);
       },
       child: Card(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10.0),
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: MediaQuery.of(context).size.width * 0.3,
-                height: 120,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  image: DecorationImage(
-                    image: NetworkImage(
-                      build['image'] ?? 'https://via.placeholder.com/150',
-                    ),
-                    fit: BoxFit.cover,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: MediaQuery.of(context).size.width * 0.3,
+              height: 120,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                image: DecorationImage(
+                  image: NetworkImage(
+                    build['image'] ?? 'https://via.placeholder.com/150',
                   ),
+                  fit: BoxFit.cover,
                 ),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Align(
-                      alignment: Alignment.topRight,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.grey[850],
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          build['build_category'] ?? 'Unknown Category',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Align(
+                    alignment: Alignment.topRight,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 4, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[850],
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        build['build_category'] ?? 'Unknown Category',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      "${build['year']} ${build['make']} ${build['model']}",
-                      style: const TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Text(
-                          "HP: ${build['hp'] ?? 'N/A'}",
-                          style:
-                              const TextStyle(fontSize: 14, color: Colors.grey),
-                        ),
-                        const SizedBox(width: 16),
-                        Text(
-                          "Torque: ${build['torque'] ?? 'N/A'}",
-                          style:
-                              const TextStyle(fontSize: 14, color: Colors.grey),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Align(
-                      alignment: Alignment.bottomRight,
-                      child: _buildTags(build),
-                    ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    "${build['year']} ${build['make']} ${build['model']}",
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Text(
+                        "HP: ${build['hp'] ?? 'N/A'}",
+                        style:
+                            const TextStyle(fontSize: 14, color: Colors.grey),
+                      ),
+                      const SizedBox(width: 16),
+                      Text(
+                        "Torque: ${build['torque'] ?? 'N/A'}",
+                        style:
+                            const TextStyle(fontSize: 14, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.bottomRight,
+                    child: _buildTags(build),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
