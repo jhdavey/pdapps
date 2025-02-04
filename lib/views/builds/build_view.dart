@@ -1,5 +1,8 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pd/helpers/loading/format_datetime_string.dart';
 import 'package:pd/services/api/auth_service.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -18,6 +21,7 @@ class BuildView extends StatefulWidget {
 class _BuildViewState extends State<BuildView> {
   late Map<String, dynamic> _build;
   bool _initialized = false;
+  String? _currentUserId;
 
   @override
   void didChangeDependencies() {
@@ -27,13 +31,14 @@ class _BuildViewState extends State<BuildView> {
       if (args != null && args is Map<String, dynamic>) {
         if (args.containsKey('build')) {
           _build = args['build'] as Map<String, dynamic>;
-          // If modificationsByCategory was passed, use it.
           if (args.containsKey('modificationsByCategory')) {
             _build['modificationsByCategory'] = args['modificationsByCategory'];
           }
-          // If notes were passed, use them.
           if (args.containsKey('notes')) {
             _build['notes'] = args['notes'];
+          }
+          if (args.containsKey('comments')) {
+            _build['comments'] = args['comments'];
           }
         } else {
           _build = args;
@@ -42,28 +47,26 @@ class _BuildViewState extends State<BuildView> {
         _build = {};
       }
 
-      // Fetch full build data (including modifications and notes).
+      // Load full build data (including modifications, notes, and comments)
       _loadBuildData();
 
-      // Get the current user and determine ownership.
       RepositoryProvider.of<ApiAuthService>(context)
           .getCurrentUser()
           .then((currentUser) {
         if (currentUser != null) {
+          _currentUserId = currentUser.id.toString(); // store as a string
           final buildUser = _build['user'] as Map<String, dynamic>?;
           if (buildUser != null && buildUser.containsKey('id')) {
             final buildUserId = buildUser['id'].toString();
-            final currentUserId = currentUser.id.toString();
-            debugPrint('buildUser id: $buildUserId vs currentUser id: $currentUserId');
-            _build['is_owner'] = buildUserId == currentUserId;
+            _build['is_owner'] = buildUserId == _currentUserId;
           } else {
             _build['is_owner'] = false;
           }
           setState(() {});
         }
       });
+
       _initialized = true;
-      print("Initial build data: $_build");
     }
   }
 
@@ -72,7 +75,8 @@ class _BuildViewState extends State<BuildView> {
       final buildId = _build['id'];
       final authService = RepositoryProvider.of<ApiAuthService>(context);
       final token = await authService.getToken();
-      final String apiUrl = 'https://passiondrivenbuilds.com/api/builds/$buildId';
+      final String apiUrl =
+          'https://passiondrivenbuilds.com/api/builds/$buildId';
       final response = await http.get(
         Uri.parse(apiUrl),
         headers: {
@@ -85,10 +89,175 @@ class _BuildViewState extends State<BuildView> {
         setState(() {
           _build['modificationsByCategory'] = data['modificationsByCategory'];
           _build['notes'] = data['notes'];
+          _build['comments'] = data['comments'];
         });
       } else {
         debugPrint('Failed to load build data: ${response.body}');
       }
+    }
+  }
+
+  Future<void> _showAddCommentDialog() async {
+    String? commentBody;
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Add Comment'),
+          content: TextFormField(
+            decoration: const InputDecoration(
+              labelText: 'Comment',
+              border: OutlineInputBorder(),
+            ),
+            maxLines: 3,
+            onChanged: (value) => commentBody = value,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (commentBody != null && commentBody!.trim().isNotEmpty) {
+                  final success = await _postComment(commentBody!.trim());
+                  Navigator.pop(context, success);
+                }
+              },
+              child: const Text('Post'),
+            ),
+          ],
+        );
+      },
+    );
+    _loadBuildData();
+  }
+
+  Future<bool> _postComment(String body) async {
+    if (_build.isNotEmpty && _build.containsKey('id')) {
+      final buildId = _build['id'];
+      final authService = RepositoryProvider.of<ApiAuthService>(context);
+      final token = await authService.getToken();
+      final String apiUrl =
+          'https://passiondrivenbuilds.com/api/builds/$buildId/comments';
+      try {
+        final response = await http.post(
+          Uri.parse(apiUrl),
+          headers: {
+            'Content-Type': 'application/json',
+            if (token != null) 'Authorization': 'Bearer $token',
+          },
+          body: json.encode({'body': body}),
+        );
+        if (response.statusCode == 201) {
+          return true;
+        } else {
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text('Error: ${response.body}')));
+          return false;
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Error: $e')));
+        return false;
+      }
+    }
+    return false;
+  }
+
+  Future<bool> _deleteComment(int commentId) async {
+    final authService = RepositoryProvider.of<ApiAuthService>(context);
+    final token = await authService.getToken();
+    final String apiUrl =
+        'https://passiondrivenbuilds.com/api/comments/$commentId';
+    try {
+      final response = await http.delete(
+        Uri.parse(apiUrl),
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+      );
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Error: ${response.body}')));
+        return false;
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Error: $e')));
+      return false;
+    }
+  }
+
+  Future<bool> _showEditCommentDialog(Map<String, dynamic> comment) async {
+    String? updatedComment = comment['body'];
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Edit Comment'),
+          content: TextFormField(
+            initialValue: updatedComment,
+            decoration: const InputDecoration(
+              labelText: 'Comment',
+              border: OutlineInputBorder(),
+            ),
+            maxLines: 3,
+            onChanged: (value) {
+              updatedComment = value;
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (updatedComment != null &&
+                    updatedComment!.trim().isNotEmpty) {
+                  final success = await _updateComment(
+                      comment['id'], updatedComment!.trim());
+                  Navigator.pop(context, success);
+                }
+              },
+              child: const Text('Update'),
+            ),
+          ],
+        );
+      },
+    );
+    return result ?? false;
+  }
+
+  Future<bool> _updateComment(int commentId, String updatedBody) async {
+    final authService = RepositoryProvider.of<ApiAuthService>(context);
+    final token = await authService.getToken();
+    final String apiUrl =
+        'https://passiondrivenbuilds.com/api/comments/$commentId';
+    try {
+      final response = await http.put(
+        Uri.parse(apiUrl),
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+        body: json.encode({'body': updatedBody}),
+      );
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Error: ${response.body}')));
+        return false;
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Error: $e')));
+      return false;
     }
   }
 
@@ -186,6 +355,8 @@ class _BuildViewState extends State<BuildView> {
         _buildModificationsSection(isOwner),
         const SizedBox(height: 20),
         _buildNotesSection(isOwner),
+        const SizedBox(height: 20),
+        _buildCommentsSection(isOwner),
       ],
     );
   }
@@ -233,8 +404,10 @@ class _BuildViewState extends State<BuildView> {
     }
   }
 
-  Widget _buildSection({required String title, required List<Map<String, dynamic>> dataPoints}) {
-    final filteredData = dataPoints.where((data) => data['value'] != null).toList();
+  Widget _buildSection(
+      {required String title, required List<Map<String, dynamic>> dataPoints}) {
+    final filteredData =
+        dataPoints.where((data) => data['value'] != null).toList();
     if (filteredData.isEmpty) {
       return const SizedBox();
     }
@@ -250,7 +423,8 @@ class _BuildViewState extends State<BuildView> {
             children: [
               Text(
                 title,
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                style:
+                    const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               ...filteredData.map(
@@ -279,7 +453,8 @@ class _BuildViewState extends State<BuildView> {
           padding: const EdgeInsets.only(left: 4.0),
           child: GestureDetector(
             onTap: () {
-              Navigator.of(context).pushNamed('/tag-view', arguments: {'tag': tag});
+              Navigator.of(context)
+                  .pushNamed('/tag-view', arguments: {'tag': tag});
             },
             child: Chip(
               visualDensity: VisualDensity.compact,
@@ -289,7 +464,8 @@ class _BuildViewState extends State<BuildView> {
                 alignment: Alignment.center,
                 child: Text(
                   tag['name'] ?? 'Tag',
-                  style: const TextStyle(fontSize: 10, color: Colors.white, height: 1.0),
+                  style: const TextStyle(
+                      fontSize: 10, color: Colors.white, height: 1.0),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -302,7 +478,8 @@ class _BuildViewState extends State<BuildView> {
 
   Widget _buildModificationsSection(bool isOwner) {
     if (_build['modificationsByCategory'] != null &&
-        (_build['modificationsByCategory'] as Map<String, dynamic>).isNotEmpty) {
+        (_build['modificationsByCategory'] as Map<String, dynamic>)
+            .isNotEmpty) {
       final modificationsByCategory =
           _build['modificationsByCategory'] as Map<String, dynamic>;
       return Container(
@@ -345,7 +522,6 @@ class _BuildViewState extends State<BuildView> {
               ],
             ),
             const SizedBox(height: 10),
-            // List the modifications grouped by category.
             ...modificationsByCategory.entries.map((entry) {
               final category = entry.key;
               final modifications = entry.value as List<dynamic>;
@@ -404,7 +580,7 @@ class _BuildViewState extends State<BuildView> {
                   }).toList(),
                 ),
               );
-            }).toList(),
+            })
           ],
         ),
       );
@@ -478,7 +654,8 @@ class _BuildViewState extends State<BuildView> {
                     final result = await Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => CreateNoteView(buildId: _build['id']),
+                        builder: (context) =>
+                            CreateNoteView(buildId: _build['id']),
                       ),
                     );
                     if (result == true) {
@@ -521,19 +698,126 @@ class _BuildViewState extends State<BuildView> {
                       )
                     : null,
               );
-            }).toList(),
+            })
         ],
       ),
     );
   }
 
-  void _showImageDialog(BuildContext context, List<String> images, int initialIndex) {
+  Widget _buildCommentsSection(bool isOwner) {
+    final List<dynamic> comments = _build['comments'] as List<dynamic>? ?? [];
+    final List<dynamic> reversedComments = List.from(comments.reversed);
+    return Container(
+      padding: const EdgeInsets.all(10.0),
+      decoration: BoxDecoration(
+        color: Colors.grey[900],
+        borderRadius: BorderRadius.circular(16.0),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Comments',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.add, color: Colors.white),
+                onPressed: () async {
+                  await _showAddCommentDialog();
+                  _loadBuildData();
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          if (reversedComments.isEmpty)
+            const Text(
+              'No comments have been added yet.',
+              style: TextStyle(color: Colors.white70),
+            )
+          else
+            ...reversedComments.map((comment) {
+              final bool commentIsOwner = comment['user_id'] != null &&
+                  comment['user_id'].toString() == _currentUserId?.toString();
+              return ListTile(
+                title: Text(
+                  comment['body'] ?? '',
+                  style: const TextStyle(color: Colors.white),
+                ),
+                subtitle: Text(
+                  "${comment['user']['name'] ?? 'User ${comment['user_id']}'} • ${formatDateTime(comment['created_at'] ?? '')}",
+                  style: const TextStyle(color: Colors.white70),
+                ),
+                trailing: commentIsOwner
+                    ? Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.edit, color: Colors.white),
+                            onPressed: () async {
+                              final result =
+                                  await _showEditCommentDialog(comment);
+                              if (result == true) {
+                                _loadBuildData();
+                              }
+                            },
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete, color: Colors.white),
+                            onPressed: () async {
+                              final confirm = await showDialog<bool>(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  title: const Text('Delete Comment'),
+                                  content: const Text(
+                                      'Are you sure you want to delete this comment?'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.pop(context, false),
+                                      child: const Text('Cancel'),
+                                    ),
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.pop(context, true),
+                                      child: const Text('Delete'),
+                                    ),
+                                  ],
+                                ),
+                              );
+                              if (confirm == true) {
+                                final success =
+                                    await _deleteComment(comment['id']);
+                                if (success) {
+                                  _loadBuildData();
+                                }
+                              }
+                            },
+                          ),
+                        ],
+                      )
+                    : null,
+              );
+            })
+        ],
+      ),
+    );
+  }
+
+  void _showImageDialog(
+      BuildContext context, List<String> images, int initialIndex) {
     showDialog(
       context: context,
       barrierDismissible: true,
       builder: (BuildContext context) {
         return Scaffold(
-          backgroundColor: Colors.black.withOpacity(0.9),
           body: Stack(
             children: [
               PageView.builder(
@@ -550,11 +834,13 @@ class _BuildViewState extends State<BuildView> {
                           fit: BoxFit.contain,
                           loadingBuilder: (context, child, loadingProgress) {
                             if (loadingProgress == null) return child;
-                            return const Center(child: CircularProgressIndicator());
+                            return const Center(
+                                child: CircularProgressIndicator());
                           },
                           errorBuilder: (context, error, stackTrace) =>
                               const Center(
-                            child: Icon(Icons.error, size: 50, color: Colors.white),
+                            child: Icon(Icons.error,
+                                size: 50, color: Colors.white),
                           ),
                         ),
                       ),
@@ -579,5 +865,19 @@ class _BuildViewState extends State<BuildView> {
         );
       },
     );
+  }
+
+  String _getCommentUserName(Map<String, dynamic> comment) {
+    if (comment.containsKey('user') &&
+        comment['user'] != null &&
+        comment['user']['name'] != null) {
+      return comment['user']['name'];
+    }
+    if (_build.containsKey('user') &&
+        _build['user'] != null &&
+        _build['user']['id'].toString() == comment['user_id'].toString()) {
+      return _build['user']['name'];
+    }
+    return 'User ${comment['user_id']}';
   }
 }
