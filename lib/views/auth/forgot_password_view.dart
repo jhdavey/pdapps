@@ -2,9 +2,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:pd/services/auth/bloc/auth_bloc.dart';
-import 'package:pd/services/auth/bloc/auth_event.dart';
-import 'package:pd/services/auth/bloc/auth_state.dart';
+import 'package:pd/services/api/auth/bloc/auth_bloc.dart';
+import 'package:pd/services/api/auth/bloc/auth_event.dart';
+import 'package:pd/services/api/auth/bloc/auth_state.dart';
 import 'package:pd/utilities/dialogs/error_dialog.dart';
 import 'package:pd/utilities/dialogs/password_reset_email_sent_dialog.dart';
 

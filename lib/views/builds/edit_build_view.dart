@@ -1,11 +1,10 @@
 // ignore_for_file: use_build_context_synchronously
 
-import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
+import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:pd/services/api/builds/build_edit.dart';
 
 class EditBuildView extends StatefulWidget {
   final Map<String, dynamic> build;
@@ -44,8 +43,8 @@ class _EditBuildViewState extends State<EditBuildView> {
   File? _selectedImage;
 
   List<String> _existingAdditionalImages = [];
-  List<String> _removedAdditionalImages = [];
-  List<File> _newAdditionalImages = [];
+  List<String> removedAdditionalImages = [];
+  List<File> newAdditionalImages = [];
 
   final List<String> _categories = [
     'Classic/Antique',
@@ -117,7 +116,7 @@ class _EditBuildViewState extends State<EditBuildView> {
 
   void _removeAdditionalImage(int index) {
     setState(() {
-      _removedAdditionalImages.add(_existingAdditionalImages[index]);
+      removedAdditionalImages.add(_existingAdditionalImages[index]);
       _existingAdditionalImages.removeAt(index);
     });
   }
@@ -128,101 +127,68 @@ class _EditBuildViewState extends State<EditBuildView> {
 
     if (pickedFile != null) {
       setState(() {
-        _newAdditionalImages.add(File(pickedFile.path));
+        newAdditionalImages.add(File(pickedFile.path));
       });
     }
   }
 
-  Future<void> _updateBuild() async {
-    if (!_formKey.currentState!.validate()) {
-      // Form validation failed exception goes here...
-      return;
-    }
+Future<void> _updateBuild() async {
+  if (!_formKey.currentState!.validate()) return;
 
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('auth_token');
+  final fields = <String, String>{
+    'year': _yearController.text.trim(),
+    'make': _makeController.text.trim(),
+    'model': _modelController.text.trim(),
+    'trim': _trimController.text.trim(),
+    'build_category': _selectedCategory ?? '',
+    'hp': _hpController.text.trim(),
+    'whp': _whpController.text.trim(),
+    'torque': _torqueController.text.trim(),
+    'weight': _weightController.text.trim(),
+    'vehicleLayout': _vehicleLayoutController.text.trim(),
+    'fuel': _fuelController.text.trim(),
+    'zeroSixty': _zeroSixtyController.text.trim(),
+    'zeroOneHundred': _zeroOneHundredController.text.trim(),
+    'quarterMile': _quarterMileController.text.trim(),
+    'engineType': _engineTypeController.text.trim(),
+    'engineCode': _engineCodeController.text.trim(),
+    'forcedInduction': _forcedInductionController.text.trim(),
+    'trans': _transController.text.trim(),
+    'suspension': _suspensionController.text.trim(),
+    'brakes': _brakesController.text.trim(),
+  };
 
-    if (token == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error: User not authenticated')),
-      );
-      return;
-    }
+  final removedImages = removedAdditionalImages.isNotEmpty
+      ? removedAdditionalImages
+      : null;
 
-    final url =
-        'https://passiondrivenbuilds.com/api/builds/${widget.build['id']}';
+  Uint8List? imageBytes;
+  if (_selectedImage != null) {
+    imageBytes = await _selectedImage!.readAsBytes();
+  }
 
-    try {
-      final body = {
-        'year': _yearController.text.trim(),
-        'make': _makeController.text.trim(),
-        'model': _modelController.text.trim(),
-        'trim': _trimController.text.trim(),
-        'build_category': _selectedCategory ?? '',
-        'hp': _hpController.text.trim(),
-        'whp': _whpController.text.trim(),
-        'torque': _torqueController.text.trim(),
-        'weight': _weightController.text.trim(),
-        'vehicleLayout': _vehicleLayoutController.text.trim(),
-        'fuel': _fuelController.text.trim(),
-        'zeroSixty': _zeroSixtyController.text.trim(),
-        'zeroOneHundred': _zeroOneHundredController.text.trim(),
-        'quarterMile': _quarterMileController.text.trim(),
-        'engineType': _engineTypeController.text.trim(),
-        'engineCode': _engineCodeController.text.trim(),
-        'forcedInduction': _forcedInductionController.text.trim(),
-        'trans': _transController.text.trim(),
-        'suspension': _suspensionController.text.trim(),
-        'brakes': _brakesController.text.trim(),
-        'removed_images':
-            _removedAdditionalImages.isNotEmpty ? _removedAdditionalImages : [],
-      };
-
-      if (_selectedImage != null) {
-        final bytes = await _selectedImage!.readAsBytes();
-        body['image'] = base64Encode(bytes);
-      }
-
-      if (_newAdditionalImages.isNotEmpty) {
-        final List<String> newImagesBase64 = [];
-        for (final file in _newAdditionalImages) {
-          final bytes = await file.readAsBytes();
-          newImagesBase64.add(base64Encode(bytes));
-        }
-        body['added_images'] = newImagesBase64;
-      }
-
-      final response = await http.put(
-        Uri.parse(url),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode(body),
-      );
-
-      if (response.statusCode == 200) {
-        final updatedBuild = jsonDecode(response.body)['build'];
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Build updated successfully!')),
-        );
-
-        Navigator.pop(context, updatedBuild);
-      } else {
-        final error =
-            jsonDecode(response.body)['message'] ?? 'An error occurred';
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $error')),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
+  List<Uint8List>? additionalImagesBytes;
+  if (newAdditionalImages.isNotEmpty) {
+    additionalImagesBytes = [];
+    for (final file in newAdditionalImages) {
+      additionalImagesBytes.add(await file.readAsBytes());
     }
   }
+
+  final updatedBuild = await updateBuild(
+    context,
+    buildId: widget.build['id'].toString(),
+    fields: fields,
+    imageBytes: imageBytes,
+    additionalImagesBytes: additionalImagesBytes,
+    removedImages: removedImages,
+  );
+
+  if (updatedBuild != null) {
+    Navigator.pop(context, updatedBuild);
+  }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -392,7 +358,7 @@ class _EditBuildViewState extends State<EditBuildView> {
                 Wrap(
                   spacing: 10,
                   runSpacing: 10,
-                  children: _newAdditionalImages.asMap().entries.map((entry) {
+                  children: newAdditionalImages.asMap().entries.map((entry) {
                     final index = entry.key;
                     final file = entry.value; // A File from ImagePicker
 
@@ -416,7 +382,7 @@ class _EditBuildViewState extends State<EditBuildView> {
                           child: GestureDetector(
                             onTap: () {
                               setState(() {
-                                _newAdditionalImages.removeAt(index);
+                                newAdditionalImages.removeAt(index);
                               });
                             },
                             child: Container(

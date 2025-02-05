@@ -1,15 +1,14 @@
-// home_view.dart
 // ignore_for_file: library_private_types_in_public_api
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:pd/services/api/auth_service.dart';
-import 'package:pd/widgets/build_grid.dart';
+import 'package:pd/services/api/auth/auth_service.dart';
+import 'package:pd/widgets/builds/build_grid.dart';
 import 'package:pd/widgets/custom_scaffold.dart';
 import 'package:pd/data/build_categories.dart';
-import 'package:pd/main.dart'; // This should import the global routeObserver
+import 'package:pd/main.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
@@ -54,7 +53,6 @@ class _HomeViewState extends State<HomeView> with RouteAware {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Subscribe HomeView to the global route observer.
     routeObserver.subscribe(this, ModalRoute.of(context)! as PageRoute);
   }
 
@@ -66,8 +64,6 @@ class _HomeViewState extends State<HomeView> with RouteAware {
 
   @override
   void didPopNext() {
-    // Called when HomeView becomes visible again.
-    // Refresh build data.
     setState(() {
       _buildData = _fetchBuildData();
     });
@@ -75,11 +71,9 @@ class _HomeViewState extends State<HomeView> with RouteAware {
 
   @override
   Widget build(BuildContext context) {
-    // Optionally, you can fetch current user here if needed.
     RepositoryProvider.of<ApiAuthService>(context)
         .getCurrentUser()
         .then((user) {
-      // Use user info if needed.
     });
 
     return CustomScaffold(

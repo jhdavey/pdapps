@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pd/data/modification_categories.dart';
-import 'package:pd/services/api/auth_service.dart';
+import 'package:pd/services/api/auth/auth_service.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 

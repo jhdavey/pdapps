@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:pd/services/api/auth_user.dart';
+import 'package:pd/services/api/auth/auth_user.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:pd/services/api/auth_exception.dart';
+import 'package:pd/services/api/auth/auth_exception.dart';
 
 class ApiAuthProvider {
   final String baseUrl;

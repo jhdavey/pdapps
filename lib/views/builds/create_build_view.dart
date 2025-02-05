@@ -1,11 +1,13 @@
+// ignore_for_file: library_private_types_in_public_api, use_build_context_synchronously
+
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:pd/services/api/builds/build_create.dart';
 
 class CreateBuildView extends StatefulWidget {
+  const CreateBuildView({super.key});
+
   @override
   _CreateBuildViewState createState() => _CreateBuildViewState();
 }
@@ -51,58 +53,27 @@ class _CreateBuildViewState extends State<CreateBuildView> {
     }
   }
 
-  Future<void> _createBuild() async {
-    if (!_formKey.currentState!.validate()) return;
+Future<void> _createBuild() async {
+  if (!_formKey.currentState!.validate()) return;
 
-    // Retrieve the token from SharedPreferences
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('auth_token');
+  final fields = <String, String>{
+    'year': _yearController.text,
+    'make': _makeController.text,
+    'model': _modelController.text,
+    'build_category': _selectedCategory!,
+  };
 
-    if (token == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error: User not authenticated')),
-      );
-      return;
-    }
+  final success = await createBuild(
+    context,
+    fields: fields,
+    imageFile: _selectedImage,
+  );
 
-    final url = 'https://passiondrivenbuilds.com/api/builds';
-
-    try {
-      final request = http.MultipartRequest('POST', Uri.parse(url));
-      request.headers['Authorization'] = 'Bearer $token';
-
-      request.fields['year'] = _yearController.text;
-      request.fields['make'] = _makeController.text;
-      request.fields['model'] = _modelController.text;
-      request.fields['build_category'] = _selectedCategory!;
-
-      if (_selectedImage != null) {
-        request.files.add(
-          await http.MultipartFile.fromPath('image', _selectedImage!.path),
-        );
-      }
-
-      final response = await request.send();
-
-      if (response.statusCode == 201) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Build created successfully!')),
-        );
-        Navigator.pop(context);
-      } else {
-        final responseBody = await response.stream.bytesToString();
-        final error =
-            jsonDecode(responseBody)['message'] ?? 'An error occurred';
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $error')),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
-    }
+  if (success) {
+    Navigator.pop(context);
   }
+}
+
 
   @override
   Widget build(BuildContext context) {

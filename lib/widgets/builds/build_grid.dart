@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:pd/widgets/tag_chip.dart';
+import 'package:pd/views/components/tag_chip.dart';
 
 Widget buildGrid(List<dynamic> builds, int columns) {
     return GridView.builder(

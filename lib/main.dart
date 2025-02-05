@@ -2,11 +2,11 @@
 // ignore_for_file: unused_local_variable
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:pd/services/api/auth_provider.dart';
-import 'package:pd/services/api/auth_service.dart';
-import 'package:pd/services/auth/bloc/auth_bloc.dart';
-import 'package:pd/services/auth/bloc/auth_event.dart';
-import 'package:pd/services/auth/bloc/auth_state.dart';
+import 'package:pd/services/api/auth/auth_provider.dart';
+import 'package:pd/services/api/auth/auth_service.dart';
+import 'package:pd/services/api/auth/bloc/auth_bloc.dart';
+import 'package:pd/services/api/auth/bloc/auth_event.dart';
+import 'package:pd/services/api/auth/bloc/auth_state.dart';
 import 'package:pd/views/builds/create_build_view.dart';
 import 'package:pd/views/builds/edit_build_view.dart';
 import 'package:pd/views/auth/login_view.dart';

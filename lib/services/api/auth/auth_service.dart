@@ -1,6 +1,6 @@
 // api_auth_service.dart
-import 'package:pd/services/api/auth_user.dart';
-import 'package:pd/services/api/auth_provider.dart';
+import 'package:pd/services/api/auth/auth_user.dart';
+import 'package:pd/services/api/auth/auth_provider.dart';
 
 class ApiAuthService {
   final ApiAuthProvider _apiAuthProvider;

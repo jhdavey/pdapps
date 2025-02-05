@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pd/data/modification_categories.dart';
-import 'package:pd/services/api/auth_service.dart';
+import 'package:pd/services/api/auth/auth_service.dart';
 
 class CreateModificationView extends StatefulWidget {
   final int buildId;

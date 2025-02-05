@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-import 'package:pd/services/api/auth_service.dart';
+import 'package:pd/services/api/auth/auth_service.dart';
 
 class TagView extends StatefulWidget {
   final Map<String, dynamic> tag;

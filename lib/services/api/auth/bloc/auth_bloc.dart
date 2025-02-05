@@ -1,7 +1,7 @@
 import 'package:bloc/bloc.dart';
-import 'package:pd/services/api/auth_service.dart';
-import 'package:pd/services/auth/bloc/auth_event.dart';
-import 'package:pd/services/auth/bloc/auth_state.dart';
+import 'package:pd/services/api/auth/auth_service.dart';
+import 'package:pd/services/api/auth/bloc/auth_event.dart';
+import 'package:pd/services/api/auth/bloc/auth_state.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final ApiAuthService authService;
