@@ -1,10 +1,12 @@
-// ignore_for_file: use_build_context_synchronously
+// ignore_for_file: use_build_context_synchronously, library_private_types_in_public_api
 
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:pd/services/api/builds/build_edit.dart';
+import 'package:pd/data/build_categories.dart';
+import 'package:pd/helpers/image_picker.dart';
+import 'package:pd/services/api/build/edit_build.dart';
 
 class EditBuildView extends StatefulWidget {
   final Map<String, dynamic> build;
@@ -46,28 +48,6 @@ class _EditBuildViewState extends State<EditBuildView> {
   List<String> removedAdditionalImages = [];
   List<File> newAdditionalImages = [];
 
-  final List<String> _categories = [
-    'Classic/Antique',
-    'Drag',
-    'Drift',
-    'Exotic',
-    'Hot rod/Rat rod',
-    'Lowrider',
-    'Mudder',
-    'Muscle',
-    'Offroad/Overlander',
-    'Rally',
-    'Restomod',
-    'Show',
-    'Sleeper',
-    'Stance',
-    'Street/daily',
-    'Time attack',
-    'Track/circuit/road race',
-    'VIP',
-    'Other',
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -102,17 +82,16 @@ class _EditBuildViewState extends State<EditBuildView> {
         List<String>.from(widget.build['additional_images'] ?? []);
   }
 
-  Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+Future<void> _pickImage() async {
+  final File? selected = await pickImageFromGallery();
 
-    if (pickedFile != null) {
-      setState(() {
-        _selectedImage = File(pickedFile.path);
-        widget.build['image'] = pickedFile.path;
-      });
-    }
+  if (selected != null) {
+    setState(() {
+      _selectedImage = selected;
+      widget.build['image'] = selected.path;
+    });
   }
+}
 
   void _removeAdditionalImage(int index) {
     setState(() {
@@ -188,7 +167,6 @@ Future<void> _updateBuild() async {
     Navigator.pop(context, updatedBuild);
   }
 }
-
 
   @override
   Widget build(BuildContext context) {
@@ -431,7 +409,7 @@ Future<void> _updateBuild() async {
     return DropdownButtonFormField<String>(
       decoration: const InputDecoration(labelText: 'Build Category'),
       value: _selectedCategory,
-      items: _categories
+      items: staticCategories
           .map((category) =>
               DropdownMenuItem(value: category, child: Text(category)))
           .toList(),

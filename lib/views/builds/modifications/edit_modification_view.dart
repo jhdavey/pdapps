@@ -1,10 +1,8 @@
-// edit_modification_view.dart
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pd/data/modification_categories.dart';
-import 'package:pd/services/api/auth/auth_service.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'package:pd/services/api/build/modification/edit_modification.dart';
 
 class EditModificationView extends StatefulWidget {
   final int buildId;
@@ -44,18 +42,12 @@ class _EditModificationViewState extends State<EditModificationView> {
   Future<void> _submitModification() async {
     if (!_formKey.currentState!.validate()) return;
     _formKey.currentState!.save();
+
     setState(() {
       _isSubmitting = true;
     });
 
-    final authService = RepositoryProvider.of<ApiAuthService>(context);
-    final token = await authService.getToken();
-    // Assuming your API endpoint for updating a modification is:
-    // PATCH /api/builds/{buildId}/modifications/{modificationId}
-    final modificationId = widget.modification['id'];
-    final String apiUrl =
-        'https://passiondrivenbuilds.com/api/builds/${widget.buildId}/modifications/$modificationId';
-
+    // Build the data to update.
     final Map<String, dynamic> modificationData = {
       'category': _selectedCategory,
       'name': _name,
@@ -65,43 +57,35 @@ class _EditModificationViewState extends State<EditModificationView> {
       'notes': _notes,
     };
 
-    try {
-      final response = await http.patch(
-        Uri.parse(apiUrl),
-        headers: {
-          'Content-Type': 'application/json',
-          if (token != null) 'Authorization': 'Bearer $token',
-        },
-        body: json.encode(modificationData),
-      );
+    final int modificationId = widget.modification['id'];
 
-      if (response.statusCode == 200) {
-        Navigator.pop(context, true);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${response.body}')),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isSubmitting = false;
-        });
-      }
+    // Call the extracted API function.
+    final success = await updateModification(
+      context: context,
+      buildId: widget.buildId,
+      modificationId: modificationId,
+      modificationData: modificationData,
+    );
+
+    if (success) {
+      Navigator.pop(context, true);
+    }
+
+    if (mounted) {
+      setState(() {
+        _isSubmitting = false;
+      });
     }
   }
 
   Future<void> _deleteModification() async {
-    // Show a confirmation dialog before deleting.
+    // Confirm deletion with a dialog.
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Modification'),
-        content: const Text('Are you sure you want to delete this modification?'),
+        content:
+            const Text('Are you sure you want to delete this modification?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -120,40 +104,23 @@ class _EditModificationViewState extends State<EditModificationView> {
       _isSubmitting = true;
     });
 
-    final authService = RepositoryProvider.of<ApiAuthService>(context);
-    final token = await authService.getToken();
-    final modificationId = widget.modification['id'];
-    // Assuming your API endpoint for deletion is:
-    // DELETE /api/builds/{buildId}/modifications/{modificationId}
-    final String apiUrl =
-        'https://passiondrivenbuilds.com/api/builds/${widget.buildId}/modifications/$modificationId';
+    final int modificationId = widget.modification['id'];
 
-    try {
-      final response = await http.delete(
-        Uri.parse(apiUrl),
-        headers: {
-          'Content-Type': 'application/json',
-          if (token != null) 'Authorization': 'Bearer $token',
-        },
-      );
-      if (response.statusCode == 200) {
-        // If deletion is successful, pop and return true.
-        Navigator.pop(context, true);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${response.body}')),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isSubmitting = false;
-        });
-      }
+    // Call the extracted delete function.
+    final success = await deleteModification(
+      context: context,
+      buildId: widget.buildId,
+      modificationId: modificationId,
+    );
+
+    if (success) {
+      Navigator.pop(context, true);
+    }
+
+    if (mounted) {
+      setState(() {
+        _isSubmitting = false;
+      });
     }
   }
 
@@ -163,7 +130,6 @@ class _EditModificationViewState extends State<EditModificationView> {
       appBar: AppBar(
         title: const Text('Edit Modification'),
         actions: [
-          // Delete button in the AppBar.
           IconButton(
             icon: const Icon(Icons.delete),
             onPressed: _isSubmitting ? null : _deleteModification,
@@ -204,8 +170,9 @@ class _EditModificationViewState extends State<EditModificationView> {
                 ),
                 initialValue: _name,
                 onSaved: (value) => _name = value,
-                validator: (value) =>
-                    value == null || value.isEmpty ? 'Please enter a name' : null,
+                validator: (value) => value == null || value.isEmpty
+                    ? 'Please enter a name'
+                    : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -215,8 +182,9 @@ class _EditModificationViewState extends State<EditModificationView> {
                 ),
                 initialValue: _brand,
                 onSaved: (value) => _brand = value,
-                validator: (value) =>
-                    value == null || value.isEmpty ? 'Please enter a brand' : null,
+                validator: (value) => value == null || value.isEmpty
+                    ? 'Please enter a brand'
+                    : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -252,9 +220,7 @@ class _EditModificationViewState extends State<EditModificationView> {
               ElevatedButton(
                 onPressed: _isSubmitting ? null : _submitModification,
                 child: _isSubmitting
-                    ? const CircularProgressIndicator(
-                        color: Colors.white,
-                      )
+                    ? const CircularProgressIndicator(color: Colors.white)
                     : const Text('Update Modification'),
               ),
             ],

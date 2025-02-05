@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-
-import 'package:pd/services/api/auth/auth_service.dart';
+import 'package:pd/services/api/tag_view_api.dart';
+import 'package:pd/widgets/build_grid.dart';
 
 class TagView extends StatefulWidget {
   final Map<String, dynamic> tag;
 
-  const TagView({Key? key, required this.tag}) : super(key: key);
+  const TagView({super.key, required this.tag});
 
   @override
   State<TagView> createState() => _TagViewState();
@@ -17,33 +14,13 @@ class TagView extends StatefulWidget {
 class _TagViewState extends State<TagView> {
   late Future<Map<String, dynamic>> _tagData;
 
-  Future<Map<String, dynamic>> _fetchTagData() async {
-    final tagId = widget.tag['id'];
-    final String apiUrl = 'https://passiondrivenbuilds.com/api/tags/$tagId';
-
-    final authService = RepositoryProvider.of<ApiAuthService>(context);
-    final token = await authService.getToken();
-
-    final response = await http.get(
-      Uri.parse(apiUrl),
-      headers: {
-        'Content-Type': 'application/json',
-        if (token != null) 'Authorization': 'Bearer $token',
-      },
-    );
-
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      return data;
-    } else {
-      throw Exception('Failed to load tag data');
-    }
-  }
-
   @override
   void initState() {
     super.initState();
-    _tagData = _fetchTagData();
+    _tagData = fetchTagData(
+      context: context,
+      tagId: widget.tag['id'],
+    );
   }
 
   @override
@@ -68,70 +45,7 @@ class _TagViewState extends State<TagView> {
 
           return builds.isEmpty
               ? const Center(child: Text('No builds found for this tag.'))
-              : GridView.builder(
-                  padding: const EdgeInsets.all(8.0),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    crossAxisSpacing: 8,
-                    mainAxisSpacing: 8,
-                    childAspectRatio: 3 / 4,
-                  ),
-                  itemCount: builds.length,
-                  itemBuilder: (context, index) {
-                    final build = builds[index];
-                    return GestureDetector(
-                      onTap: () {
-                        Navigator.of(context)
-                            .pushNamed('/build-view', arguments: build);
-                      },
-                      child: Card(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            AspectRatio(
-                              aspectRatio: 4 / 3,
-                              child: Image.network(
-                                build['image'] ??
-                                    'https://via.placeholder.com/150',
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                            Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 4.0),
-                              child: Text(
-                                build['user'] != null &&
-                                        build['user']['name'] != null
-                                    ? "${build['user']['name']}'s"
-                                    : 'Unknown User',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                            Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 8.0),
-                              child: Text(
-                                '${build['year']} ${build['make']} ${build['model']}',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.normal,
-                                ),
-                                textAlign: TextAlign.center,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                );
+              : buildGrid(builds, 3); 
         },
       ),
     );

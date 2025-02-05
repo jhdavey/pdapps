@@ -3,7 +3,7 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
-import 'package:pd/services/api/builds/build_create.dart';
+import 'package:pd/services/api/build/create_build.dart';
 
 class CreateBuildView extends StatefulWidget {
   const CreateBuildView({super.key});

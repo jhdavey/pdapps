@@ -1,10 +1,7 @@
 // ignore_for_file: use_build_context_synchronously, library_private_types_in_public_api
 
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'package:pd/services/api/auth/auth_service.dart';
+import 'package:pd/services/api/build/note/edit_note.dart';
 
 class EditNoteView extends StatefulWidget {
   final int buildId;
@@ -26,42 +23,29 @@ class _EditNoteViewState extends State<EditNoteView> {
     _note = widget.note['note'] ?? '';
   }
 
-  Future<void> _submitNote() async {
+Future<void> _submitNote() async {
     if (!_formKey.currentState!.validate()) return;
     _formKey.currentState!.save();
+
     setState(() {
       _isSubmitting = true;
     });
-    final authService = RepositoryProvider.of<ApiAuthService>(context);
-    final token = await authService.getToken();
-    final noteId = widget.note['id'];
-    final String apiUrl = 'https://passiondrivenbuilds.com/api/notes/$noteId';
 
-    try {
-      final response = await http.put(
-        Uri.parse(apiUrl),
-        headers: {
-          'Content-Type': 'application/json',
-          if (token != null) 'Authorization': 'Bearer $token',
-        },
-        body: json.encode({'note': _note}),
-      );
+    final int noteId = widget.note['id'];
+    final success = await updateNote(
+      context: context,
+      noteId: noteId,
+      note: _note,
+    );
 
-      if (response.statusCode == 200) {
-        Navigator.pop(context, true);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: ${response.body}')));
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Error: $e')));
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isSubmitting = false;
-        });
-      }
+    if (success) {
+      Navigator.pop(context, true);
+    }
+
+    if (mounted) {
+      setState(() {
+        _isSubmitting = false;
+      });
     }
   }
 
@@ -88,35 +72,24 @@ class _EditNoteViewState extends State<EditNoteView> {
     setState(() {
       _isSubmitting = true;
     });
-    final authService = RepositoryProvider.of<ApiAuthService>(context);
-    final token = await authService.getToken();
-    final noteId = widget.note['id'];
-    final String apiUrl = 'https://passiondrivenbuilds.com/api/notes/$noteId';
-    try {
-      final response = await http.delete(
-        Uri.parse(apiUrl),
-        headers: {
-          'Content-Type': 'application/json',
-          if (token != null) 'Authorization': 'Bearer $token',
-        },
-      );
-      if (response.statusCode == 200) {
-        Navigator.pop(context, true);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: ${response.body}')));
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Error: $e')));
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isSubmitting = false;
-        });
-      }
+
+    final int noteId = widget.note['id'];
+    final success = await deleteNote(
+      context: context,
+      noteId: noteId,
+    );
+
+    if (success) {
+      Navigator.pop(context, true);
+    }
+
+    if (mounted) {
+      setState(() {
+        _isSubmitting = false;
+      });
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -136,7 +109,6 @@ class _EditNoteViewState extends State<EditNoteView> {
           key: _formKey,
           child: Column(
             children: [
-              // Replace this with a rich text editor if desired.
               TextFormField(
                 decoration: const InputDecoration(
                   labelText: 'Note',

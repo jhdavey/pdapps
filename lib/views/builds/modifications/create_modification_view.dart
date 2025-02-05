@@ -1,14 +1,12 @@
+// ignore_for_file: library_private_types_in_public_api, use_build_context_synchronously
+
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pd/data/modification_categories.dart';
-import 'package:pd/services/api/auth/auth_service.dart';
+import 'package:pd/services/api/build/modification/create_modification.dart';
 
 class CreateModificationView extends StatefulWidget {
   final int buildId;
-  const CreateModificationView({Key? key, required this.buildId})
-      : super(key: key);
+  const CreateModificationView({super.key, required this.buildId});
 
   @override
   _CreateModificationViewState createState() => _CreateModificationViewState();
@@ -24,60 +22,35 @@ class _CreateModificationViewState extends State<CreateModificationView> {
   String? _notes;
   bool _isSubmitting = false;
 
-  Future<void> _submitModification() async {
-    if (!_formKey.currentState!.validate()) return;
-    _formKey.currentState!.save();
-    setState(() {
-      _isSubmitting = true;
-    });
+Future<void> _submitModification() async {
+  if (!_formKey.currentState!.validate()) return;
+  _formKey.currentState!.save();
 
-    // Retrieve the token from ApiAuthService.
-    final authService = RepositoryProvider.of<ApiAuthService>(context);
-    final token = await authService.getToken();
+  setState(() {
+    _isSubmitting = true;
+  });
 
-    final String apiUrl =
-        'https://passiondrivenbuilds.com/api/builds/${widget.buildId}/modifications';
+  final success = await submitModification(
+    context,
+    widget.buildId.toString(),
+    category: _selectedCategory!,
+    name: _name,
+    brand: _brand,
+    price: _price,
+    part: _part,
+    notes: _notes,
+  );
 
-    // Build the modification data.
-    final Map<String, dynamic> modificationData = {
-      'category': _selectedCategory,
-      'name': _name,
-      'brand': _brand,
-      'price': _price,
-      'part': _part,
-      'notes': _notes,
-    };
-
-    try {
-      final response = await http.post(
-        Uri.parse(apiUrl),
-        headers: {
-          'Content-Type': 'application/json',
-          if (token != null) 'Authorization': 'Bearer $token',
-        },
-        body: json.encode(modificationData),
-      );
-
-      if (response.statusCode == 201) {
-        // Modification added successfully.
-        Navigator.pop(context, true);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${response.body}')),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isSubmitting = false;
-        });
-      }
-    }
+  if (success) {
+    Navigator.pop(context, true);
   }
+
+  if (mounted) {
+    setState(() {
+      _isSubmitting = false;
+    });
+  }
+}
 
   @override
   Widget build(BuildContext context) {

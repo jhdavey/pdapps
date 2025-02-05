@@ -1,4 +1,3 @@
-// lib/widgets/build_tags.dart
 import 'package:flutter/material.dart';
 
 class BuildTags extends StatelessWidget {

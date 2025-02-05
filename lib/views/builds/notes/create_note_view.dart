@@ -1,10 +1,7 @@
 // ignore_for_file: library_private_types_in_public_api, use_build_context_synchronously
 
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'package:pd/services/api/auth/auth_service.dart';
+import 'package:pd/services/api/build/note/create_note.dart';
 
 class CreateNoteView extends StatefulWidget {
   final int buildId;
@@ -19,43 +16,28 @@ class _CreateNoteViewState extends State<CreateNoteView> {
   String? _note;
   bool _isSubmitting = false;
 
-  Future<void> _submitNote() async {
+Future<void> _submitNote() async {
     if (!_formKey.currentState!.validate()) return;
     _formKey.currentState!.save();
+
     setState(() {
       _isSubmitting = true;
     });
 
-    final authService = RepositoryProvider.of<ApiAuthService>(context);
-    final token = await authService.getToken();
-    final String apiUrl =
-        'https://passiondrivenbuilds.com/api/builds/${widget.buildId}/notes';
+    final success = await submitNote(
+      context: context,
+      buildId: widget.buildId,
+      note: _note ?? '',
+    );
 
-    try {
-      final response = await http.post(
-        Uri.parse(apiUrl),
-        headers: {
-          'Content-Type': 'application/json',
-          if (token != null) 'Authorization': 'Bearer $token',
-        },
-        body: json.encode({'note': _note}),
-      );
+    if (success) {
+      Navigator.pop(context, true);
+    }
 
-      if (response.statusCode == 201) {
-        Navigator.pop(context, true);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: ${response.body}')));
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Error: $e')));
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isSubmitting = false;
-        });
-      }
+    if (mounted) {
+      setState(() {
+        _isSubmitting = false;
+      });
     }
   }
 

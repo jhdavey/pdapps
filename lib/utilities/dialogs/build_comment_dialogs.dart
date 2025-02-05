@@ -1,6 +1,6 @@
 // ignore_for_file: use_build_context_synchronously
 import 'package:flutter/material.dart';
-import 'package:pd/services/api/comments/build_comment.dart';
+import 'package:pd/services/api/build/comment/build_comment.dart';
 
 Future<void> showAddCommentDialog(
   BuildContext context,

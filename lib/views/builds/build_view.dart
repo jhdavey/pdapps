@@ -1,9 +1,10 @@
 // ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:pd/helpers/build_ownership_helper.dart';
 import 'package:pd/helpers/route_arguments_helper.dart';
-import 'package:pd/services/api/builds/build_data_loader.dart';
-import 'package:pd/widgets/builds/build_additional_images.dart';
+import 'package:pd/services/api/build/build_data_loader.dart';
+import 'package:pd/widgets/builds/build_additional_images_section.dart';
 import 'package:pd/widgets/builds/build_comment_section.dart';
 import 'package:pd/widgets/builds/build_data_section.dart';
 import 'package:pd/widgets/builds/build_modification_section.dart';
@@ -26,10 +27,14 @@ class _BuildViewState extends State<BuildView> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (!_initialized) {
+      // Retrieve route arguments using the helper.
       _build = getRouteArguments(context);
+      debugPrint("Extracted build: $_build");
 
+      // Load additional build data using the build_data_loader API.
       _loadBuildData();
 
+      // Update build ownership (this might also update the _currentUserId)
       updateBuildOwnership(context, _build).then((userId) {
         _currentUserId = userId;
         setState(() {});
@@ -146,7 +151,9 @@ class _BuildViewState extends State<BuildView> {
         ),
         BuildModificationsSection(
           modificationsByCategory:
-              _build['modificationsByCategory'] as Map<String, dynamic>? ?? {},
+              _build['modificationsByCategory'] is Map<String, dynamic>
+                  ? _build['modificationsByCategory'] as Map<String, dynamic>
+                  : {},
           buildId: _build['id'],
           isOwner: isOwner,
           reloadBuildData: _loadBuildData,

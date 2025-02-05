@@ -18,50 +18,50 @@ class BuildModificationsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (modificationsByCategory.isNotEmpty) {
-      return Container(
-        padding: const EdgeInsets.all(10.0),
-        decoration: BoxDecoration(
-          color: Colors.grey[900],
-          borderRadius: BorderRadius.circular(16.0),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header row with "Modifications" and plus icon (only if owner)
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Modifications',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
+    final bool hasModifications = modificationsByCategory.isNotEmpty;
+
+    return Container(
+      padding: const EdgeInsets.all(10.0),
+      decoration: BoxDecoration(
+        color: Colors.grey[900],
+        borderRadius: BorderRadius.circular(16.0),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Modifications',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
                 ),
-                if (isOwner)
-                  IconButton(
-                    icon: const Icon(Icons.add, color: Colors.white),
-                    onPressed: () async {
-                      final result = await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => CreateModificationView(buildId: buildId),
-                        ),
-                      );
-                      if (result == true) {
-                        reloadBuildData();
-                      }
-                    },
-                  ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            // For each category, display an ExpansionTile
+              ),
+              if (isOwner)
+                IconButton(
+                  icon: const Icon(Icons.add, color: Colors.white),
+                  onPressed: () async {
+                    final result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => CreateModificationView(buildId: buildId),
+                      ),
+                    );
+                    if (result == true) {
+                      reloadBuildData();
+                    }
+                  },
+                ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          if (hasModifications)
             ...modificationsByCategory.entries.map((entry) {
-              final category = entry.key;
-              final modifications = entry.value as List<dynamic>;
+              final String category = entry.key;
+              final List<dynamic> mods = entry.value as List<dynamic>;
               return Theme(
                 data: ThemeData(dividerColor: Colors.transparent),
                 child: ExpansionTile(
@@ -71,7 +71,7 @@ class BuildModificationsSection extends StatelessWidget {
                     category,
                     style: const TextStyle(color: Colors.white),
                   ),
-                  children: modifications.map((modification) {
+                  children: mods.map((modification) {
                     return ListTile(
                       title: Text(
                         modification['name'] ?? 'Unnamed Modification',
@@ -122,45 +122,13 @@ class BuildModificationsSection extends StatelessWidget {
                 ),
               );
             })
-          ],
-        ),
-      );
-    } else {
-      return Container(
-        padding: const EdgeInsets.all(10.0),
-        decoration: BoxDecoration(
-          color: Colors.grey[900],
-          borderRadius: BorderRadius.circular(16.0),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              'Modifications',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
+          else
+            Text(
+              'No modifications have been added yet.',
+              style: TextStyle(color: Colors.white70),
             ),
-            if (isOwner)
-              IconButton(
-                icon: const Icon(Icons.add, color: Colors.white),
-                onPressed: () async {
-                  final result = await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => CreateModificationView(buildId: buildId),
-                    ),
-                  );
-                  if (result == true) {
-                    reloadBuildData();
-                  }
-                },
-              ),
-          ],
-        ),
-      );
-    }
+        ],
+      ),
+    );
   }
 }

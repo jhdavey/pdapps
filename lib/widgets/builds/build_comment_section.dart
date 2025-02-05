@@ -1,7 +1,7 @@
 // ignore_for_file: use_build_context_synchronously
 import 'package:flutter/material.dart';
 import 'package:pd/helpers/format_datetime_string.dart';
-import 'package:pd/services/api/comments/build_comment.dart';
+import 'package:pd/services/api/build/comment/build_comment.dart';
 import 'package:pd/utilities/dialogs/build_comment_dialogs.dart';
 
 class BuildCommentsSection extends StatelessWidget {
@@ -50,7 +50,6 @@ class BuildCommentsSection extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 10),
           if (reversedComments.isEmpty)
             const Text(
               'No comments have been added yet.',

@@ -2,10 +2,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'package:pd/services/api/auth/auth_service.dart';
-import 'package:pd/widgets/builds/build_grid.dart';
+import 'package:pd/services/api/build/get_all_builds.dart';
+import 'package:pd/widgets/build_grid.dart';
 import 'package:pd/widgets/custom_scaffold.dart';
 import 'package:pd/data/build_categories.dart';
 import 'package:pd/main.dart';
@@ -20,34 +19,12 @@ class HomeView extends StatefulWidget {
 class _HomeViewState extends State<HomeView> with RouteAware {
   late Future<Map<String, dynamic>> _buildData;
 
-  // Fetch build data from the API.
-  Future<Map<String, dynamic>> _fetchBuildData() async {
-    const String apiUrl = 'https://passiondrivenbuilds.com/api/builds';
-
-    final authService = RepositoryProvider.of<ApiAuthService>(context);
-    final token = await authService.getToken();
-
-    debugPrint('Token: $token');
-
-    final response = await http.get(
-      Uri.parse(apiUrl),
-      headers: {
-        'Content-Type': 'application/json',
-        if (token != null) 'Authorization': 'Bearer $token',
-      },
-    );
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      return data;
-    } else {
-      throw Exception('Failed to load builds');
-    }
-  }
-
   @override
   void initState() {
     super.initState();
-    _buildData = _fetchBuildData();
+    _buildData = fetchBuildData(
+      context: context
+    );
   }
 
   @override
@@ -65,7 +42,9 @@ class _HomeViewState extends State<HomeView> with RouteAware {
   @override
   void didPopNext() {
     setState(() {
-      _buildData = _fetchBuildData();
+      _buildData = fetchBuildData(
+        context: context,
+      );
     });
   }
 

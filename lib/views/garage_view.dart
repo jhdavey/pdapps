@@ -1,10 +1,12 @@
 // ignore_for_file: library_private_types_in_public_api, prefer_final_fields, use_build_context_synchronously
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:pd/helpers/toggle_follow_helper.dart';
+import 'package:pd/services/api/follower_api.dart';
 import 'package:pd/services/api/auth/auth_service.dart';
+import 'package:pd/services/garage_api.dart';
+import 'package:pd/widgets/garage_profile_section.dart';
+import 'package:pd/widgets/wide_build_tile.dart';
 
 class GarageView extends StatefulWidget {
   const GarageView({super.key});
@@ -23,13 +25,11 @@ class _GarageViewState extends State<GarageView> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Access userId passed via Navigator arguments (this is the profile user's id)
     final profileUserId = ModalRoute.of(context)?.settings.arguments as int?;
     if (profileUserId != null) {
-      _garageData = _fetchGarageData(profileUserId);
-      _followers = _fetchFollowers(profileUserId);
-      _following = _fetchFollowing(profileUserId);
-      // Get current logged-in user id using your ApiAuthService.
+      _garageData = fetchGarageData(context: context, userId: profileUserId);
+      _followers = fetchFollowers(context: context, userId: profileUserId);
+      _following = fetchFollowing(context: context, userId: profileUserId);
       RepositoryProvider.of<ApiAuthService>(context)
           .getCurrentUser()
           .then((currentUser) {
@@ -42,99 +42,20 @@ class _GarageViewState extends State<GarageView> {
     }
   }
 
-  Future<Map<String, dynamic>> _fetchGarageData(int userId) async {
-    final authService = RepositoryProvider.of<ApiAuthService>(context);
-    final token = await authService.getToken();
-
-    final String apiUrl = 'https://passiondrivenbuilds.com/api/garage/$userId';
-    final response = await http.get(
-      Uri.parse(apiUrl),
-      headers: {
-        'Content-Type': 'application/json',
-        if (token != null) 'Authorization': 'Bearer $token',
-      },
-    );
-    if (response.statusCode == 200) {
-      final decodedResponse = json.decode(response.body);
-      return decodedResponse;
-    } else {
-      throw Exception('Failed to load garage data');
-    }
-  }
-
-  Future<List<dynamic>> _fetchFollowers(int userId) async {
-    final authService = RepositoryProvider.of<ApiAuthService>(context);
-    final token = await authService.getToken();
-    final String apiUrl =
-        'https://passiondrivenbuilds.com/api/users/$userId/followers';
-    final response = await http.get(
-      Uri.parse(apiUrl),
-      headers: {
-        'Content-Type': 'application/json',
-        if (token != null) 'Authorization': 'Bearer $token',
-      },
-    );
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      return (data['followers'] as List<dynamic>?) ?? [];
-    } else {
-      throw Exception('Failed to load followers');
-    }
-  }
-
-  Future<List<dynamic>> _fetchFollowing(int userId) async {
-    final authService = RepositoryProvider.of<ApiAuthService>(context);
-    final token = await authService.getToken();
-    final String apiUrl =
-        'https://passiondrivenbuilds.com/api/users/$userId/following';
-    final response = await http.get(
-      Uri.parse(apiUrl),
-      headers: {
-        'Content-Type': 'application/json',
-        if (token != null) 'Authorization': 'Bearer $token',
-      },
-    );
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      return (data['following'] as List<dynamic>?) ?? [];
-    } else {
-      throw Exception('Failed to load following');
-    }
-  }
-
+  // Updated _toggleFollow now uses toggleFollowHelper.
   Future<void> _toggleFollow(int profileUserId) async {
-    final bool follow = !_isFollowing;
-    final String apiUrl;
-    http.Response response;
-
-    final authService = RepositoryProvider.of<ApiAuthService>(context);
-    final token = await authService.getToken();
-
-    final headers = {
-      'Content-Type': 'application/json',
-      if (token != null) 'Authorization': 'Bearer $token',
-    };
-
-    if (follow) {
-      apiUrl =
-          'https://passiondrivenbuilds.com/api/users/$profileUserId/follow';
-      response = await http.post(Uri.parse(apiUrl), headers: headers);
-    } else {
-      apiUrl =
-          'https://passiondrivenbuilds.com/api/users/$profileUserId/unfollow';
-      response = await http.delete(Uri.parse(apiUrl), headers: headers);
-    }
-
-    if (response.statusCode == 200) {
-      setState(() {
-        _followers = _fetchFollowers(profileUserId);
-        _following = _fetchFollowing(profileUserId);
-      });
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: ${response.body}')),
-      );
-    }
+    await toggleFollowHelper(
+      context: context,
+      profileUserId: profileUserId,
+      currentFollowStatus: _isFollowing,
+      onSuccess: (newFollowStatus, newFollowers, newFollowing) {
+        setState(() {
+          _isFollowing = newFollowStatus;
+          _followers = newFollowers;
+          _following = newFollowing;
+        });
+      },
+    );
   }
 
   @override
@@ -205,7 +126,14 @@ class _GarageViewState extends State<GarageView> {
                         followers.any((follower) =>
                             int.tryParse(follower['id'].toString()) ==
                             _currentUserId);
-                    return _buildProfileSection(user, followers, following);
+                    return ProfileSection(
+                      user: user,
+                      followers: followers,
+                      following: following,
+                      currentUserId: _currentUserId,
+                      isFollowing: _isFollowing,
+                      onToggleFollow: () => _toggleFollow(user['id']),
+                    );
                   },
                 ),
                 const SizedBox(height: 10),
@@ -216,10 +144,14 @@ class _GarageViewState extends State<GarageView> {
                     itemCount: builds.length,
                     itemBuilder: (context, index) {
                       final build = builds[index];
-                      return _buildTile(
-                        build: build,
+                      if (build is! Map<String, dynamic>) {
+                        return const Center(child: Text('Invalid build data.'));
+                      }
+                      return WideBuildTile(
+                        buildData: build,
                         user: user,
-                        isOwner: isOwner,
+                        isOwner:
+                            isOwner,
                       );
                     },
                   )
@@ -233,257 +165,6 @@ class _GarageViewState extends State<GarageView> {
           );
         },
       ),
-    );
-  }
-
-  Widget _buildProfileSection(Map<String, dynamic> user,
-      List<dynamic> followers, List<dynamic> following) {
-    final Map<String, String> socialMedia = {
-      'IG': user['instagram'] ?? '',
-      'FB': user['facebook'] ?? '',
-      'TT': user['tiktok'] ?? '',
-      'YT': user['youtube'] ?? '',
-    };
-
-    final availableSocialMedia = socialMedia.entries
-        .where((entry) => entry.value.trim().isNotEmpty)
-        .toList();
-
-    final followerCount = followers.length;
-    final followingCount = following.length;
-
-    return Container(
-      padding: const EdgeInsets.all(10.0),
-      decoration: BoxDecoration(
-        color: Colors.grey[850],
-        borderRadius: BorderRadius.circular(16.0),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 40,
-                backgroundImage: user['profile_image'] != null
-                    ? NetworkImage(user['profile_image'])
-                    : const NetworkImage('https://via.placeholder.com/150'),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "${user['name']}'s Garage",
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      "Followers: $followerCount | Following: $followingCount",
-                      style: const TextStyle(color: Colors.white70),
-                    ),
-                  ],
-                ),
-              ),
-              if (_currentUserId != null && _currentUserId != user['id'])
-                ElevatedButton(
-                  onPressed: () => _toggleFollow(user['id']),
-                  child: Text(_isFollowing ? 'Unfollow' : 'Follow'),
-                ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            user['bio'] ?? "No bio available.",
-            style: const TextStyle(color: Colors.white70),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: availableSocialMedia.map((entry) {
-              return Padding(
-                padding: const EdgeInsets.only(right: 8.0),
-                child: GestureDetector(
-                  onTap: () async {
-                    final url = _getSocialMediaUrl(entry.key, entry.value);
-                    final Uri uri = Uri.parse(url);
-                    if (await canLaunchUrl(uri)) {
-                      await launchUrl(uri,
-                          mode: LaunchMode.externalApplication);
-                    } else {
-                      debugPrint("Could not launch $url");
-                    }
-                  },
-                  child: Chip(
-                    visualDensity: VisualDensity.compact,
-                    padding: EdgeInsets.zero,
-                    label: Container(
-                      height: 28,
-                      alignment: Alignment.center,
-                      child: Text(
-                        '${entry.key}: ${entry.value}',
-                        style: const TextStyle(
-                          fontSize: 10,
-                          color: Colors.white,
-                          height: 1.0,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _getSocialMediaUrl(String platform, String username) {
-    switch (platform) {
-      case 'IG':
-        return 'https://instagram.com/$username';
-      case 'FB':
-        return 'https://facebook.com/$username';
-      case 'TT':
-        return 'https://tiktok.com/@$username';
-      case 'YT':
-        return 'https://youtube.com/$username';
-      default:
-        return '';
-    }
-  }
-
-  Widget _buildTile({
-    required Map<String, dynamic> build,
-    required Map<String, dynamic> user,
-    required bool isOwner,
-  }) {
-    final buildWithUser = {
-      ...build,
-      'user': user,
-    };
-    return GestureDetector(
-      onTap: () {
-        Navigator.of(context)
-            .pushNamed('/build-view', arguments: buildWithUser);
-      },
-      child: Card(
-        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10.0),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: MediaQuery.of(context).size.width * 0.3,
-              height: 120,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(8),
-                image: DecorationImage(
-                  image: NetworkImage(
-                    build['image'] ?? 'https://via.placeholder.com/150',
-                  ),
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Align(
-                    alignment: Alignment.topRight,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 4, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[850],
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        build['build_category'] ?? 'Unknown Category',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    "${build['year']} ${build['make']} ${build['model']}",
-                    style: const TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Text(
-                        "HP: ${build['hp'] ?? 'N/A'}",
-                        style:
-                            const TextStyle(fontSize: 14, color: Colors.grey),
-                      ),
-                      const SizedBox(width: 16),
-                      Text(
-                        "Torque: ${build['torque'] ?? 'N/A'}",
-                        style:
-                            const TextStyle(fontSize: 14, color: Colors.grey),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Align(
-                    alignment: Alignment.bottomRight,
-                    child: _buildTags(build),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTags(Map<String, dynamic> build) {
-    final List tagList = build['tags'] is List ? build['tags'] : [];
-    if (tagList.isEmpty) return const SizedBox.shrink();
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: tagList.map<Widget>((tag) {
-        return Padding(
-          padding: const EdgeInsets.only(left: 4.0),
-          child: GestureDetector(
-            onTap: () {
-              Navigator.of(context)
-                  .pushNamed('/tag-view', arguments: {'tag': tag});
-            },
-            child: Chip(
-              visualDensity: VisualDensity.compact,
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-              label: Container(
-                height: 28,
-                alignment: Alignment.center,
-                child: Text(
-                  tag['name'] ?? 'Tag',
-                  style: const TextStyle(
-                      fontSize: 10, color: Colors.white, height: 1.0),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            ),
-          ),
-        );
-      }).toList(),
     );
   }
 }

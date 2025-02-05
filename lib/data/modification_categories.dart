@@ -1,6 +1,5 @@
   final List<String> categories = [
-    'Accessories'
-    'Suspension',
+    'Accessories',
     'Audio',
     'Body Kit',
     'Brakes',
