@@ -3,7 +3,7 @@ import 'package:pd/widgets/tag_chip_list.dart';
 
 Widget buildHorizontalList(List<dynamic> builds) {
   return SizedBox(
-    height: 300,
+    height: 325,
     child: ListView.builder(
       scrollDirection: Axis.horizontal,
       itemCount: builds.length,
@@ -53,6 +53,17 @@ Widget buildHorizontalList(List<dynamic> builds) {
                           const SizedBox(height: 2),
                           Text(
                             '${build['year']} ${build['make']} ${build['model']}',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.normal,
+                              fontSize: 18,
+                            ),
+                            textAlign: TextAlign.center,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 2),
+                                                    Text(
+                            '${build['build_category']}',
                             style: const TextStyle(
                               fontWeight: FontWeight.normal,
                               fontSize: 18,
