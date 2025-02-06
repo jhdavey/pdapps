@@ -27,14 +27,10 @@ class _BuildViewState extends State<BuildView> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (!_initialized) {
-      // Retrieve route arguments using the helper.
       _build = getRouteArguments(context);
-      debugPrint("Extracted build: $_build");
 
-      // Load additional build data using the build_data_loader API.
       _loadBuildData();
 
-      // Update build ownership (this might also update the _currentUserId)
       updateBuildOwnership(context, _build).then((userId) {
         _currentUserId = userId;
         setState(() {});
@@ -70,7 +66,21 @@ class _BuildViewState extends State<BuildView> {
           onTap: () {
             Navigator.pushNamed(context, '/garage', arguments: user['id']);
           },
-          child: Text("$userName's ${_build['build_category'] ?? ''} Build"),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment:
+                CrossAxisAlignment.center,
+            children: [
+              Text(
+                "$userName's ${_build['build_category'] ?? ''} Build",
+                style: const TextStyle(fontSize: 24),
+              ),
+              Text(
+                'Click here to view profile',
+                style: TextStyle(fontSize: 14, color: Colors.white70, fontStyle: FontStyle.italic),
+              ),
+            ],
+          ),
         ),
         actions: isOwner
             ? [
@@ -118,6 +128,7 @@ class _BuildViewState extends State<BuildView> {
           ),
         ),
         buildAdditionalImagesSection(_build),
+        const SizedBox(height: 8),
         BuildTags(buildData: _build),
         buildSection(
           title: 'Specs',

@@ -34,7 +34,7 @@ class BuildTags extends StatelessWidget {
                 child: Text(
                   tag['name'] ?? 'Tag',
                   style: const TextStyle(
-                    fontSize: 10,
+                    fontSize: 14,
                     color: Colors.white,
                     height: 1.0,
                   ),
