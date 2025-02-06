@@ -10,7 +10,7 @@ Widget buildSection(
     return SizedBox(
       width: double.infinity,
       child: Card(
-        color: Colors.grey[900],
+        color: Color(0xFF1F242C),
         margin: const EdgeInsets.symmetric(vertical: 10),
         child: Padding(
           padding: const EdgeInsets.all(12.0),

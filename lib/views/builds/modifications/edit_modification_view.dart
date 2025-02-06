@@ -133,6 +133,7 @@ class _EditModificationViewState extends State<EditModificationView> {
           IconButton(
             icon: const Icon(Icons.delete),
             onPressed: _isSubmitting ? null : _deleteModification,
+            color: Color(0xFFED1C24),
           ),
         ],
       ),

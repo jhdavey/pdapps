@@ -1,4 +1,3 @@
-// main.dart
 // ignore_for_file: unused_local_variable
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -32,7 +31,7 @@ void main() async {
   await apiAuthService.initialize();
 
   runApp(MyApp(
-    authService: apiAuthService,
+    authService: apiAuthService,  
   ));
 }
 
@@ -55,6 +54,31 @@ class MyApp extends StatelessWidget {
           navigatorObservers: [routeObserver],
           title: 'Passion Driven',
           theme: ThemeData.dark().copyWith(
+            appBarTheme: const AppBarTheme(
+              backgroundColor: Color(0xFF0F141D),
+            ),
+            scaffoldBackgroundColor: const Color(0xFF0F141D),
+            cardTheme: const CardTheme(
+              color: Color(0xFF1F242C),
+            ),
+            chipTheme: ChipThemeData(
+              backgroundColor: const Color(0xFF1F242C),
+            ),
+            elevatedButtonTheme: ElevatedButtonThemeData(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF1F242C),
+                foregroundColor: Colors.white,
+                side: const BorderSide(
+                  color: Colors.white,
+                  width: 1,
+                ),
+              ),
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFFEFFFFF),
+              ),
+            ),
             inputDecorationTheme: const InputDecorationTheme(
               border: UnderlineInputBorder(
                 borderSide: BorderSide(color: Colors.white),
@@ -76,8 +100,8 @@ class MyApp extends StatelessWidget {
           home: const AppNavigator(),
           routes: {
             '/build-view': (context) {
-              final args =
-                  ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
+              final args = ModalRoute.of(context)!.settings.arguments
+                  as Map<String, dynamic>?;
               if (args == null || !args.containsKey('id')) {
                 return const Scaffold(
                   body: Center(
@@ -91,8 +115,8 @@ class MyApp extends StatelessWidget {
             '/garage': (context) => const GarageView(),
             '/create-update-build': (context) => CreateBuildView(),
             '/edit-build-view': (context) {
-              final args =
-                  ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
+              final args = ModalRoute.of(context)!.settings.arguments
+                  as Map<String, dynamic>?;
               if (args == null || !args.containsKey('build')) {
                 return const Scaffold(
                   body: Center(
@@ -104,8 +128,8 @@ class MyApp extends StatelessWidget {
               return EditBuildView(build: build);
             },
             '/tag-view': (context) {
-              final args =
-                  ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
+              final args = ModalRoute.of(context)!.settings.arguments
+                  as Map<String, dynamic>?;
               if (args == null || !args.containsKey('tag')) {
                 return const Scaffold(
                   body: Center(child: Text('Invalid tag data')),
@@ -115,8 +139,8 @@ class MyApp extends StatelessWidget {
               return TagView(tag: tag);
             },
             '/categories-view': (context) {
-              final args =
-                  ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
+              final args = ModalRoute.of(context)!.settings.arguments
+                  as Map<String, dynamic>?;
               if (args == null || !args.containsKey('category')) {
                 return const Scaffold(
                   body: Center(child: Text('Invalid category data')),

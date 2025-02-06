@@ -1,13 +1,13 @@
 // ignore_for_file: library_private_types_in_public_api
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pd/services/api/auth/auth_service.dart';
+import 'package:pd/services/api/auth/bloc/auth_bloc.dart';
+import 'package:pd/services/api/auth/bloc/auth_event.dart';
 import 'package:pd/services/api/build/get_all_builds.dart';
-import 'package:pd/widgets/build_grid.dart';
-import 'package:pd/widgets/custom_scaffold.dart';
 import 'package:pd/data/build_categories.dart';
 import 'package:pd/main.dart';
+import 'package:pd/widgets/build_horizontal_list.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
@@ -22,9 +22,7 @@ class _HomeViewState extends State<HomeView> with RouteAware {
   @override
   void initState() {
     super.initState();
-    _buildData = fetchBuildData(
-      context: context
-    );
+    _buildData = fetchBuildData(context: context);
   }
 
   @override
@@ -42,21 +40,56 @@ class _HomeViewState extends State<HomeView> with RouteAware {
   @override
   void didPopNext() {
     setState(() {
-      _buildData = fetchBuildData(
-        context: context,
-      );
+      _buildData = fetchBuildData(context: context);
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    RepositoryProvider.of<ApiAuthService>(context)
-        .getCurrentUser()
-        .then((user) {
-    });
+    final authService = RepositoryProvider.of<ApiAuthService>(context);
 
-    return CustomScaffold(
-      title: 'Passion Driven Builds',
+    return Scaffold(
+      appBar: AppBar(
+        title: Image.asset(
+          'assets/images/logoFull.png',
+          height: 48,
+        ),
+        actions: [
+          // Garage Button
+          IconButton(
+            icon: const Icon(Icons.garage),
+            onPressed: () async {
+              final user = await authService.getCurrentUser();
+              if (user != null) {
+                final result = await Navigator.of(context).pushNamed(
+                  '/garage',
+                  arguments: int.tryParse(user.id),
+                );
+                if (result == true) {
+                  setState(() {
+                    _buildData = fetchBuildData(context: context);
+                  });
+                }
+              }
+            },
+          ),
+
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              if (value == 'logout') {
+                context.read<AuthBloc>().add(const AuthEventLogOut());
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'logout',
+                child: Text('Logout'),
+              ),
+            ],
+            icon: const Icon(Icons.more_vert),
+          ),
+        ],
+      ),
       body: FutureBuilder<Map<String, dynamic>>(
         future: _buildData,
         builder: (context, snapshot) {
@@ -83,16 +116,11 @@ class _HomeViewState extends State<HomeView> with RouteAware {
 
           return SingleChildScrollView(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 2),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Categories Section
-                  const Text(
-                    'Browse by Categories',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 10),
+                  const Divider(),
                   SizedBox(
                     height: 40,
                     child: ListView.builder(
@@ -118,7 +146,7 @@ class _HomeViewState extends State<HomeView> with RouteAware {
                                 child: Text(
                                   category,
                                   style: const TextStyle(
-                                    fontSize: 12,
+                                    fontSize: 14,
                                     color: Colors.white,
                                   ),
                                   textAlign: TextAlign.center,
@@ -131,13 +159,6 @@ class _HomeViewState extends State<HomeView> with RouteAware {
                     ),
                   ),
                   const Divider(),
-
-                  // Browse by Tags Section
-                  const Text(
-                    'Browse by Tags',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 10),
                   SizedBox(
                     height: 40,
                     child: ListView.builder(
@@ -163,7 +184,7 @@ class _HomeViewState extends State<HomeView> with RouteAware {
                                 child: Text(
                                   tag['name'] ?? 'Tag',
                                   style: const TextStyle(
-                                    fontSize: 12,
+                                    fontSize: 14,
                                     color: Colors.white,
                                   ),
                                   textAlign: TextAlign.center,
@@ -175,21 +196,18 @@ class _HomeViewState extends State<HomeView> with RouteAware {
                       },
                     ),
                   ),
-
                   const Divider(),
-
                   // Featured Builds
                   if (featuredBuilds.isNotEmpty) ...[
                     const Text(
-                      'Featured Builds',
+                      'Featured',
                       style:
                           TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 10),
-                    buildGrid(featuredBuilds, 3),
+                    buildHorizontalList(featuredBuilds),
                   ],
                   const Divider(),
-
                   // Following Builds
                   const Text(
                     'Following',
@@ -199,17 +217,17 @@ class _HomeViewState extends State<HomeView> with RouteAware {
                   if (followingBuilds.isEmpty)
                     const Text('You are not following any builds yet.')
                   else
-                    buildGrid(followingBuilds, 3),
+                    buildHorizontalList(followingBuilds),
 
                   const Divider(),
-
                   // Recently Updated Builds
                   const Text(
                     'Recently Updated',
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 10),
-                  buildGrid(builds, 3),
+                  buildHorizontalList(builds),
+                  const SizedBox(height: 20),
                 ],
               ),
             ),

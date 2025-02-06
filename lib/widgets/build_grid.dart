@@ -1,3 +1,5 @@
+// NOT CURRENTLY IN USE
+
 import 'package:flutter/material.dart';
 import 'package:pd/widgets/tag_chip_list.dart';
 
@@ -7,8 +9,6 @@ Widget buildGrid(List<dynamic> builds, int columns) {
     physics: const NeverScrollableScrollPhysics(),
     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
       crossAxisCount: columns,
-      crossAxisSpacing: 8,
-      mainAxisSpacing: 8,
       childAspectRatio: 3 / 4,
     ),
     itemCount: builds.length,

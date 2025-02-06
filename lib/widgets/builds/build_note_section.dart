@@ -21,7 +21,7 @@ class BuildNotesSection extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(10.0),
       decoration: BoxDecoration(
-        color: Colors.grey[900],
+        color: Color(0xFF1F242C),
         borderRadius: BorderRadius.circular(16.0),
       ),
       child: Column(

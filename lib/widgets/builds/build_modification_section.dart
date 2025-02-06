@@ -23,7 +23,7 @@ class BuildModificationsSection extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(10.0),
       decoration: BoxDecoration(
-        color: Colors.grey[900],
+        color: Color(0xFF1F242C),
         borderRadius: BorderRadius.circular(16.0),
       ),
       child: Column(
@@ -47,7 +47,8 @@ class BuildModificationsSection extends StatelessWidget {
                     final result = await Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => CreateModificationView(buildId: buildId),
+                        builder: (context) =>
+                            CreateModificationView(buildId: buildId),
                       ),
                     );
                     if (result == true) {
@@ -65,58 +66,67 @@ class BuildModificationsSection extends StatelessWidget {
               return Theme(
                 data: ThemeData(dividerColor: Colors.transparent),
                 child: ExpansionTile(
-                  backgroundColor: Colors.grey[800],
-                  collapsedBackgroundColor: Colors.grey[900],
+                  backgroundColor: Color(0xFF1F242C),
+                  collapsedBackgroundColor: Color(0xFF1F242C),
                   title: Text(
                     category,
                     style: const TextStyle(color: Colors.white),
                   ),
                   children: mods.map((modification) {
-                    return ListTile(
-                      title: Text(
-                        modification['name'] ?? 'Unnamed Modification',
-                        style: const TextStyle(color: Colors.white),
+                    return Container(
+                      decoration: const BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(color: Colors.white, width: 1),
+                        ),
                       ),
-                      trailing: isOwner
-                          ? IconButton(
-                              icon: const Icon(Icons.edit, color: Colors.white),
-                              onPressed: () async {
-                                final result = await Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => EditModificationView(
-                                      buildId: buildId,
-                                      modification: modification,
+                      child: ListTile(
+                        title: Text(
+                          modification['name'] ?? 'Unnamed Modification',
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                        trailing: isOwner
+                            ? IconButton(
+                                icon:
+                                    const Icon(Icons.edit, color: Colors.white),
+                                onPressed: () async {
+                                  final result = await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          EditModificationView(
+                                        buildId: buildId,
+                                        modification: modification,
+                                      ),
                                     ),
-                                  ),
-                                );
-                                if (result == true) {
-                                  reloadBuildData();
-                                }
-                              },
-                            )
-                          : null,
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Brand: ${modification['brand'] ?? 'Unknown'}',
-                            style: const TextStyle(color: Colors.white70),
-                          ),
-                          if (modification['price'] != null)
+                                  );
+                                  if (result == true) {
+                                    reloadBuildData();
+                                  }
+                                },
+                              )
+                            : null,
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
                             Text(
-                              'Price: \$${modification['price']}',
+                              'Brand: ${modification['brand'] ?? 'Unknown'}',
                               style: const TextStyle(color: Colors.white70),
                             ),
-                          if (modification['notes'] != null &&
-                              modification['notes'].toString().isNotEmpty)
-                            Text(
-                              modification['notes'],
-                              style: const TextStyle(color: Colors.white70),
-                            ),
-                        ],
+                            if (modification['price'] != null)
+                              Text(
+                                'Price: \$${modification['price']}',
+                                style: const TextStyle(color: Colors.white70),
+                              ),
+                            if (modification['notes'] != null &&
+                                modification['notes'].toString().isNotEmpty)
+                              Text(
+                                modification['notes'],
+                                style: const TextStyle(color: Colors.white70),
+                              ),
+                          ],
+                        ),
+                        isThreeLine: true,
                       ),
-                      isThreeLine: true,
                     );
                   }).toList(),
                 ),

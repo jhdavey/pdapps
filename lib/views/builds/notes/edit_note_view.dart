@@ -100,6 +100,7 @@ Future<void> _submitNote() async {
           IconButton(
             icon: const Icon(Icons.delete),
             onPressed: _isSubmitting ? null : _deleteNote,
+            color: Color(0xFFED1C24),
           ),
         ],
       ),
