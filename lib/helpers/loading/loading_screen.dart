@@ -54,7 +54,6 @@ class LoadingScreen {
                   minWidth: size.width * 0.5,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.white,
                   borderRadius: BorderRadius.circular(10.0),
                 ),
                 child: Padding(
@@ -65,7 +64,10 @@ class LoadingScreen {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const SizedBox(height: 10),
-                        const CircularProgressIndicator(),
+                        const CircularProgressIndicator(
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
                         const SizedBox(height: 20),
                         StreamBuilder(
                             stream: _text.stream,

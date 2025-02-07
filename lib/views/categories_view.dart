@@ -32,15 +32,17 @@ class _CategoriesViewState extends State<CategoriesView> {
         future: _builds,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(
+                child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white)));
           } else if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(
-                child: Text('No builds found for this category.'));
+            return const Center(child: Text('No builds found for this tag.'));
           }
+
           final builds = snapshot.data!;
-          return buildGrid(builds, 3);
+          return buildGrid(builds, 2);
         },
       ),
     );

@@ -1,5 +1,3 @@
-// NOT CURRENTLY IN USE
-
 import 'package:flutter/material.dart';
 import 'package:pd/widgets/tag_chip_list.dart';
 
@@ -38,39 +36,45 @@ Widget buildGrid(List<dynamic> builds, int columns) {
               ),
               Expanded(
                 flex: 4,
-                child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        build['user'] != null && build['user']['name'] != null
-                            ? "${build['user']['name']}'s"
-                            : 'Unknown User',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                        ),
-                        textAlign: TextAlign.center,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      build['user'] != null && build['user']['name'] != null
+                          ? "${build['user']['name']}'s"
+                          : 'Unknown User',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '${build['year']} ${build['make']} ${build['model']}',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.normal,
-                          fontSize: 11,
-                        ),
-                        textAlign: TextAlign.center,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${build['build_category']}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.normal,
+                        fontSize: 18,
                       ),
-                      const SizedBox(height: 2),
-                      TagChipList(
-                        tags: build['tags'] is List ? build['tags'] : [],
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      '${build['year']} ${build['make']} ${build['model']}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.normal,
+                        fontSize: 18,
                       ),
-                    ],
-                  ),
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    TagChipList(
+                      tags: build['tags'] is List ? build['tags'] : [],
+                    ),
+                  ],
                 ),
               ),
             ],

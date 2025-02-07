@@ -1,8 +1,8 @@
 // ignore_for_file: use_build_context_synchronously
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:pd/helpers/format_datetime_string.dart';
-import 'package:pd/utilities/dialogs/add_comment_dialog.dart';
-import 'package:pd/utilities/dialogs/manage_commnet_dialogs.dart';
+import 'package:pd/utilities/dialogs/comments/add_comment_dialog.dart';
+import 'package:pd/utilities/dialogs/comments/manage_comment_dialogs.dart';
 
 class BuildCommentsSection extends StatelessWidget {
   final List<dynamic> comments;
@@ -25,7 +25,7 @@ class BuildCommentsSection extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(10.0),
       decoration: BoxDecoration(
-        color: Color(0xFF1F242C),
+        color: const Color(0xFF1F242C),
         borderRadius: BorderRadius.circular(16.0),
       ),
       child: Column(
@@ -61,32 +61,74 @@ class BuildCommentsSection extends StatelessWidget {
                   comment['user_id'].toString() == currentUserId?.toString();
 
               return ListTile(
-                title: Text(
-                  comment['body'] ?? '',
-                  style: const TextStyle(color: Colors.white),
+  contentPadding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 0),
+  dense: true,
+  title: Row(
+    crossAxisAlignment: CrossAxisAlignment.center,
+    children: [
+      CircleAvatar(
+        radius: 20,
+        backgroundImage: comment['user'] != null &&
+                comment['user']['profile_image'] != null &&
+                comment['user']['profile_image'].isNotEmpty
+            ? NetworkImage(comment['user']['profile_image'])
+            : const AssetImage('assets/images/profile_placeholder.png')
+                as ImageProvider,
+      ),
+      const SizedBox(width: 8),
+      Expanded(
+        child: Text.rich(
+          TextSpan(
+            children: [
+              TextSpan(
+                text:
+                    "${comment['user'] != null ? comment['user']['name'] : 'User ${comment['user_id']}'}\n",
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                  height: 1.5,
                 ),
-                subtitle: Text(
-                  "${comment['user'] != null ? comment['user']['name'] : 'User ${comment['user_id']}'} • ${formatDateTime(comment['created_at'] ?? '')}",
-                  style: const TextStyle(color: Colors.white70),
+                recognizer: TapGestureRecognizer()
+                  ..onTap = () {
+                    if (comment['user'] != null && comment['user']['id'] != null) {
+                      Navigator.pushNamed(
+                        context,
+                        '/garage',
+                        arguments: comment['user']['id'],
+                      );
+                    }
+                  },
+              ),
+              TextSpan(
+                text: comment['body'] ?? '',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  height: 1.5,
                 ),
-                trailing: commentIsOwner
-                    ? Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.edit, color: Colors.white),
-                            onPressed: () async {
-                              final result = await showManageCommentDialog(
-                                  context, comment, reloadBuildData);
-                              if (result == true) {
-                                reloadBuildData();
-                              }
-                            },
-                          ),
-                        ],
-                      )
-                    : null,
-              );
+              ),
+            ],
+          ),
+        ),
+      ),
+      if (commentIsOwner)
+        IconButton(
+          icon: const Icon(Icons.edit, color: Colors.white, size: 16),
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(),
+          onPressed: () async {
+            final result = await showManageCommentDialog(
+                context, comment, reloadBuildData);
+            if (result == true) {
+              reloadBuildData();
+            }
+          },
+        ),
+    ],
+  ),
+);
+
             })
         ],
       ),

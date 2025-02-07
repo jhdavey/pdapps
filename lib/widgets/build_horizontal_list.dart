@@ -52,7 +52,7 @@ Widget buildHorizontalList(List<dynamic> builds) {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            '${build['year']} ${build['make']} ${build['model']}',
+                            '${build['build_category']}',
                             style: const TextStyle(
                               fontWeight: FontWeight.normal,
                               fontSize: 18,
@@ -61,9 +61,8 @@ Widget buildHorizontalList(List<dynamic> builds) {
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          const SizedBox(height: 2),
-                                                    Text(
-                            '${build['build_category']}',
+                          Text(
+                            '${build['year']} ${build['make']} ${build['model']}',
                             style: const TextStyle(
                               fontWeight: FontWeight.normal,
                               fontSize: 18,

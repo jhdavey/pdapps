@@ -20,6 +20,11 @@ class WideBuildTile extends StatelessWidget {
       'user': user,
     };
 
+    final String? imageUrl = buildData['image'];
+    final ImageProvider imageProvider = (imageUrl != null && imageUrl.isNotEmpty)
+        ? NetworkImage(imageUrl)
+        : const AssetImage('assets/images/placeholder_car_image.png');
+
     return GestureDetector(
       onTap: () {
         Navigator.of(context).pushNamed('/build-view', arguments: buildWithUser);
@@ -38,9 +43,7 @@ class WideBuildTile extends StatelessWidget {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(8),
                 image: DecorationImage(
-                  image: NetworkImage(
-                    buildData['image'] ?? 'https://via.placeholder.com/150',
-                  ),
+                  image: imageProvider,
                   fit: BoxFit.cover,
                 ),
               ),

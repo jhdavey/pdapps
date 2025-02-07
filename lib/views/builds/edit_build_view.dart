@@ -6,7 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:pd/data/build_categories.dart';
 import 'package:pd/helpers/image_picker.dart';
+import 'package:pd/services/api/build/delete_build.dart';
 import 'package:pd/services/api/build/edit_build.dart';
+import 'package:pd/utilities/dialogs/delete_dialog.dart';
 
 class EditBuildView extends StatefulWidget {
   final Map<String, dynamic> build;
@@ -82,16 +84,16 @@ class _EditBuildViewState extends State<EditBuildView> {
         List<String>.from(widget.build['additional_images'] ?? []);
   }
 
-Future<void> _pickImage() async {
-  final File? selected = await pickImageFromGallery();
+  Future<void> _pickImage() async {
+    final File? selected = await pickImageFromGallery();
 
-  if (selected != null) {
-    setState(() {
-      _selectedImage = selected;
-      widget.build['image'] = selected.path;
-    });
+    if (selected != null) {
+      setState(() {
+        _selectedImage = selected;
+        widget.build['image'] = selected.path;
+      });
+    }
   }
-}
 
   void _removeAdditionalImage(int index) {
     setState(() {
@@ -111,67 +113,86 @@ Future<void> _pickImage() async {
     }
   }
 
-Future<void> _updateBuild() async {
-  if (!_formKey.currentState!.validate()) return;
+  Future<void> _updateBuild() async {
+    if (!_formKey.currentState!.validate()) return;
 
-  final fields = <String, String>{
-    'year': _yearController.text.trim(),
-    'make': _makeController.text.trim(),
-    'model': _modelController.text.trim(),
-    'trim': _trimController.text.trim(),
-    'build_category': _selectedCategory ?? '',
-    'hp': _hpController.text.trim(),
-    'whp': _whpController.text.trim(),
-    'torque': _torqueController.text.trim(),
-    'weight': _weightController.text.trim(),
-    'vehicleLayout': _vehicleLayoutController.text.trim(),
-    'fuel': _fuelController.text.trim(),
-    'zeroSixty': _zeroSixtyController.text.trim(),
-    'zeroOneHundred': _zeroOneHundredController.text.trim(),
-    'quarterMile': _quarterMileController.text.trim(),
-    'engineType': _engineTypeController.text.trim(),
-    'engineCode': _engineCodeController.text.trim(),
-    'forcedInduction': _forcedInductionController.text.trim(),
-    'trans': _transController.text.trim(),
-    'suspension': _suspensionController.text.trim(),
-    'brakes': _brakesController.text.trim(),
-  };
+    final fields = <String, String>{
+      'year': _yearController.text.trim(),
+      'make': _makeController.text.trim(),
+      'model': _modelController.text.trim(),
+      'trim': _trimController.text.trim(),
+      'build_category': _selectedCategory ?? '',
+      'hp': _hpController.text.trim(),
+      'whp': _whpController.text.trim(),
+      'torque': _torqueController.text.trim(),
+      'weight': _weightController.text.trim(),
+      'vehicleLayout': _vehicleLayoutController.text.trim(),
+      'fuel': _fuelController.text.trim(),
+      'zeroSixty': _zeroSixtyController.text.trim(),
+      'zeroOneHundred': _zeroOneHundredController.text.trim(),
+      'quarterMile': _quarterMileController.text.trim(),
+      'engineType': _engineTypeController.text.trim(),
+      'engineCode': _engineCodeController.text.trim(),
+      'forcedInduction': _forcedInductionController.text.trim(),
+      'trans': _transController.text.trim(),
+      'suspension': _suspensionController.text.trim(),
+      'brakes': _brakesController.text.trim(),
+    };
 
-  final removedImages = removedAdditionalImages.isNotEmpty
-      ? removedAdditionalImages
-      : null;
+    final removedImages =
+        removedAdditionalImages.isNotEmpty ? removedAdditionalImages : null;
 
-  Uint8List? imageBytes;
-  if (_selectedImage != null) {
-    imageBytes = await _selectedImage!.readAsBytes();
-  }
+    Uint8List? imageBytes;
+    if (_selectedImage != null) {
+      imageBytes = await _selectedImage!.readAsBytes();
+    }
 
-  List<Uint8List>? additionalImagesBytes;
-  if (newAdditionalImages.isNotEmpty) {
-    additionalImagesBytes = [];
-    for (final file in newAdditionalImages) {
-      additionalImagesBytes.add(await file.readAsBytes());
+    List<Uint8List>? additionalImagesBytes;
+    if (newAdditionalImages.isNotEmpty) {
+      additionalImagesBytes = [];
+      for (final file in newAdditionalImages) {
+        additionalImagesBytes.add(await file.readAsBytes());
+      }
+    }
+
+    final updatedBuild = await updateBuild(
+      context,
+      buildId: widget.build['id'].toString(),
+      fields: fields,
+      imageBytes: imageBytes,
+      additionalImagesBytes: additionalImagesBytes,
+      removedImages: removedImages,
+    );
+
+    if (updatedBuild != null) {
+      Navigator.pop(context, updatedBuild);
     }
   }
-
-  final updatedBuild = await updateBuild(
-    context,
-    buildId: widget.build['id'].toString(),
-    fields: fields,
-    imageBytes: imageBytes,
-    additionalImagesBytes: additionalImagesBytes,
-    removedImages: removedImages,
-  );
-
-  if (updatedBuild != null) {
-    Navigator.pop(context, updatedBuild);
-  }
-}
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Edit Build')),
+      appBar: AppBar(
+        title: const Text('Edit Build'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.delete, color: Colors.red),
+            onPressed: () async {
+              final confirmDelete = await showDeleteDialog(context);
+              if (confirmDelete) {
+                final success = await deleteBuild(context,
+                    buildId: widget.build['id'].toString());
+                if (success) {
+                  Navigator.popUntil(
+                      context,
+                      ModalRoute.withName(
+                          '/garage')); // Ensures navigation back to garage
+                }
+              }
+            },
+          ),
+        ],
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(

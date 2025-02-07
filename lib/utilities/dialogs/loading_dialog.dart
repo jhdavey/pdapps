@@ -10,7 +10,9 @@ CloseDialog showLoadingDialog({
     content: Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const CircularProgressIndicator(),
+        const CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+        ),
         const SizedBox(
           height: 10.0,
         ),

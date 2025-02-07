@@ -94,7 +94,8 @@ class _GarageViewState extends State<GarageView> {
         future: _garageData,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white)));
           } else if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
@@ -113,7 +114,8 @@ class _GarageViewState extends State<GarageView> {
                   builder: (context, snapshotSocial) {
                     if (snapshotSocial.connectionState ==
                         ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
+                      return const Center(child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white)));
                     }
                     if (snapshotSocial.hasError) {
                       return Center(

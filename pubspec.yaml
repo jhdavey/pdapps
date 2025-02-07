@@ -103,3 +103,5 @@ flutter:
   # see https://flutter.dev/to/font-from-package
   assets:
     - assets/images/logoFull.png
+    - assets/images/profile_placeholder.png
+    - assets/images/placeholder_car_image.png

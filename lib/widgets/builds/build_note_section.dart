@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:pd/views/builds/notes/create_note_view.dart';
-import 'package:pd/views/builds/notes/edit_note_view.dart';
+import 'package:pd/utilities/dialogs/notes/manage_note_dialog.dart';
 
 class BuildNotesSection extends StatelessWidget {
   final List<dynamic> notes;
@@ -21,12 +20,13 @@ class BuildNotesSection extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(10.0),
       decoration: BoxDecoration(
-        color: Color(0xFF1F242C),
+        color: const Color(0xFF1F242C),
         borderRadius: BorderRadius.circular(16.0),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header Row
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -42,12 +42,7 @@ class BuildNotesSection extends StatelessWidget {
                 IconButton(
                   icon: const Icon(Icons.add, color: Colors.white),
                   onPressed: () async {
-                    final result = await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => CreateNoteView(buildId: buildId),
-                      ),
-                    );
+                    final result = await showManageNoteDialog(context, buildId, null, reloadBuildData);
                     if (result == true) {
                       reloadBuildData();
                     }
@@ -56,7 +51,8 @@ class BuildNotesSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
-          // Display a message if there are no notes, otherwise list them
+
+          // Display Message if No Notes Exist
           if (notes.isEmpty)
             const Text(
               'No build notes have been added yet.',
@@ -73,15 +69,7 @@ class BuildNotesSection extends StatelessWidget {
                     ? IconButton(
                         icon: const Icon(Icons.edit, color: Colors.white),
                         onPressed: () async {
-                          final result = await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => EditNoteView(
-                                buildId: buildId,
-                                note: note,
-                              ),
-                            ),
-                          );
+                          final result = await showManageNoteDialog(context, buildId, note, reloadBuildData);
                           if (result == true) {
                             reloadBuildData();
                           }
@@ -89,7 +77,7 @@ class BuildNotesSection extends StatelessWidget {
                       )
                     : null,
               );
-            })
+            }),
         ],
       ),
     );

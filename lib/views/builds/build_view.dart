@@ -68,8 +68,7 @@ class _BuildViewState extends State<BuildView> {
           },
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment:
-                CrossAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Text(
                 "$userName's ${_build['build_category'] ?? ''} Build",
@@ -77,7 +76,10 @@ class _BuildViewState extends State<BuildView> {
               ),
               Text(
                 'Click here to view profile',
-                style: TextStyle(fontSize: 14, color: Colors.white70, fontStyle: FontStyle.italic),
+                style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.white70,
+                    fontStyle: FontStyle.italic),
               ),
             ],
           ),
@@ -122,9 +124,16 @@ class _BuildViewState extends State<BuildView> {
         ClipRRect(
           borderRadius: BorderRadius.circular(8),
           child: Image.network(
-            _build['image'] ?? 'https://via.placeholder.com/780',
+            _build['image'] ?? '',
             fit: BoxFit.cover,
             width: double.infinity,
+            errorBuilder: (context, error, stackTrace) {
+              return Image.asset(
+                'assets/images/placeholder_car_image.png',
+                fit: BoxFit.cover,
+                width: double.infinity,
+              );
+            },
           ),
         ),
         buildAdditionalImagesSection(_build),

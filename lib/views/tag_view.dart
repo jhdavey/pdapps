@@ -33,7 +33,8 @@ class _TagViewState extends State<TagView> {
         future: _tagData,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white)));
           } else if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
@@ -45,7 +46,7 @@ class _TagViewState extends State<TagView> {
 
           return builds.isEmpty
               ? const Center(child: Text('No builds found for this tag.'))
-              : buildGrid(builds, 3); 
+              : buildGrid(builds, 2); 
         },
       ),
     );

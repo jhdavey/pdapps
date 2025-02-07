@@ -3,10 +3,12 @@
 import 'package:flutter/material.dart';
 import 'package:pd/data/modification_categories.dart';
 import 'package:pd/services/api/build/modification/edit_modification.dart';
+import 'package:pd/utilities/dialogs/delete_dialog.dart';
 
 class EditModificationView extends StatefulWidget {
   final int buildId;
   final Map<String, dynamic> modification;
+
   const EditModificationView({
     Key? key,
     required this.buildId,
@@ -30,7 +32,6 @@ class _EditModificationViewState extends State<EditModificationView> {
   @override
   void initState() {
     super.initState();
-    // Pre-fill form fields using the modification data.
     _selectedCategory = widget.modification['category'] ?? categories.first;
     _name = widget.modification['name'] ?? '';
     _brand = widget.modification['brand'] ?? '';
@@ -47,8 +48,7 @@ class _EditModificationViewState extends State<EditModificationView> {
       _isSubmitting = true;
     });
 
-    // Build the data to update.
-    final Map<String, dynamic> modificationData = {
+    final modificationData = {
       'category': _selectedCategory,
       'name': _name,
       'brand': _brand,
@@ -57,13 +57,10 @@ class _EditModificationViewState extends State<EditModificationView> {
       'notes': _notes,
     };
 
-    final int modificationId = widget.modification['id'];
-
-    // Call the extracted API function.
     final success = await updateModification(
       context: context,
       buildId: widget.buildId,
-      modificationId: modificationId,
+      modificationId: widget.modification['id'],
       modificationData: modificationData,
     );
 
@@ -79,38 +76,17 @@ class _EditModificationViewState extends State<EditModificationView> {
   }
 
   Future<void> _deleteModification() async {
-    // Confirm deletion with a dialog.
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Modification'),
-        content:
-            const Text('Are you sure you want to delete this modification?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
-    );
-    if (confirm != true) return;
+    final confirm = await showDeleteDialog(context);
+    if (!confirm) return;
 
     setState(() {
       _isSubmitting = true;
     });
 
-    final int modificationId = widget.modification['id'];
-
-    // Call the extracted delete function.
     final success = await deleteModification(
       context: context,
       buildId: widget.buildId,
-      modificationId: modificationId,
+      modificationId: widget.modification['id'],
     );
 
     if (success) {
@@ -133,7 +109,7 @@ class _EditModificationViewState extends State<EditModificationView> {
           IconButton(
             icon: const Icon(Icons.delete),
             onPressed: _isSubmitting ? null : _deleteModification,
-            color: Color(0xFFED1C24),
+            color: const Color(0xFFED1C24),
           ),
         ],
       ),
@@ -164,59 +140,16 @@ class _EditModificationViewState extends State<EditModificationView> {
                     value == null ? 'Please select a category' : null,
               ),
               const SizedBox(height: 16),
-              TextFormField(
-                decoration: const InputDecoration(
-                  labelText: 'Name',
-                  border: OutlineInputBorder(),
-                ),
-                initialValue: _name,
-                onSaved: (value) => _name = value,
-                validator: (value) => value == null || value.isEmpty
-                    ? 'Please enter a name'
-                    : null,
-              ),
+              _buildTextField('Name', _name, (value) => _name = value),
               const SizedBox(height: 16),
-              TextFormField(
-                decoration: const InputDecoration(
-                  labelText: 'Brand',
-                  border: OutlineInputBorder(),
-                ),
-                initialValue: _brand,
-                onSaved: (value) => _brand = value,
-                validator: (value) => value == null || value.isEmpty
-                    ? 'Please enter a brand'
-                    : null,
-              ),
+              _buildTextField('Brand', _brand, (value) => _brand = value),
               const SizedBox(height: 16),
-              TextFormField(
-                decoration: const InputDecoration(
-                  labelText: 'Price',
-                  border: OutlineInputBorder(),
-                ),
-                initialValue: _price,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                onSaved: (value) => _price = value,
-              ),
+              _buildTextField('Price', _price, (value) => _price = value,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true)),
               const SizedBox(height: 16),
-              TextFormField(
-                decoration: const InputDecoration(
-                  labelText: 'Part Number',
-                  border: OutlineInputBorder(),
-                ),
-                initialValue: _part,
-                onSaved: (value) => _part = value,
-              ),
+              _buildTextField('Part Number', _part, (value) => _part = value),
               const SizedBox(height: 16),
-              TextFormField(
-                decoration: const InputDecoration(
-                  labelText: 'Notes',
-                  border: OutlineInputBorder(),
-                ),
-                initialValue: _notes,
-                maxLines: 4,
-                onSaved: (value) => _notes = value,
-              ),
+              _buildTextField('Notes', _notes, (value) => _notes = value, maxLines: 4),
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: _isSubmitting ? null : _submitModification,
@@ -228,6 +161,22 @@ class _EditModificationViewState extends State<EditModificationView> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildTextField(
+      String label, String? initialValue, Function(String?) onSaved,
+      {TextInputType keyboardType = TextInputType.text, int maxLines = 1}) {
+    return TextFormField(
+      decoration: InputDecoration(labelText: label, border: OutlineInputBorder()),
+      initialValue: initialValue,
+      keyboardType: keyboardType,
+      maxLines: maxLines,
+      onSaved: onSaved,
+      validator: (value) =>
+          (label == 'Name' || label == 'Brand') && (value == null || value.isEmpty)
+              ? 'Please enter a $label'
+              : null,
     );
   }
 }

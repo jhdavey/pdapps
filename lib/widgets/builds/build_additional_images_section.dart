@@ -65,7 +65,8 @@ void showImageDialog(BuildContext context, List<String> images, int initialIndex
                         fit: BoxFit.contain,
                         loadingBuilder: (context, child, loadingProgress) {
                           if (loadingProgress == null) return child;
-                          return const Center(child: CircularProgressIndicator());
+                          return const Center(child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white)));
                         },
                         errorBuilder: (context, error, stackTrace) => const Center(
                           child: Icon(Icons.error, size: 50, color: Colors.white),

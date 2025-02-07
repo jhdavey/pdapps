@@ -63,9 +63,11 @@ class ProfileSection extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 40,
-                backgroundImage: user['profile_image'] != null
+                backgroundImage: user['profile_image'] != null &&
+                        user['profile_image'].isNotEmpty
                     ? NetworkImage(user['profile_image'])
-                    : const NetworkImage('https://via.placeholder.com/150'),
+                    : const AssetImage('assets/images/profile_placeholder.png')
+                        as ImageProvider,
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -110,7 +112,8 @@ class ProfileSection extends StatelessWidget {
                     final url = _getSocialMediaUrl(entry.key, entry.value);
                     final Uri uri = Uri.parse(url);
                     if (await canLaunchUrl(uri)) {
-                      await launchUrl(uri, mode: LaunchMode.externalApplication);
+                      await launchUrl(uri,
+                          mode: LaunchMode.externalApplication);
                     } else {
                       debugPrint("Could not launch $url");
                     }

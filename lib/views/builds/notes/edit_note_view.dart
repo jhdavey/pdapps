@@ -2,10 +2,12 @@
 
 import 'package:flutter/material.dart';
 import 'package:pd/services/api/build/note/edit_note.dart';
+import 'package:pd/utilities/dialogs/delete_dialog.dart';
 
 class EditNoteView extends StatefulWidget {
   final int buildId;
   final Map<String, dynamic> note;
+
   const EditNoteView({super.key, required this.buildId, required this.note});
 
   @override
@@ -23,7 +25,7 @@ class _EditNoteViewState extends State<EditNoteView> {
     _note = widget.note['note'] ?? '';
   }
 
-Future<void> _submitNote() async {
+  Future<void> _submitNote() async {
     if (!_formKey.currentState!.validate()) return;
     _formKey.currentState!.save();
 
@@ -31,10 +33,9 @@ Future<void> _submitNote() async {
       _isSubmitting = true;
     });
 
-    final int noteId = widget.note['id'];
     final success = await updateNote(
       context: context,
-      noteId: noteId,
+      noteId: widget.note['id'],
       note: _note,
     );
 
@@ -50,33 +51,16 @@ Future<void> _submitNote() async {
   }
 
   Future<void> _deleteNote() async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Note'),
-        content: const Text('Are you sure you want to delete this note?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
-    );
-    if (confirm != true) return;
+    final confirm = await showDeleteDialog(context);
+    if (!confirm) return;
 
     setState(() {
       _isSubmitting = true;
     });
 
-    final int noteId = widget.note['id'];
     final success = await deleteNote(
       context: context,
-      noteId: noteId,
+      noteId: widget.note['id'],
     );
 
     if (success) {
@@ -90,7 +74,6 @@ Future<void> _submitNote() async {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -100,7 +83,7 @@ Future<void> _submitNote() async {
           IconButton(
             icon: const Icon(Icons.delete),
             onPressed: _isSubmitting ? null : _deleteNote,
-            color: Color(0xFFED1C24),
+            color: const Color(0xFFED1C24),
           ),
         ],
       ),

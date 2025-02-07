@@ -1,4 +1,4 @@
-// ignore_for_file: library_private_types_in_public_api
+// ignore_for_file: library_private_types_in_public_api, use_build_context_synchronously
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pd/services/api/auth/auth_service.dart';
@@ -7,6 +7,7 @@ import 'package:pd/services/api/auth/bloc/auth_event.dart';
 import 'package:pd/services/api/build/get_all_builds.dart';
 import 'package:pd/data/build_categories.dart';
 import 'package:pd/main.dart';
+import 'package:pd/widgets/build_grid.dart';
 import 'package:pd/widgets/build_horizontal_list.dart';
 
 class HomeView extends StatefulWidget {
@@ -94,7 +95,9 @@ class _HomeViewState extends State<HomeView> with RouteAware {
         future: _buildData,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(
+                child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white)));
           } else if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
@@ -108,15 +111,15 @@ class _HomeViewState extends State<HomeView> with RouteAware {
                   .any((apiCat) => apiCat['build_category'] == cat))
               .toList();
 
-          final featuredBuilds = data['featuredBuilds'] as List<dynamic>? ?? [];
           final builds = data['builds'] as List<dynamic>? ?? [];
+          final featuredBuilds = data['featuredBuilds'] as List<dynamic>? ?? [];
           final followingBuilds =
               data['followingBuilds'] as List<dynamic>? ?? [];
           final tags = data['tags'] as List<dynamic>? ?? [];
 
           return SingleChildScrollView(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 4),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -199,20 +202,33 @@ class _HomeViewState extends State<HomeView> with RouteAware {
                   const Divider(),
                   // Featured Builds
                   if (featuredBuilds.isNotEmpty) ...[
-                    const Text(
-                      'Featured',
-                      style:
-                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    Padding(
+                      padding: const EdgeInsets.only(
+                          left: 8.0),
+                      child: Text(
+                        'Featured',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 10),
                     buildHorizontalList(featuredBuilds),
                   ],
                   const Divider(),
                   // Following Builds
-                  const Text(
-                    'Following',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
+                  Padding(
+                      padding: const EdgeInsets.only(
+                          left: 8.0),
+                      child: Text(
+                        'Following',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
                   const SizedBox(height: 10),
                   if (followingBuilds.isEmpty)
                     const Text('You are not following any builds yet.')
@@ -221,12 +237,19 @@ class _HomeViewState extends State<HomeView> with RouteAware {
 
                   const Divider(),
                   // Recently Updated Builds
-                  const Text(
-                    'Recently Updated',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
+                  Padding(
+                      padding: const EdgeInsets.only(
+                          left: 8.0),
+                      child: Text(
+                        'Recently Updated',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
                   const SizedBox(height: 10),
-                  buildHorizontalList(builds),
+                  buildGrid(builds, 2),
                   const SizedBox(height: 20),
                 ],
               ),
