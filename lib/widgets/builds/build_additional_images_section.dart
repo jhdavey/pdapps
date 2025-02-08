@@ -8,32 +8,36 @@ Widget buildAdditionalImagesSection(Map<String, dynamic> build) {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 10),
-        SizedBox(
-          width: double.infinity,
-          child: GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              crossAxisSpacing: 4,
-              mainAxisSpacing: 8,
-              childAspectRatio: 1,
-            ),
-            itemCount: images.length,
-            itemBuilder: (context, index) {
-              return GestureDetector(
-                onTap: () => showImageDialog(context, images, index),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.network(
-                    images[index],
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) =>
-                        const Icon(Icons.error),
+        ClipRect(
+          // Ensures no unwanted spacing
+          child: SizedBox(
+            width: double.infinity,
+            child: GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              padding: EdgeInsets.zero, // Remove any default padding
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                crossAxisSpacing: 4,
+                mainAxisSpacing: 4, // Reduce the main axis spacing slightly
+                childAspectRatio: 1,
+              ),
+              itemCount: images.length,
+              itemBuilder: (context, index) {
+                return GestureDetector(
+                  onTap: () => showImageDialog(context, images, index),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.network(
+                      images[index],
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) =>
+                          const Icon(Icons.error),
+                    ),
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
         ),
       ],
@@ -43,7 +47,8 @@ Widget buildAdditionalImagesSection(Map<String, dynamic> build) {
   }
 }
 
-void showImageDialog(BuildContext context, List<String> images, int initialIndex) {
+void showImageDialog(
+    BuildContext context, List<String> images, int initialIndex) {
   showDialog(
     context: context,
     barrierDismissible: true,
@@ -65,11 +70,15 @@ void showImageDialog(BuildContext context, List<String> images, int initialIndex
                         fit: BoxFit.contain,
                         loadingBuilder: (context, child, loadingProgress) {
                           if (loadingProgress == null) return child;
-                          return const Center(child: CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white)));
+                          return const Center(
+                              child: CircularProgressIndicator(
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white)));
                         },
-                        errorBuilder: (context, error, stackTrace) => const Center(
-                          child: Icon(Icons.error, size: 50, color: Colors.white),
+                        errorBuilder: (context, error, stackTrace) =>
+                            const Center(
+                          child:
+                              Icon(Icons.error, size: 50, color: Colors.white),
                         ),
                       ),
                     ),
@@ -78,8 +87,8 @@ void showImageDialog(BuildContext context, List<String> images, int initialIndex
               },
             ),
             Positioned(
-              top: 40,
-              right: 20,
+              top: 10,
+              right: 10,
               child: GestureDetector(
                 onTap: () => Navigator.of(context).pop(),
                 child: const CircleAvatar(

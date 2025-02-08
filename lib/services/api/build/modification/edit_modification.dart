@@ -16,6 +16,21 @@ Future<bool> updateModification({
   final token = await authService.getToken();
   final String apiUrl =
       'https://passiondrivenbuilds.com/api/builds/$buildId/modifications/$modificationId';
+  
+  modificationData = {
+    'category': modificationData['category'],
+    'name': modificationData['name'],
+    'brand': modificationData['brand'],
+    'price': modificationData['price'],
+    'part': modificationData['part'],
+    'notes': modificationData['notes'],
+    'installed_myself': modificationData['installedMyself'],
+    'installed_by': modificationData['installed_by'],
+    
+  };
+
+  // Debugging output
+  print("Final Payload Before Sending: ${json.encode(modificationData)}");
 
   try {
     final response = await http.put(
@@ -30,16 +45,15 @@ Future<bool> updateModification({
     if (response.statusCode == 200) {
       return true;
     } else {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Error: ${response.body}')));
+      _showErrorSnackbar(context, response.statusCode, response.body);
       return false;
     }
   } catch (e) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text('Error: $e')));
+    _showErrorSnackbar(context, null, e.toString());
     return false;
   }
 }
+
 
 Future<bool> deleteModification({
   required BuildContext context,
@@ -63,13 +77,23 @@ Future<bool> deleteModification({
     if (response.statusCode == 200) {
       return true;
     } else {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Error: ${response.body}')));
+      _showErrorSnackbar(context, response.statusCode, response.body);
       return false;
     }
   } catch (e) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text('Error: $e')));
+    _showErrorSnackbar(context, null, e.toString());
     return false;
   }
+}
+
+void _showErrorSnackbar(BuildContext context, int? statusCode, String errorMessage) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(
+        'Error ${statusCode != null ? "($statusCode)" : ""}: $errorMessage',
+        style: const TextStyle(color: Colors.white),
+      ),
+      backgroundColor: Colors.red,
+    ),
+  );
 }

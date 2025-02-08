@@ -1,4 +1,6 @@
-// ignore_for_file: use_build_context_synchronously
+// ignore_for_file: use_build_context_synchronously, library_private_types_in_public_api
+
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:pd/data/modification_categories.dart';
@@ -10,10 +12,10 @@ class EditModificationView extends StatefulWidget {
   final Map<String, dynamic> modification;
 
   const EditModificationView({
-    Key? key,
+    super.key,
     required this.buildId,
     required this.modification,
-  }) : super(key: key);
+  });
 
   @override
   _EditModificationViewState createState() => _EditModificationViewState();
@@ -28,6 +30,8 @@ class _EditModificationViewState extends State<EditModificationView> {
   String? _part;
   String? _notes;
   bool _isSubmitting = false;
+  int _installedMyself = 0;
+  String? _installedBy;
 
   @override
   void initState() {
@@ -38,6 +42,8 @@ class _EditModificationViewState extends State<EditModificationView> {
     _price = widget.modification['price']?.toString();
     _part = widget.modification['part'] ?? '';
     _notes = widget.modification['notes'] ?? '';
+    _installedMyself = widget.modification['installed_myself'] ?? 0;
+    _installedBy = widget.modification['installed_by'] ?? '';
   }
 
   Future<void> _submitModification() async {
@@ -55,7 +61,11 @@ class _EditModificationViewState extends State<EditModificationView> {
       'price': _price,
       'part': _part,
       'notes': _notes,
+      'installedMyself': _installedMyself,
+      'installed_by': _installedMyself == 1 ? null : _installedBy,
     };
+
+    print("Final Payload Before Sending: ${json.encode(modificationData)}");
 
     final success = await updateModification(
       context: context,
@@ -145,12 +155,28 @@ class _EditModificationViewState extends State<EditModificationView> {
               _buildTextField('Brand', _brand, (value) => _brand = value),
               const SizedBox(height: 16),
               _buildTextField('Price', _price, (value) => _price = value,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true)),
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true)),
               const SizedBox(height: 16),
               _buildTextField('Part Number', _part, (value) => _part = value),
               const SizedBox(height: 16),
-              _buildTextField('Notes', _notes, (value) => _notes = value, maxLines: 4),
+              CheckboxListTile(
+                title: const Text('Installed Myself'),
+                value: _installedMyself == 1,
+                onChanged: (bool? value) {
+                  setState(() {
+                    _installedMyself = value == true ? 1 : 0;
+                    if (_installedMyself == 1) _installedBy = null;
+                  });
+                },
+              ),
               const SizedBox(height: 16),
+              _buildTextField(
+                'Installed By',
+                _installedBy,
+                (value) => _installedBy = value,
+                enabled: _installedMyself == 0,
+              ),
               ElevatedButton(
                 onPressed: _isSubmitting ? null : _submitModification,
                 child: _isSubmitting
@@ -165,18 +191,30 @@ class _EditModificationViewState extends State<EditModificationView> {
   }
 
   Widget _buildTextField(
-      String label, String? initialValue, Function(String?) onSaved,
-      {TextInputType keyboardType = TextInputType.text, int maxLines = 1}) {
+    String label,
+    String? initialValue,
+    Function(String?) onSaved, {
+    TextInputType keyboardType = TextInputType.text,
+    int maxLines = 1,
+    bool enabled = true,
+  }) {
     return TextFormField(
-      decoration: InputDecoration(labelText: label, border: OutlineInputBorder()),
+      decoration: InputDecoration(
+        labelText: label,
+        border: const OutlineInputBorder(),
+      ),
       initialValue: initialValue,
       keyboardType: keyboardType,
       maxLines: maxLines,
       onSaved: onSaved,
-      validator: (value) =>
-          (label == 'Name' || label == 'Brand') && (value == null || value.isEmpty)
-              ? 'Please enter a $label'
-              : null,
+      enabled: enabled,
+      validator: (value) {
+        if ((label == 'Name' || label == 'Brand') &&
+            (value == null || value.isEmpty)) {
+          return 'Please enter a $label';
+        }
+        return null;
+      },
     );
   }
 }

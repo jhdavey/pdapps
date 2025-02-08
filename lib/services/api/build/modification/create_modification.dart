@@ -15,6 +15,8 @@ Future<bool> submitModification(
   String? price,
   String? part,
   String? notes,
+  required int installedMyself,
+  String? installedBy,
 }) async {
   final authService = RepositoryProvider.of<ApiAuthService>(context);
   final token = await authService.getToken();
@@ -29,7 +31,11 @@ Future<bool> submitModification(
     'price': price,
     'part': part,
     'notes': notes,
+    'installed_myself': installedMyself,
+    'installed_by': installedMyself == 1 ? "" : installedBy,
   };
+
+  print("Final Payload Before Sending: ${json.encode(modificationData)}");
 
   try {
     final response = await http.post(
@@ -42,7 +48,6 @@ Future<bool> submitModification(
     );
 
     if (response.statusCode == 201) {
-      // Modification added successfully.
       return true;
     } else {
       ScaffoldMessenger.of(context).showSnackBar(

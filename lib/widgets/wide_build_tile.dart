@@ -21,13 +21,15 @@ class WideBuildTile extends StatelessWidget {
     };
 
     final String? imageUrl = buildData['image'];
-    final ImageProvider imageProvider = (imageUrl != null && imageUrl.isNotEmpty)
-        ? NetworkImage(imageUrl)
-        : const AssetImage('assets/images/placeholder_car_image.png');
+    final ImageProvider imageProvider =
+        (imageUrl != null && imageUrl.isNotEmpty)
+            ? NetworkImage(imageUrl)
+            : const AssetImage('assets/images/placeholder_car_image.png');
 
     return GestureDetector(
       onTap: () {
-        Navigator.of(context).pushNamed('/build-view', arguments: buildWithUser);
+        Navigator.of(context)
+            .pushNamed('/build-view', arguments: buildWithUser);
       },
       child: Card(
         margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
@@ -56,11 +58,8 @@ class WideBuildTile extends StatelessWidget {
                   Align(
                     alignment: Alignment.topRight,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[850],
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 4),
                       child: Text(
                         buildData['build_category'] ?? 'Unknown Category',
                         style: const TextStyle(
@@ -84,12 +83,14 @@ class WideBuildTile extends StatelessWidget {
                     children: [
                       Text(
                         "HP: ${buildData['hp'] ?? 'N/A'}",
-                        style: const TextStyle(fontSize: 14, color: Colors.grey),
+                        style:
+                            const TextStyle(fontSize: 14, color: Colors.grey),
                       ),
                       const SizedBox(width: 16),
                       Text(
                         "Torque: ${buildData['torque'] ?? 'N/A'}",
-                        style: const TextStyle(fontSize: 14, color: Colors.grey),
+                        style:
+                            const TextStyle(fontSize: 14, color: Colors.grey),
                       ),
                     ],
                   ),

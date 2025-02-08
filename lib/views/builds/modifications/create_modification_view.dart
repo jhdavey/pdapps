@@ -21,36 +21,44 @@ class _CreateModificationViewState extends State<CreateModificationView> {
   String? _part;
   String? _notes;
   bool _isSubmitting = false;
+  int _installedMyself = 0;
+  String? _installedBy;
 
-Future<void> _submitModification() async {
-  if (!_formKey.currentState!.validate()) return;
-  _formKey.currentState!.save();
+  Future<void> _submitModification() async {
+    if (!_formKey.currentState!.validate()) return;
+    _formKey.currentState!.save();
 
-  setState(() {
-    _isSubmitting = true;
-  });
-
-  final success = await submitModification(
-    context,
-    widget.buildId.toString(),
-    category: _selectedCategory!,
-    name: _name,
-    brand: _brand,
-    price: _price,
-    part: _part,
-    notes: _notes,
-  );
-
-  if (success) {
-    Navigator.pop(context, true);
-  }
-
-  if (mounted) {
     setState(() {
-      _isSubmitting = false;
+      _isSubmitting = true;
     });
+
+    // ✅ DEBUGGING: Print Data Before Sending to API
+    print("Installed Myself: $_installedMyself");
+    print("Installed By: $_installedBy");
+
+    final success = await submitModification(
+      context,
+      widget.buildId.toString(),
+      category: _selectedCategory!,
+      name: _name,
+      brand: _brand,
+      price: _price,
+      part: _part,
+      notes: _notes,
+      installedMyself: _installedMyself,
+      installedBy: _installedMyself == 1 ? null : _installedBy,
+    );
+
+    if (success) {
+      Navigator.pop(context, true);
+    }
+
+    if (mounted) {
+      setState(() {
+        _isSubmitting = false;
+      });
+    }
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -85,53 +93,41 @@ Future<void> _submitModification() async {
                     value == null ? 'Please select a category' : null,
               ),
               const SizedBox(height: 16),
-              TextFormField(
-                decoration: const InputDecoration(
-                  labelText: 'Name',
-                  border: OutlineInputBorder(),
-                ),
-                onSaved: (value) => _name = value,
-                validator: (value) => value == null || value.isEmpty
-                    ? 'Please enter a name'
-                    : null,
-              ),
+              _buildTextField('Name', (value) => _name = value),
               const SizedBox(height: 16),
-              TextFormField(
-                decoration: const InputDecoration(
-                  labelText: 'Brand',
-                  border: OutlineInputBorder(),
-                ),
-                onSaved: (value) => _brand = value,
-                validator: (value) => value == null || value.isEmpty
-                    ? 'Please enter a brand'
-                    : null,
-              ),
+              _buildTextField('Brand', (value) => _brand = value),
               const SizedBox(height: 16),
-              TextFormField(
-                decoration: const InputDecoration(
-                  labelText: 'Price',
-                  border: OutlineInputBorder(),
-                ),
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                onSaved: (value) => _price = value,
-              ),
+              _buildTextField('Price', (value) => _price = value,
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true)),
               const SizedBox(height: 16),
-              TextFormField(
-                decoration: const InputDecoration(
-                  labelText: 'Part Number',
-                  border: OutlineInputBorder(),
-                ),
-                onSaved: (value) => _part = value,
-              ),
+              _buildTextField('Part Number', (value) => _part = value),
               const SizedBox(height: 16),
+              _buildTextField('Notes', (value) => _notes = value, maxLines: 4),
+              const SizedBox(height: 16),
+              CheckboxListTile(
+                title: const Text('Installed Myself'),
+                value: _installedMyself == 1,
+                onChanged: (bool? value) {
+                  setState(() {
+                    _installedMyself = value == true ? 1 : 0;
+                    if (_installedMyself == 1) {
+                      _installedBy = null;
+                    }
+                  });
+                },
+              ),
               TextFormField(
                 decoration: const InputDecoration(
-                  labelText: 'Notes',
+                  labelText: 'Installed By',
                   border: OutlineInputBorder(),
                 ),
-                maxLines: 4,
-                onSaved: (value) => _notes = value,
+                enabled: _installedMyself == 0,
+                onChanged: (value) {
+                  if (_installedMyself == 0) {
+                    _installedBy = value;
+                  }
+                },
               ),
               const SizedBox(height: 16),
               ElevatedButton(
@@ -146,6 +142,32 @@ Future<void> _submitModification() async {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildTextField(
+    String label,
+    Function(String?) onSaved, {
+    TextInputType keyboardType = TextInputType.text,
+    int maxLines = 1,
+    bool enabled = true,
+  }) {
+    return TextFormField(
+      decoration: InputDecoration(
+        labelText: label,
+        border: const OutlineInputBorder(),
+      ),
+      keyboardType: keyboardType,
+      maxLines: maxLines,
+      onSaved: onSaved,
+      enabled: enabled,
+      validator: (value) {
+        if ((label == 'Name' || label == 'Brand') &&
+            (value == null || value.isEmpty)) {
+          return 'Please enter a $label';
+        }
+        return null;
+      },
     );
   }
 }

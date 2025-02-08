@@ -2,9 +2,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pd/helpers/toggle_follow_helper.dart';
-import 'package:pd/services/api/follower_api.dart';
+import 'package:pd/services/api/follower_controller.dart';
 import 'package:pd/services/api/auth/auth_service.dart';
-import 'package:pd/services/garage_api.dart';
+import 'package:pd/services/garage_controller.dart';
 import 'package:pd/widgets/garage_profile_section.dart';
 import 'package:pd/widgets/wide_build_tile.dart';
 

@@ -7,6 +7,7 @@ import 'package:pd/services/api/auth/bloc/auth_event.dart';
 import 'package:pd/services/api/build/get_all_builds.dart';
 import 'package:pd/data/build_categories.dart';
 import 'package:pd/main.dart';
+import 'package:pd/utilities/dialogs/search_dialog.dart';
 import 'package:pd/widgets/build_grid.dart';
 import 'package:pd/widgets/build_horizontal_list.dart';
 
@@ -53,7 +54,7 @@ class _HomeViewState extends State<HomeView> with RouteAware {
       appBar: AppBar(
         title: Image.asset(
           'assets/images/logoFull.png',
-          height: 48,
+          height: 36,
         ),
         actions: [
           // Garage Button
@@ -74,7 +75,13 @@ class _HomeViewState extends State<HomeView> with RouteAware {
               }
             },
           ),
-
+          // Search Button
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: () {
+              showSearchDialog(context);
+            },
+          ),
           PopupMenuButton<String>(
             onSelected: (value) {
               if (value == 'logout') {
@@ -203,8 +210,7 @@ class _HomeViewState extends State<HomeView> with RouteAware {
                   // Featured Builds
                   if (featuredBuilds.isNotEmpty) ...[
                     Padding(
-                      padding: const EdgeInsets.only(
-                          left: 8.0),
+                      padding: const EdgeInsets.only(left: 8.0),
                       child: Text(
                         'Featured',
                         style: TextStyle(
@@ -219,16 +225,15 @@ class _HomeViewState extends State<HomeView> with RouteAware {
                   const Divider(),
                   // Following Builds
                   Padding(
-                      padding: const EdgeInsets.only(
-                          left: 8.0),
-                      child: Text(
-                        'Following',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
+                    padding: const EdgeInsets.only(left: 8.0),
+                    child: Text(
+                      'Following',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
+                  ),
                   const SizedBox(height: 10),
                   if (followingBuilds.isEmpty)
                     const Text('You are not following any builds yet.')
@@ -238,16 +243,15 @@ class _HomeViewState extends State<HomeView> with RouteAware {
                   const Divider(),
                   // Recently Updated Builds
                   Padding(
-                      padding: const EdgeInsets.only(
-                          left: 8.0),
-                      child: Text(
-                        'Recently Updated',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
+                    padding: const EdgeInsets.only(left: 8.0),
+                    child: Text(
+                      'Recently Updated',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
+                  ),
                   const SizedBox(height: 10),
                   buildGrid(builds, 2),
                   const SizedBox(height: 20),

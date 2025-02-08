@@ -1,6 +1,6 @@
 // ignore_for_file: use_build_context_synchronously
 import 'package:flutter/material.dart';
-import 'package:pd/services/api/follower_api.dart';
+import 'package:pd/services/api/follower_controller.dart';
 
 Future<void> toggleFollowHelper({
   required BuildContext context,

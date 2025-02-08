@@ -13,6 +13,7 @@ import 'package:pd/views/home_view.dart';
 import 'package:pd/views/garage_view.dart';
 import 'package:pd/views/builds/build_view.dart';
 import 'package:pd/views/auth/register_view.dart';
+import 'package:pd/views/search_results_view.dart';
 import 'package:pd/views/tag_view.dart';
 import 'package:pd/views/categories_view.dart';
 import 'package:pd/helpers/loading/loading_screen.dart';
@@ -109,7 +110,6 @@ class MyApp extends StatelessWidget {
                   ),
                 );
               }
-              // You may retrieve the build ID if needed
               return const BuildView();
             },
             '/garage': (context) => const GarageView(),
@@ -149,6 +149,10 @@ class MyApp extends StatelessWidget {
               final category = args['category'] as String;
               return CategoriesView(category: category);
             },
+            '/search-results': (context) {
+          final query = ModalRoute.of(context)!.settings.arguments as String;
+          return SearchResultsView(query: query);
+        },
           },
         ),
       ),
