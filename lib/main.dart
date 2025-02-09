@@ -101,6 +101,7 @@ class MyApp extends StatelessWidget {
           debugShowCheckedModeBanner: false,
           home: const AppNavigator(),
           routes: {
+            '/login': (context) => const LoginView(),
             '/build-view': (context) {
               final args = ModalRoute.of(context)!.settings.arguments
                   as Map<String, dynamic>?;

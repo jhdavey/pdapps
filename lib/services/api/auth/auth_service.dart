@@ -1,4 +1,7 @@
 // api_auth_service.dart
+// ignore_for_file: use_build_context_synchronously
+
+import 'package:flutter/material.dart';
 import 'package:pd/services/api/auth/auth_user.dart';
 import 'package:pd/services/api/auth/auth_provider.dart';
 
@@ -26,8 +29,18 @@ class ApiAuthService {
     await _apiAuthProvider.logIn(email: email, password: password);
   }
 
-  Future<void> logOut() async {
-    await _apiAuthProvider.logOut();
+  Future<void> logOut([BuildContext? context]) async {
+    try {
+      await _apiAuthProvider.logOut();
+    } catch (e) {
+      debugPrint('Logout API failed: $e');
+    } finally {
+      await _apiAuthProvider.clearAuthData();
+      if (context != null) {
+        Navigator.of(context)
+            .pushNamedAndRemoveUntil('/login', (route) => false);
+      }
+    }
   }
 
   Future<AuthUser?> getCurrentUser() async {
@@ -46,7 +59,6 @@ class ApiAuthService {
     await _apiAuthProvider.initialize();
   }
 
-  // Add this method to expose the token from the underlying provider.
   Future<String?> getToken() async {
     return await _apiAuthProvider.getToken();
   }

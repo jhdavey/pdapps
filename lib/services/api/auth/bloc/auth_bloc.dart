@@ -6,7 +6,8 @@ import 'package:pd/services/api/auth/bloc/auth_state.dart';
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final ApiAuthService authService;
 
-  AuthBloc(this.authService) : super(const AuthStateUninitialized(isLoading: true)) {
+  AuthBloc(this.authService)
+      : super(const AuthStateUninitialized(isLoading: true)) {
     // Handle register navigation
     on<AuthEventShouldRegister>((event, emit) {
       emit(const AuthStateRegistering(

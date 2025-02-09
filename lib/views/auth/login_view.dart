@@ -37,33 +37,44 @@ class _LoginViewState extends State<LoginView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Login')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            TextField(
-              controller: _emailController,
-              decoration: const InputDecoration(labelText: 'Email'),
-              keyboardType: TextInputType.emailAddress,
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: IntrinsicHeight(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Login',
+                  style: TextStyle(fontSize: 24),
+                ),
+                TextField(
+                  controller: _emailController,
+                  decoration: const InputDecoration(labelText: 'Email'),
+                  keyboardType: TextInputType.emailAddress,
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _passwordController,
+                  decoration: const InputDecoration(labelText: 'Password'),
+                  obscureText: true,
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: _onLoginButtonPressed,
+                  child: const Text('Login'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    context
+                        .read<AuthBloc>()
+                        .add(const AuthEventShouldRegister());
+                  },
+                  child: const Text('Register'),
+                ),
+              ],
             ),
-            TextField(
-              controller: _passwordController,
-              decoration: const InputDecoration(labelText: 'Password'),
-              obscureText: true,
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _onLoginButtonPressed,
-              child: const Text('Login'),
-            ),
-            TextButton(
-              onPressed: () {
-                context.read<AuthBloc>().add(const AuthEventShouldRegister());
-              },
-              child: const Text('Register'),
-            ),
-          ],
+          ),
         ),
       ),
     );

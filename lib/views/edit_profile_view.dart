@@ -3,7 +3,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:pd/services/api/update_profile_conrtoller.dart';
+import 'package:pd/services/api/update_profile_controller.dart';
 import 'package:pd/utilities/dialogs/delete_dialog.dart';
 
 class EditProfileView extends StatefulWidget {
@@ -88,7 +88,7 @@ class _EditProfileViewState extends State<EditProfileView> {
       _isSubmitting = true;
     });
 
-    final success = await deleteProfile(context: context);
+    final success = await deleteProfile(context);
 
     if (success) {
       Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
@@ -130,7 +130,7 @@ class _EditProfileViewState extends State<EditProfileView> {
                               widget.user['profile_image'].isNotEmpty
                           ? NetworkImage(widget.user['profile_image'])
                               as ImageProvider
-                          : const AssetImage('assets/images/profile_placeholder.png')),
+                          : AssetImage('assets/images/profile_placeholder.png')),
                   child: _profileImage == null
                       ? const Icon(Icons.camera_alt, color: Colors.white70)
                       : null,

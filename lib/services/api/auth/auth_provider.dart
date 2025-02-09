@@ -10,20 +10,17 @@ class ApiAuthProvider {
 
   ApiAuthProvider({required this.baseUrl});
 
-  // Load token from SharedPreferences
   Future<void> _loadToken() async {
     final prefs = await SharedPreferences.getInstance();
     _token = prefs.getString('auth_token');
   }
 
-  // Save token to SharedPreferences
   Future<void> _saveToken(String token) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('auth_token', token);
     _token = token;
   }
 
-  // Remove token from SharedPreferences
   Future<void> _removeToken() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('auth_token');
@@ -31,9 +28,9 @@ class ApiAuthProvider {
   }
 
   Future<String?> getToken() async {
-  await _loadToken();
-  return _token;
-}
+    await _loadToken();
+    return _token;
+  }
 
   Future<void> register({
     required String displayName,
@@ -107,6 +104,12 @@ class ApiAuthProvider {
         code: 'logout_failed',
       );
     }
+  }
+
+  Future<void> clearAuthData() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('auth_token');
+    _token = null;
   }
 
   Future<AuthUser?> getCurrentUser() async {

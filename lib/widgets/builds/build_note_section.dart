@@ -26,7 +26,6 @@ class BuildNotesSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header Row
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -51,8 +50,6 @@ class BuildNotesSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
-
-          // Display Message if No Notes Exist
           if (notes.isEmpty)
             const Text(
               'No build notes have been added yet.',

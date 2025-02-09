@@ -61,7 +61,7 @@ Future<bool> updateProfile({
   }
 }
 
-Future<bool> deleteProfile({required BuildContext context}) async {
+Future<bool> deleteProfile(BuildContext context) async {
   final authService = RepositoryProvider.of<ApiAuthService>(context);
   final token = await authService.getToken();
   final String apiUrl = 'https://passiondrivenbuilds.com/api/profile';
@@ -76,6 +76,11 @@ Future<bool> deleteProfile({required BuildContext context}) async {
     );
 
     if (response.statusCode == 200) {
+      await authService.logOut(context);
+      if (context.mounted) {
+        Navigator.of(context)
+            .pushNamedAndRemoveUntil('/login', (route) => false);
+      }
       return true;
     } else {
       _showErrorSnackbar(context, response.statusCode, response.body);
