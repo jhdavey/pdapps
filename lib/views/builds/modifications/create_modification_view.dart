@@ -74,7 +74,7 @@ class _CreateModificationViewState extends State<CreateModificationView> {
             children: [
               DropdownButtonFormField<String>(
                 decoration: const InputDecoration(
-                  labelText: 'Category',
+                  labelText: 'Category*',
                   border: OutlineInputBorder(),
                 ),
                 value: _selectedCategory,
@@ -90,12 +90,12 @@ class _CreateModificationViewState extends State<CreateModificationView> {
                   });
                 },
                 validator: (value) =>
-                    value == null ? 'Please select a category' : null,
+                    value == null ? 'Please select a category*' : null,
               ),
               const SizedBox(height: 16),
-              _buildTextField('Name', (value) => _name = value),
+              _buildTextField('Name*', (value) => _name = value),
               const SizedBox(height: 16),
-              _buildTextField('Brand', (value) => _brand = value),
+              _buildTextField('Brand*', (value) => _brand = value),
               const SizedBox(height: 16),
               _buildTextField('Price', (value) => _price = value,
                   keyboardType:

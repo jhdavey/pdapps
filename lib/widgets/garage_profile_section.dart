@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pd/views/components/edit_button.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ProfileSection extends StatelessWidget {
@@ -8,6 +9,7 @@ class ProfileSection extends StatelessWidget {
   final int? currentUserId;
   final bool isFollowing;
   final VoidCallback onToggleFollow;
+  final VoidCallback onEditProfile;
 
   const ProfileSection({
     super.key,
@@ -17,6 +19,7 @@ class ProfileSection extends StatelessWidget {
     required this.currentUserId,
     required this.isFollowing,
     required this.onToggleFollow,
+    required this.onEditProfile,
   });
 
   String _getSocialMediaUrl(String platform, String username) {
@@ -50,95 +53,132 @@ class ProfileSection extends StatelessWidget {
     final followerCount = followers.length;
     final followingCount = following.length;
 
+    final bool isGarageOwner = currentUserId == user['id'];
+
     return Container(
       padding: const EdgeInsets.all(10.0),
       decoration: BoxDecoration(
-        color: Color(0xFF1F242C),
+        color: const Color(0xFF1F242C),
         borderRadius: BorderRadius.circular(16.0),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
         children: [
-          Row(
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              CircleAvatar(
-                radius: 40,
-                backgroundImage: user['profile_image'] != null &&
-                        user['profile_image'].isNotEmpty
-                    ? NetworkImage(user['profile_image'])
-                    : const AssetImage('assets/images/profile_placeholder.png')
-                        as ImageProvider,
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "${user['name']}'s Garage",
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      "Followers: $followerCount | Following: $followingCount",
-                      style: const TextStyle(color: Colors.white70),
-                    ),
-                  ],
-                ),
-              ),
-              if (currentUserId != null && currentUserId != user['id'])
-                ElevatedButton(
-                  onPressed: onToggleFollow,
-                  child: Text(isFollowing ? 'Unfollow' : 'Follow'),
-                ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            user['bio'] ?? "No bio available.",
-            style: const TextStyle(color: Colors.white70),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: availableSocialMedia.map((entry) {
-              return Padding(
-                padding: const EdgeInsets.only(right: 8.0),
-                child: GestureDetector(
-                  onTap: () async {
-                    final url = _getSocialMediaUrl(entry.key, entry.value);
-                    final Uri uri = Uri.parse(url);
-                    if (await canLaunchUrl(uri)) {
-                      await launchUrl(uri,
-                          mode: LaunchMode.externalApplication);
-                    } else {
-                      debugPrint("Could not launch $url");
-                    }
-                  },
-                  child: Chip(
-                    visualDensity: VisualDensity.compact,
-                    padding: EdgeInsets.zero,
-                    label: Container(
-                      height: 28,
-                      alignment: Alignment.center,
-                      child: Text(
-                        '${entry.key}: ${entry.value}',
-                        style: const TextStyle(
-                          fontSize: 10,
-                          color: Colors.white,
-                          height: 1.0,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
+              Row(
+                children: [
+                  CircleAvatar(
+                    radius: 40,
+                    backgroundColor:
+                        Color(0xFF1F242C),
+                    child: ClipOval(
+                      child: user['profile_image'] != null &&
+                              user['profile_image'].isNotEmpty
+                          ? Image.network(
+                              user['profile_image'],
+                              fit: BoxFit.cover,
+                              width: 80,
+                              height: 80,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Image.asset(
+                                  'assets/images/profile_placeholder.png',
+                                  fit: BoxFit.cover,
+                                  width: 80,
+                                  height: 80,
+                                );
+                              },
+                            )
+                          : Image.asset(
+                              'assets/images/profile_placeholder.png',
+                              fit: BoxFit.cover,
+                              width: 80,
+                              height: 80,
+                            ),
                     ),
                   ),
-                ),
-              );
-            }).toList(),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "${user['name']}",
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          "Followers: $followerCount | Following: $followingCount",
+                          style: const TextStyle(color: Colors.white70),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (!isGarageOwner)
+                    ElevatedButton(
+                      onPressed: onToggleFollow,
+                      child: Text(isFollowing ? 'Unfollow' : 'Follow'),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                user['bio'] ?? "No bio available.",
+                style: const TextStyle(color: Colors.white70),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: availableSocialMedia.map((entry) {
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8.0),
+                    child: GestureDetector(
+                      onTap: () async {
+                        final url = _getSocialMediaUrl(entry.key, entry.value);
+                        final Uri uri = Uri.parse(url);
+                        if (await canLaunchUrl(uri)) {
+                          await launchUrl(uri,
+                              mode: LaunchMode.externalApplication);
+                        } else {
+                          debugPrint("Could not launch $url");
+                        }
+                      },
+                      child: Chip(
+                        visualDensity: VisualDensity.compact,
+                        padding: EdgeInsets.zero,
+                        label: Container(
+                          height: 28,
+                          alignment: Alignment.center,
+                          child: Text(
+                            '${entry.key}: ${entry.value}',
+                            style: const TextStyle(
+                              fontSize: 10,
+                              color: Colors.white,
+                              height: 1.0,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
           ),
+          // Edit Button (Only for Garage Owner)
+          if (isGarageOwner)
+            Positioned(
+              top: 5,
+              right: 5,
+              child: EditIconButton(
+                onPressed: onEditProfile,
+                iconColor: Colors.white,
+              ),
+            ),
         ],
       ),
     );

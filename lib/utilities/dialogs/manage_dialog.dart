@@ -6,6 +6,7 @@ Future<void> showManageDialog({
   required String title,
   required String label,
   required String initialValue,
+  required String itemType,
   required void Function(String) onUpdate,
   required Future<bool> Function() onDelete,
 }) async {
@@ -36,7 +37,7 @@ Future<void> showManageDialog({
           IconButton(
             icon: const Icon(Icons.delete, color: Color(0xFFED1C24)),
             onPressed: () async {
-              final confirm = await showDeleteDialog(context);
+              final confirm = await showDeleteDialog(context, itemType);
               if (confirm) {
                 final success = await onDelete();
                 if (success) {

@@ -178,7 +178,7 @@ class _EditBuildViewState extends State<EditBuildView> {
           IconButton(
             icon: const Icon(Icons.delete, color: Colors.red),
             onPressed: () async {
-              final confirmDelete = await showDeleteDialog(context);
+              final confirmDelete = await showDeleteDialog(context, 'build');
               if (confirmDelete) {
                 final success = await deleteBuild(context,
                     buildId: widget.build['id'].toString());
@@ -186,7 +186,7 @@ class _EditBuildViewState extends State<EditBuildView> {
                   Navigator.popUntil(
                       context,
                       ModalRoute.withName(
-                          '/garage')); // Ensures navigation back to garage
+                          '/garage'));
                 }
               }
             },

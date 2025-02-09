@@ -19,6 +19,7 @@ Future<bool> showManageNoteDialog(
     title: isNewNote ? 'Add Note' : 'Manage Note',
     label: 'Note',
     initialValue: note?['note'] ?? '',
+    itemType: 'note',
     onDelete: isNewNote
         ? () async => false
         : () async {

@@ -117,10 +117,21 @@ class BuildModificationsSection extends StatelessWidget {
                                 'Price: \$${modification['price']}',
                                 style: const TextStyle(color: Colors.white70),
                               ),
+                            const SizedBox(height: 10),
                             if (modification['notes'] != null &&
                                 modification['notes'].toString().isNotEmpty)
                               Text(
                                 modification['notes'],
+                                style: const TextStyle(color: Colors.white70),
+                              ),
+                            const SizedBox(height: 10),
+                            if (modification['installed_myself'] == 1 ||
+                                (modification['installed_by'] != null &&
+                                    modification['installed_by'].isNotEmpty))
+                              Text(
+                                modification['installed_myself'] == 1
+                                    ? "Self-Installed"
+                                    : "Installed by: ${modification['installed_by']}",
                                 style: const TextStyle(color: Colors.white70),
                               ),
                           ],

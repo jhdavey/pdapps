@@ -16,6 +16,7 @@ Future<bool> showManageCommentDialog(
     title: 'Manage Comment',
     label: 'Comment',
     initialValue: comment['body'] ?? '',
+    itemType: 'comment',
     onDelete: () async {
       success = await deleteComment(context, comment['id']);
       if (success) {

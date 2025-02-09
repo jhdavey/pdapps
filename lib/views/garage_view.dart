@@ -1,10 +1,11 @@
-// ignore_for_file: library_private_types_in_public_api, prefer_final_fields, use_build_context_synchronously
+// ignore_for_file: library_private_types_in_public_api
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pd/helpers/toggle_follow_helper.dart';
-import 'package:pd/services/api/follower_controller.dart';
 import 'package:pd/services/api/auth/auth_service.dart';
-import 'package:pd/services/garage_controller.dart';
+import 'package:pd/services/api/follower_controller.dart';
+import 'package:pd/services/api/garage_controller.dart';
 import 'package:pd/widgets/garage_profile_section.dart';
 import 'package:pd/widgets/wide_build_tile.dart';
 
@@ -30,19 +31,22 @@ class _GarageViewState extends State<GarageView> {
       _garageData = fetchGarageData(context: context, userId: profileUserId);
       _followers = fetchFollowers(context: context, userId: profileUserId);
       _following = fetchFollowing(context: context, userId: profileUserId);
+
       RepositoryProvider.of<ApiAuthService>(context)
           .getCurrentUser()
           .then((currentUser) {
-        setState(() {
-          _currentUserId = int.tryParse(currentUser?.id.toString() ?? '');
-        });
+        if (mounted) {
+          setState(() {
+            _currentUserId = int.tryParse(currentUser?.id.toString() ?? '');
+            debugPrint("DEBUG: Current User ID: $_currentUserId");
+          });
+        }
       });
     } else {
       throw Exception('User ID not provided');
     }
   }
 
-  // Updated _toggleFollow now uses toggleFollowHelper.
   Future<void> _toggleFollow(int profileUserId) async {
     await toggleFollowHelper(
       context: context,
@@ -60,10 +64,21 @@ class _GarageViewState extends State<GarageView> {
 
   @override
   Widget build(BuildContext context) {
-    final profileUserId = ModalRoute.of(context)?.settings.arguments as int?;
     return Scaffold(
       appBar: AppBar(
-        title: const Text("My Garage"),
+        title: FutureBuilder<Map<String, dynamic>>(
+          future: _garageData,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Text("Garage");
+            } else if (snapshot.hasError || !snapshot.hasData) {
+              return const Text("Garage");
+            }
+            final data = snapshot.data!;
+            final userName = data['user']['name'] ?? "Garage";
+            return Text("$userName's Garage");
+          },
+        ),
         actions: [
           FutureBuilder<Map<String, dynamic>>(
             future: _garageData,
@@ -73,19 +88,19 @@ class _GarageViewState extends State<GarageView> {
                   !snapshot.hasData) {
                 return const SizedBox();
               }
+
               final data = snapshot.data!;
-              final userId = ModalRoute.of(context)?.settings.arguments as int?;
-              final isOwner = userId == data['user']['id'];
-              if (isOwner) {
+              final garageOwnerId = data['user']['id'];
+
+              if (_currentUserId != null && _currentUserId == garageOwnerId) {
                 return IconButton(
                   icon: const Icon(Icons.add),
                   onPressed: () {
                     Navigator.of(context).pushNamed('/create-update-build');
                   },
                 );
-              } else {
-                return const SizedBox();
               }
+              return const SizedBox();
             },
           ),
         ],
@@ -94,17 +109,20 @@ class _GarageViewState extends State<GarageView> {
         future: _garageData,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator(
+            return const Center(
+                child: CircularProgressIndicator(
                     valueColor: AlwaysStoppedAnimation<Color>(Colors.white)));
           } else if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
             return const Center(child: Text('No builds found.'));
           }
+
           final data = snapshot.data!;
           final user = data['user'];
           final builds = data['builds'] as List<dynamic>? ?? [];
-          final isOwner = profileUserId == user['id'];
+          final isOwner = _currentUserId != null && _currentUserId == user['id'];
+
           return SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -114,8 +132,10 @@ class _GarageViewState extends State<GarageView> {
                   builder: (context, snapshotSocial) {
                     if (snapshotSocial.connectionState ==
                         ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white)));
+                      return const Center(
+                          child: CircularProgressIndicator(
+                              valueColor:
+                                  AlwaysStoppedAnimation<Color>(Colors.white)));
                     }
                     if (snapshotSocial.hasError) {
                       return Center(
@@ -128,6 +148,7 @@ class _GarageViewState extends State<GarageView> {
                         followers.any((follower) =>
                             int.tryParse(follower['id'].toString()) ==
                             _currentUserId);
+
                     return ProfileSection(
                       user: user,
                       followers: followers,
@@ -135,6 +156,10 @@ class _GarageViewState extends State<GarageView> {
                       currentUserId: _currentUserId,
                       isFollowing: _isFollowing,
                       onToggleFollow: () => _toggleFollow(user['id']),
+                      onEditProfile: isOwner
+                          ? () => Navigator.of(context)
+                              .pushNamed('/edit-profile', arguments: user)
+                          : () {},
                     );
                   },
                 ),
@@ -152,12 +177,11 @@ class _GarageViewState extends State<GarageView> {
                       return WideBuildTile(
                         buildData: build,
                         user: user,
-                        isOwner:
-                            isOwner,
+                        isOwner: isOwner,
                       );
                     },
                   )
-                else
+                else if (isOwner)
                   const Center(
                     child: Text(
                         "Add your first build by tapping the plus icon in the top right."),

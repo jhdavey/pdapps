@@ -86,7 +86,7 @@ class _EditModificationViewState extends State<EditModificationView> {
   }
 
   Future<void> _deleteModification() async {
-    final confirm = await showDeleteDialog(context);
+    final confirm = await showDeleteDialog(context, 'modification');
     if (!confirm) return;
 
     setState(() {
@@ -131,7 +131,7 @@ class _EditModificationViewState extends State<EditModificationView> {
             children: [
               DropdownButtonFormField<String>(
                 decoration: const InputDecoration(
-                  labelText: 'Category',
+                  labelText: 'Category*',
                   border: OutlineInputBorder(),
                 ),
                 value: _selectedCategory,
@@ -147,12 +147,12 @@ class _EditModificationViewState extends State<EditModificationView> {
                   });
                 },
                 validator: (value) =>
-                    value == null ? 'Please select a category' : null,
+                    value == null ? 'Please select a category*' : null,
               ),
               const SizedBox(height: 16),
-              _buildTextField('Name', _name, (value) => _name = value),
+              _buildTextField('Name*', _name, (value) => _name = value),
               const SizedBox(height: 16),
-              _buildTextField('Brand', _brand, (value) => _brand = value),
+              _buildTextField('Brand*', _brand, (value) => _brand = value),
               const SizedBox(height: 16),
               _buildTextField('Price', _price, (value) => _price = value,
                   keyboardType:

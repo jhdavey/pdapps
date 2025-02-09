@@ -9,6 +9,7 @@ import 'package:pd/services/api/auth/bloc/auth_state.dart';
 import 'package:pd/views/builds/create_build_view.dart';
 import 'package:pd/views/builds/edit_build_view.dart';
 import 'package:pd/views/auth/login_view.dart';
+import 'package:pd/views/edit_profile_view.dart';
 import 'package:pd/views/home_view.dart';
 import 'package:pd/views/garage_view.dart';
 import 'package:pd/views/builds/build_view.dart';
@@ -32,7 +33,7 @@ void main() async {
   await apiAuthService.initialize();
 
   runApp(MyApp(
-    authService: apiAuthService,  
+    authService: apiAuthService,
   ));
 }
 
@@ -113,6 +114,18 @@ class MyApp extends StatelessWidget {
               return const BuildView();
             },
             '/garage': (context) => const GarageView(),
+            '/edit-profile': (context) {
+              final args = ModalRoute.of(context)!.settings.arguments
+                  as Map<String, dynamic>?;
+              if (args == null || !args.containsKey('id')) {
+                return const Scaffold(
+                  body: Center(
+                    child: Text('Invalid profile data'),
+                  ),
+                );
+              }
+              return EditProfileView(user: args);
+            },
             '/create-update-build': (context) => CreateBuildView(),
             '/edit-build-view': (context) {
               final args = ModalRoute.of(context)!.settings.arguments
@@ -150,9 +163,10 @@ class MyApp extends StatelessWidget {
               return CategoriesView(category: category);
             },
             '/search-results': (context) {
-          final query = ModalRoute.of(context)!.settings.arguments as String;
-          return SearchResultsView(query: query);
-        },
+              final query =
+                  ModalRoute.of(context)!.settings.arguments as String;
+              return SearchResultsView(query: query);
+            },
           },
         ),
       ),
