@@ -180,20 +180,20 @@ class _BuildViewState extends State<BuildView> {
           isOwner: isOwner,
           reloadBuildData: _loadBuildData,
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 10),
         BuildNotesSection(
           notes: _build['notes'] as List<dynamic>? ?? [],
           buildId: _build['id'],
           isOwner: isOwner,
           reloadBuildData: _loadBuildData,
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 10),
         BuildFilesSection(
           build: _build,
           isOwner: isOwner,
           refreshBuild: _loadBuildData,
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 10),
         BuildCommentsSection(
           comments: _build['comments'] as List<dynamic>? ?? [],
           buildId: _build['id'].toString(),

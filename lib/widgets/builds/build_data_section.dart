@@ -13,7 +13,7 @@ Widget buildSection(
         color: Color(0xFF1F242C),
         margin: const EdgeInsets.symmetric(vertical: 10),
         child: Padding(
-          padding: const EdgeInsets.all(12.0),
+          padding: const EdgeInsets.all(10.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -22,7 +22,6 @@ Widget buildSection(
                 style:
                     const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 8),
               ...filteredData.map(
                 (data) => Padding(
                   padding: const EdgeInsets.symmetric(vertical: 4),

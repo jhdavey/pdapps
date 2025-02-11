@@ -41,7 +41,8 @@ class BuildNotesSection extends StatelessWidget {
                 IconButton(
                   icon: const Icon(Icons.add, color: Colors.white),
                   onPressed: () async {
-                    final result = await showManageNoteDialog(context, buildId, null, reloadBuildData);
+                    final result = await showManageNoteDialog(
+                        context, buildId, null, reloadBuildData);
                     if (result == true) {
                       reloadBuildData();
                     }
@@ -49,7 +50,6 @@ class BuildNotesSection extends StatelessWidget {
                 ),
             ],
           ),
-          const SizedBox(height: 10),
           if (notes.isEmpty)
             const Text(
               'No build notes have been added yet.',
@@ -57,22 +57,30 @@ class BuildNotesSection extends StatelessWidget {
             )
           else
             ...notes.map((note) {
-              return ListTile(
-                title: Text(
-                  note['note'] ?? '',
-                  style: const TextStyle(color: Colors.white),
-                ),
-                trailing: isOwner
-                    ? IconButton(
-                        icon: const Icon(Icons.edit, color: Colors.white),
-                        onPressed: () async {
-                          final result = await showManageNoteDialog(context, buildId, note, reloadBuildData);
-                          if (result == true) {
-                            reloadBuildData();
-                          }
-                        },
-                      )
-                    : null,
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Text(
+                      note['note'] ?? '',
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  ),
+                  if (isOwner)
+                    IconButton(
+                      icon: const Icon(Icons.edit,
+                          color: Colors.white, size: 16),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      onPressed: () async {
+                        final result = await showManageNoteDialog(
+                            context, buildId, note, reloadBuildData);
+                        if (result == true) {
+                          reloadBuildData();
+                        }
+                      },
+                    ),
+                ],
               );
             }),
         ],

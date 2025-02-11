@@ -58,7 +58,6 @@ class BuildModificationsSection extends StatelessWidget {
                 ),
             ],
           ),
-          const SizedBox(height: 10),
           if (hasModifications)
             ...modificationsByCategory.entries.map((entry) {
               final String category = entry.key;
