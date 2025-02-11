@@ -11,7 +11,8 @@ Future<dynamic> updateBuild(
   required String buildId,
   required Map<String, String> fields,
   Uint8List? imageBytes,
-  List<Uint8List>? additionalImagesBytes,
+  List<Uint8List>? additionalMediaBytes,
+  List<String>? additionalMediaTypes,
   List<dynamic>? removedImages,
 }) async {
   final prefs = await SharedPreferences.getInstance();
@@ -27,7 +28,6 @@ Future<dynamic> updateBuild(
   final String url = 'https://passiondrivenbuilds.com/api/builds/$buildId';
 
   try {
-    // Build the request body
     final Map<String, dynamic> body = Map.from(fields);
 
     if (removedImages != null && removedImages.isNotEmpty) {
@@ -38,11 +38,15 @@ Future<dynamic> updateBuild(
       body['image'] = base64Encode(imageBytes);
     }
 
-    if (additionalImagesBytes != null && additionalImagesBytes.isNotEmpty) {
-      final List<String> newImagesBase64 = additionalImagesBytes
+    if (additionalMediaBytes != null && additionalMediaBytes.isNotEmpty) {
+      final List<String> newMediaBase64 = additionalMediaBytes
           .map((bytes) => base64Encode(bytes))
           .toList();
-      body['added_images'] = newImagesBase64;
+      body['added_media'] = newMediaBase64;
+
+      if (additionalMediaTypes != null && additionalMediaTypes.isNotEmpty) {
+        body['added_media_types'] = additionalMediaTypes;
+      }
     }
 
     final response = await http.put(

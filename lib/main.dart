@@ -24,7 +24,6 @@ final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize ApiAuthProvider and ApiAuthService
   final apiAuthProvider = ApiAuthProvider(
     baseUrl: 'https://passiondrivenbuilds.com/api',
   );

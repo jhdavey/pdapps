@@ -4,9 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:pd/helpers/build_ownership_helper.dart';
 import 'package:pd/helpers/route_arguments_helper.dart';
 import 'package:pd/services/api/build/build_data_loader.dart';
-import 'package:pd/widgets/builds/build_additional_images_section.dart';
+import 'package:pd/widgets/builds/build_additional_media_section.dart';
 import 'package:pd/widgets/builds/build_comment_section.dart';
 import 'package:pd/widgets/builds/build_data_section.dart';
+import 'package:pd/widgets/builds/build_file_section.dart';
 import 'package:pd/widgets/builds/build_modification_section.dart';
 import 'package:pd/widgets/builds/build_note_section.dart';
 import 'package:pd/widgets/builds/build_tag_section.dart';
@@ -42,13 +43,14 @@ class _BuildViewState extends State<BuildView> {
 
   Future<void> _loadBuildData() async {
     if (_build.isNotEmpty && _build.containsKey('id')) {
-      final buildId = _build['id'].toString(); // Ensure it's a string
+      final buildId = _build['id'].toString();
       final data = await loadBuildDataHelper(buildId, context);
-      if (data != null) {
+      if (data != null && data['build'] != null) {
         setState(() {
           _build['modificationsByCategory'] = data['modificationsByCategory'];
           _build['notes'] = data['notes'];
           _build['comments'] = data['comments'];
+          _build['files'] = data['build']['files'];
         });
       }
     }
@@ -136,7 +138,7 @@ class _BuildViewState extends State<BuildView> {
             },
           ),
         ),
-        buildAdditionalImagesSection(_build),
+        buildAdditionalMediaSection(_build),
         const SizedBox(height: 8),
         BuildTags(buildData: _build),
         buildSection(
@@ -184,6 +186,12 @@ class _BuildViewState extends State<BuildView> {
           buildId: _build['id'],
           isOwner: isOwner,
           reloadBuildData: _loadBuildData,
+        ),
+        const SizedBox(height: 20),
+        BuildFilesSection(
+          build: _build,
+          isOwner: isOwner,
+          refreshBuild: _loadBuildData,
         ),
         const SizedBox(height: 20),
         BuildCommentsSection(

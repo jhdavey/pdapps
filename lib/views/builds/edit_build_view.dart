@@ -10,6 +10,18 @@ import 'package:pd/services/api/build/delete_build.dart';
 import 'package:pd/services/api/build/edit_build.dart';
 import 'package:pd/utilities/dialogs/delete_dialog.dart';
 
+class AdditionalMedia {
+  final File file;
+  final String type;
+  final String extension;
+
+  AdditionalMedia({
+    required this.file,
+    required this.type,
+    required this.extension,
+  });
+}
+
 class EditBuildView extends StatefulWidget {
   final Map<String, dynamic> build;
 
@@ -46,9 +58,9 @@ class _EditBuildViewState extends State<EditBuildView> {
   String? _selectedCategory;
   File? _selectedImage;
 
-  List<String> _existingAdditionalImages = [];
-  List<String> removedAdditionalImages = [];
-  List<File> newAdditionalImages = [];
+  List<Map<String, String>> _existingAdditionalMedia = [];
+  List<String> removedAdditionalMedia = [];
+  List<AdditionalMedia> newAdditionalMedia = [];
 
   @override
   void initState() {
@@ -80,8 +92,22 @@ class _EditBuildViewState extends State<EditBuildView> {
     _suspensionController.text = widget.build['suspension']?.toString() ?? '';
     _brakesController.text = widget.build['brakes']?.toString() ?? '';
     _selectedCategory = widget.build['build_category']?.toString();
-    _existingAdditionalImages =
-        List<String>.from(widget.build['additional_images'] ?? []);
+    final mediaRaw = widget.build['additional_media'] ??
+        widget.build['additional_images'] ??
+        [];
+
+    _existingAdditionalMedia = [];
+    for (var item in mediaRaw) {
+      if (item is String) {
+        _existingAdditionalMedia.add({'url': item, 'type': 'image'});
+      } else if (item is Map) {
+        final mediaMap = Map<String, String>.from(item);
+        if (!mediaMap.containsKey('type')) {
+          mediaMap['type'] = 'image';
+        }
+        _existingAdditionalMedia.add(mediaMap);
+      }
+    }
   }
 
   Future<void> _pickImage() async {
@@ -95,23 +121,34 @@ class _EditBuildViewState extends State<EditBuildView> {
     }
   }
 
-  void _removeAdditionalImage(int index) {
+  void _removeAdditionalMedia(int index) {
     setState(() {
-      removedAdditionalImages.add(_existingAdditionalImages[index]);
-      _existingAdditionalImages.removeAt(index);
+      removedAdditionalMedia.add(_existingAdditionalMedia[index]['url']!);
+      _existingAdditionalMedia.removeAt(index);
     });
   }
 
-  Future<void> _pickAdditionalImage() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-
-    if (pickedFile != null) {
-      setState(() {
-        newAdditionalImages.add(File(pickedFile.path));
-      });
-    }
+Future<void> _pickAdditionalMedia() async {
+  final picker = ImagePicker();
+  final pickedFile = await picker.pickMedia();
+  if (pickedFile != null) {
+    final String lowerCasePath = pickedFile.path.toLowerCase();
+    final String extension = lowerCasePath.split('.').last;
+    final String fileType = (lowerCasePath.endsWith(".mp4") ||
+            lowerCasePath.endsWith(".mov"))
+        ? "video"
+        : "image";
+    setState(() {
+      newAdditionalMedia.add(
+        AdditionalMedia(
+          file: File(pickedFile.path),
+          type: fileType,
+          extension: extension,
+        ),
+      );
+    });
   }
+}
 
   Future<void> _updateBuild() async {
     if (!_formKey.currentState!.validate()) return;
@@ -139,29 +176,32 @@ class _EditBuildViewState extends State<EditBuildView> {
       'brakes': _brakesController.text.trim(),
     };
 
-    final removedImages =
-        removedAdditionalImages.isNotEmpty ? removedAdditionalImages : null;
-
     Uint8List? imageBytes;
     if (_selectedImage != null) {
       imageBytes = await _selectedImage!.readAsBytes();
     }
 
-    List<Uint8List>? additionalImagesBytes;
-    if (newAdditionalImages.isNotEmpty) {
-      additionalImagesBytes = [];
-      for (final file in newAdditionalImages) {
-        additionalImagesBytes.add(await file.readAsBytes());
+    List<Uint8List>? additionalMediaBytes;
+    List<String>? additionalMediaTypes;
+    if (newAdditionalMedia.isNotEmpty) {
+      additionalMediaBytes = [];
+      additionalMediaTypes = [];
+      for (final media in newAdditionalMedia) {
+        additionalMediaBytes.add(await media.file.readAsBytes());
+        additionalMediaTypes.add(media.type);
       }
     }
+
+    final removedMedia =
+        removedAdditionalMedia.isNotEmpty ? removedAdditionalMedia : null;
 
     final updatedBuild = await updateBuild(
       context,
       buildId: widget.build['id'].toString(),
       fields: fields,
       imageBytes: imageBytes,
-      additionalImagesBytes: additionalImagesBytes,
-      removedImages: removedImages,
+      additionalMediaBytes: additionalMediaBytes,
+      removedImages: removedMedia,
     );
 
     if (updatedBuild != null) {
@@ -180,13 +220,12 @@ class _EditBuildViewState extends State<EditBuildView> {
             onPressed: () async {
               final confirmDelete = await showDeleteDialog(context, 'build');
               if (confirmDelete) {
-                final success = await deleteBuild(context,
-                    buildId: widget.build['id'].toString());
+                final success = await deleteBuild(
+                  context,
+                  buildId: widget.build['id'].toString(),
+                );
                 if (success) {
-                  Navigator.popUntil(
-                      context,
-                      ModalRoute.withName(
-                          '/garage'));
+                  Navigator.popUntil(context, ModalRoute.withName('/garage'));
                 }
               }
             },
@@ -202,17 +241,20 @@ class _EditBuildViewState extends State<EditBuildView> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildTextField(
-                    controller: _yearController,
-                    label: 'Year*',
-                    isRequired: true),
+                  controller: _yearController,
+                  label: 'Year*',
+                  isRequired: true,
+                ),
                 _buildTextField(
-                    controller: _makeController,
-                    label: 'Make*',
-                    isRequired: true),
+                  controller: _makeController,
+                  label: 'Make*',
+                  isRequired: true,
+                ),
                 _buildTextField(
-                    controller: _modelController,
-                    label: 'Model*',
-                    isRequired: true),
+                  controller: _modelController,
+                  label: 'Model*',
+                  isRequired: true,
+                ),
                 _buildTextField(controller: _trimController, label: 'Trim'),
                 _buildDropdownField(),
                 _buildTextField(
@@ -246,12 +288,11 @@ class _EditBuildViewState extends State<EditBuildView> {
                 _buildTextField(
                     controller: _suspensionController, label: 'Suspension'),
                 _buildTextField(controller: _brakesController, label: 'Brakes'),
-
                 const SizedBox(height: 20),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    // Image preview container
+                    // Featured image preview container
                     if (_selectedImage != null)
                       Container(
                         width: 100,
@@ -298,28 +339,20 @@ class _EditBuildViewState extends State<EditBuildView> {
                 ),
                 const SizedBox(height: 20),
                 const Text(
-                  'Additional Images',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 20),
-                const Text(
-                  'Additional Images',
+                  'Additional Media',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 10),
-                // Additional Images
-                ElevatedButton(
-                  onPressed: _pickAdditionalImage,
-                  child: const Text('Add Additional Image'),
-                ),
+                // Existing Additional Media Preview
                 Wrap(
                   spacing: 10,
                   runSpacing: 10,
                   children:
-                      _existingAdditionalImages.asMap().entries.map((entry) {
+                      _existingAdditionalMedia.asMap().entries.map((entry) {
                     final index = entry.key;
-                    final imageUrl = entry.value;
-
+                    final mediaItem = entry.value;
+                    final mediaUrl = mediaItem['url'] ?? '';
+                    final mediaType = mediaItem['type'] ?? 'image';
                     return Stack(
                       children: [
                         Container(
@@ -328,17 +361,26 @@ class _EditBuildViewState extends State<EditBuildView> {
                           decoration: BoxDecoration(
                             border: Border.all(color: Colors.grey),
                             borderRadius: BorderRadius.circular(8),
-                            image: DecorationImage(
-                              image: NetworkImage(imageUrl),
-                              fit: BoxFit.cover,
-                            ),
+                            // If the existing media is an image, show it; otherwise show a video icon.
+                            image: mediaType == 'image'
+                                ? DecorationImage(
+                                    image: NetworkImage(mediaUrl),
+                                    fit: BoxFit.cover,
+                                  )
+                                : null,
                           ),
+                          child: mediaType == 'video'
+                              ? const Center(
+                                  child: Icon(Icons.videocam,
+                                      size: 40, color: Colors.grey),
+                                )
+                              : null,
                         ),
                         Positioned(
                           top: 4,
                           right: 4,
                           child: GestureDetector(
-                            onTap: () => _removeAdditionalImage(index),
+                            onTap: () => _removeAdditionalMedia(index),
                             child: Container(
                               decoration: BoxDecoration(
                                 color: Colors.red,
@@ -353,14 +395,20 @@ class _EditBuildViewState extends State<EditBuildView> {
                     );
                   }).toList(),
                 ),
-
+                const SizedBox(height: 10),
+                // Button to pick new additional media (image or video)
+                ElevatedButton(
+                  onPressed: _pickAdditionalMedia,
+                  child: const Text('Add Additional Media'),
+                ),
+                const SizedBox(height: 10),
+                // Preview of newly picked additional media
                 Wrap(
                   spacing: 10,
                   runSpacing: 10,
-                  children: newAdditionalImages.asMap().entries.map((entry) {
+                  children: newAdditionalMedia.asMap().entries.map((entry) {
                     final index = entry.key;
-                    final file = entry.value; // A File from ImagePicker
-
+                    final media = entry.value;
                     return Stack(
                       children: [
                         Container(
@@ -369,11 +417,20 @@ class _EditBuildViewState extends State<EditBuildView> {
                           decoration: BoxDecoration(
                             border: Border.all(color: Colors.grey),
                             borderRadius: BorderRadius.circular(8),
-                            image: DecorationImage(
-                              image: FileImage(file),
-                              fit: BoxFit.cover,
-                            ),
+                            // For images, show a preview; for videos, display a placeholder icon.
+                            image: media.type == 'image'
+                                ? DecorationImage(
+                                    image: FileImage(media.file),
+                                    fit: BoxFit.cover,
+                                  )
+                                : null,
                           ),
+                          child: media.type == 'video'
+                              ? const Center(
+                                  child: Icon(Icons.videocam,
+                                      size: 40, color: Colors.grey),
+                                )
+                              : null,
                         ),
                         Positioned(
                           top: 4,
@@ -381,7 +438,7 @@ class _EditBuildViewState extends State<EditBuildView> {
                           child: GestureDetector(
                             onTap: () {
                               setState(() {
-                                newAdditionalImages.removeAt(index);
+                                newAdditionalMedia.removeAt(index);
                               });
                             },
                             child: Container(
@@ -398,7 +455,6 @@ class _EditBuildViewState extends State<EditBuildView> {
                     );
                   }).toList(),
                 ),
-
                 const SizedBox(height: 10),
                 ElevatedButton(
                   onPressed: _updateBuild,
@@ -412,10 +468,11 @@ class _EditBuildViewState extends State<EditBuildView> {
     );
   }
 
-  Widget _buildTextField(
-      {required TextEditingController controller,
-      required String label,
-      bool isRequired = false}) {
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    bool isRequired = false,
+  }) {
     return TextFormField(
       controller: controller,
       decoration: InputDecoration(labelText: label),

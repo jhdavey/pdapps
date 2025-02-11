@@ -70,8 +70,7 @@ class ProfileSection extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 40,
-                    backgroundColor:
-                        Color(0xFF1F242C),
+                    backgroundColor: Color(0xFF1F242C),
                     child: ClipOval(
                       child: user['profile_image'] != null &&
                               user['profile_image'].isNotEmpty
@@ -131,45 +130,40 @@ class ProfileSection extends StatelessWidget {
                 style: const TextStyle(color: Colors.white70),
               ),
               const SizedBox(height: 16),
-              Row(
+              Wrap(
+                spacing: 4.0,
+                alignment: WrapAlignment.start,
                 children: availableSocialMedia.map((entry) {
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8.0),
-                    child: GestureDetector(
-                      onTap: () async {
-                        final url = _getSocialMediaUrl(entry.key, entry.value);
-                        final Uri uri = Uri.parse(url);
-                        if (await canLaunchUrl(uri)) {
-                          await launchUrl(uri,
-                              mode: LaunchMode.externalApplication);
-                        } else {
-                          debugPrint("Could not launch $url");
-                        }
-                      },
-                      child: Chip(
-                        visualDensity: VisualDensity.compact,
-                        padding: EdgeInsets.zero,
-                        label: Container(
-                          height: 28,
-                          alignment: Alignment.center,
-                          child: Text(
-                            '${entry.key}: ${entry.value}',
-                            style: const TextStyle(
-                              fontSize: 10,
-                              color: Colors.white,
-                              height: 1.0,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
+                  return GestureDetector(
+                    onTap: () async {
+                      final url = _getSocialMediaUrl(entry.key, entry.value);
+                      final Uri uri = Uri.parse(url);
+                      if (await canLaunchUrl(uri)) {
+                        await launchUrl(uri,
+                            mode: LaunchMode.externalApplication);
+                      } else {
+                        debugPrint("Could not launch $url");
+                      }
+                    },
+                    child: Chip(
+                      visualDensity: VisualDensity.compact,
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                      label: Text(
+                        '${entry.key}: ${entry.value}',
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: Colors.white,
+                          height: 1.0,
                         ),
+                        textAlign: TextAlign.center,
                       ),
                     ),
                   );
                 }).toList(),
-              ),
+              )
             ],
           ),
-          // Edit Button (Only for Garage Owner)
           if (isGarageOwner)
             Positioned(
               top: 5,

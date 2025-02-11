@@ -61,74 +61,77 @@ class BuildCommentsSection extends StatelessWidget {
                   comment['user_id'].toString() == currentUserId?.toString();
 
               return ListTile(
-  contentPadding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 0),
-  dense: true,
-  title: Row(
-    crossAxisAlignment: CrossAxisAlignment.center,
-    children: [
-      CircleAvatar(
-        radius: 20,
-        backgroundImage: comment['user'] != null &&
-                comment['user']['profile_image'] != null &&
-                comment['user']['profile_image'].isNotEmpty
-            ? NetworkImage(comment['user']['profile_image'])
-            : const AssetImage('assets/images/profile_placeholder.png')
-                as ImageProvider,
-      ),
-      const SizedBox(width: 8),
-      Expanded(
-        child: Text.rich(
-          TextSpan(
-            children: [
-              TextSpan(
-                text:
-                    "${comment['user'] != null ? comment['user']['name'] : 'User ${comment['user_id']}'}\n",
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                  height: 1.5,
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 8.0, vertical: 0),
+                dense: true,
+                title: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    CircleAvatar(
+                      radius: 20,
+                      backgroundImage: comment['user'] != null &&
+                              comment['user']['profile_image'] != null &&
+                              comment['user']['profile_image'].isNotEmpty
+                          ? NetworkImage(comment['user']['profile_image'])
+                          : const AssetImage(
+                                  'assets/images/profile_placeholder.png')
+                              as ImageProvider,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text.rich(
+                        TextSpan(
+                          children: [
+                            TextSpan(
+                              text:
+                                  "${comment['user'] != null ? comment['user']['name'] : 'User ${comment['user_id']}'}\n",
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                                height: 1.5,
+                              ),
+                              recognizer: TapGestureRecognizer()
+                                ..onTap = () {
+                                  if (comment['user'] != null &&
+                                      comment['user']['id'] != null) {
+                                    Navigator.pushNamed(
+                                      context,
+                                      '/garage',
+                                      arguments: comment['user']['id'],
+                                    );
+                                  }
+                                },
+                            ),
+                            TextSpan(
+                              text: comment['body'] ?? '',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                                height: 1.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    if (commentIsOwner)
+                      IconButton(
+                        icon: const Icon(Icons.edit,
+                            color: Colors.white, size: 16),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        onPressed: () async {
+                          final result = await showManageCommentDialog(
+                              context, comment, reloadBuildData);
+                          if (result == true) {
+                            reloadBuildData();
+                          }
+                        },
+                      ),
+                  ],
                 ),
-                recognizer: TapGestureRecognizer()
-                  ..onTap = () {
-                    if (comment['user'] != null && comment['user']['id'] != null) {
-                      Navigator.pushNamed(
-                        context,
-                        '/garage',
-                        arguments: comment['user']['id'],
-                      );
-                    }
-                  },
-              ),
-              TextSpan(
-                text: comment['body'] ?? '',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  height: 1.5,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-      if (commentIsOwner)
-        IconButton(
-          icon: const Icon(Icons.edit, color: Colors.white, size: 16),
-          padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(),
-          onPressed: () async {
-            final result = await showManageCommentDialog(
-                context, comment, reloadBuildData);
-            if (result == true) {
-              reloadBuildData();
-            }
-          },
-        ),
-    ],
-  ),
-);
-
+              );
             })
         ],
       ),
