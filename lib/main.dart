@@ -22,6 +22,7 @@ import 'package:pd/views/categories_view.dart';
 import 'package:pd/helpers/loading/loading_screen.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
+import 'package:pd/widgets/user_list.dart';
 
 final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
 
@@ -180,19 +181,33 @@ class MyApp extends StatelessWidget {
                   ModalRoute.of(context)!.settings.arguments as String;
               return SearchResultsView(query: query);
             },
-            // New route for the manage note page.
             '/manage-note': (context) {
-              final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
+              final args = ModalRoute.of(context)!.settings.arguments
+                  as Map<String, dynamic>?;
               if (args == null || !args.containsKey('buildId')) {
                 return const Scaffold(
                   body: Center(child: Text('Invalid note data')),
                 );
               }
-              // Since callbacks are non-serializable, we provide a fallback no-op callback.
               return ManageNotePage(
                 buildId: args['buildId'],
-                note: args['note'], // May be null if adding a new note.
+                note: args['note'],
                 reloadBuildData: args['reloadBuildData'] ?? () {},
+              );
+            },
+            '/user-list': (context) {
+              final args = ModalRoute.of(context)!.settings.arguments
+                  as Map<String, dynamic>?;
+              if (args == null ||
+                  !args.containsKey('users') ||
+                  !args.containsKey('title')) {
+                return const Scaffold(
+                  body: Center(child: Text('Invalid user list data')),
+                );
+              }
+              return UserListView(
+                users: args['users'],
+                title: args['title'],
               );
             },
           },

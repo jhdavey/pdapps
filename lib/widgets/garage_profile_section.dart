@@ -52,7 +52,6 @@ class ProfileSection extends StatelessWidget {
 
     final followerCount = followers.length;
     final followingCount = following.length;
-
     final bool isGarageOwner = currentUserId == user['id'];
 
     return Container(
@@ -66,11 +65,12 @@ class ProfileSection extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Main row with profile image and user info.
               Row(
                 children: [
                   CircleAvatar(
                     radius: 40,
-                    backgroundColor: Color(0xFF1F242C),
+                    backgroundColor: const Color(0xFF1F242C),
                     child: ClipOval(
                       child: user['profile_image'] != null &&
                               user['profile_image'].isNotEmpty
@@ -110,18 +110,48 @@ class ProfileSection extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 4),
-                        Text(
-                          "Followers: $followerCount | Following: $followingCount",
-                          style: const TextStyle(color: Colors.white70),
+                        // Follower and following data.
+                        Row(
+                          children: [
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.pushNamed(context, '/user-list',
+                                    arguments: {
+                                      'users': followers,
+                                      'title': 'Followers'
+                                    });
+                              },
+                              child: Text(
+                                "Followers: $followerCount",
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                ),
+                              ),
+                            ),
+                            const Text(
+                              "  |  ",
+                              style: TextStyle(color: Colors.white70),
+                            ),
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.pushNamed(context, '/user-list',
+                                    arguments: {
+                                      'users': following,
+                                      'title': 'Following'
+                                    });
+                              },
+                              child: Text(
+                                "Following: $followingCount",
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
                   ),
-                  if (!isGarageOwner)
-                    ElevatedButton(
-                      onPressed: onToggleFollow,
-                      child: Text(isFollowing ? 'Unfollow' : 'Follow'),
-                    ),
                 ],
               ),
               const SizedBox(height: 16),
@@ -147,8 +177,8 @@ class ProfileSection extends StatelessWidget {
                     },
                     child: Chip(
                       visualDensity: VisualDensity.compact,
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8.0, vertical: 4.0),
                       label: Text(
                         '${entry.key}: ${entry.value}',
                         style: const TextStyle(
@@ -161,7 +191,7 @@ class ProfileSection extends StatelessWidget {
                     ),
                   );
                 }).toList(),
-              )
+              ),
             ],
           ),
           if (isGarageOwner)
@@ -171,6 +201,23 @@ class ProfileSection extends StatelessWidget {
               child: EditIconButton(
                 onPressed: onEditProfile,
                 iconColor: Colors.white,
+              ),
+            ),
+          if (!isGarageOwner)
+            Positioned(
+              top: 5,
+              right: 5,
+              child: SizedBox(
+                width: 70,
+                height: 30,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                    textStyle: const TextStyle(fontSize: 12),
+                  ),
+                  onPressed: onToggleFollow,
+                  child: Text(isFollowing ? 'Unfollow' : 'Follow'),
+                ),
               ),
             ),
         ],
