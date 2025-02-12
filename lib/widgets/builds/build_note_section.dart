@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:pd/utilities/dialogs/notes/manage_note_dialog.dart';
+import 'package:flutter_quill/flutter_quill.dart' as quill;
+import 'package:pd/views/builds/build_note_view.dart'; // if needed for ManageNotePage
 
 class BuildNotesSection extends StatelessWidget {
   final List<dynamic> notes;
@@ -26,6 +28,7 @@ class BuildNotesSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header row with title and add button.
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -41,8 +44,17 @@ class BuildNotesSection extends StatelessWidget {
                 IconButton(
                   icon: const Icon(Icons.add, color: Colors.white),
                   onPressed: () async {
-                    final result = await showManageNoteDialog(
-                        context, buildId, null, reloadBuildData);
+                    // Navigate to the ManageNotePage in "add note" mode.
+                    final result = await Navigator.push<bool>(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ManageNotePage(
+                          buildId: buildId,
+                          note: null,
+                          reloadBuildData: reloadBuildData,
+                        ),
+                      ),
+                    );
                     if (result == true) {
                       reloadBuildData();
                     }
@@ -50,6 +62,7 @@ class BuildNotesSection extends StatelessWidget {
                 ),
             ],
           ),
+          const SizedBox(height: 10),
           if (notes.isEmpty)
             const Text(
               'No build notes have been added yet.',
@@ -57,30 +70,58 @@ class BuildNotesSection extends StatelessWidget {
             )
           else
             ...notes.map((note) {
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Text(
-                      note['note'] ?? '',
-                      style: const TextStyle(color: Colors.white),
+              // Attempt to parse the note's content (stored as a JSON-encoded Delta).
+              quill.Document document;
+              try {
+                final deltaJson = jsonDecode(note['note']);
+                document = quill.Document.fromJson(deltaJson);
+              } catch (e) {
+                // Fallback to a plain text document if parsing fails.
+                document = quill.Document()..insert(0, note['note'] ?? '');
+              }
+              // Create a temporary controller for rendering.
+              final controller = quill.QuillController(
+                document: document,
+                selection: const TextSelection.collapsed(offset: 0),
+              );
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4.0),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Use AbsorbPointer to render the note as read-only rich text.
+                    Expanded(
+                      child: AbsorbPointer(
+                        child: quill.QuillEditor(
+                          controller: controller,
+                          focusNode: FocusNode(), // Create a temporary focus node.
+                          scrollController: ScrollController(), // Temporary scroll controller.
+                        ),
+                      ),
                     ),
-                  ),
-                  if (isOwner)
-                    IconButton(
-                      icon: const Icon(Icons.edit,
-                          color: Colors.white, size: 16),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      onPressed: () async {
-                        final result = await showManageNoteDialog(
-                            context, buildId, note, reloadBuildData);
-                        if (result == true) {
-                          reloadBuildData();
-                        }
-                      },
-                    ),
-                ],
+                    if (isOwner)
+                      IconButton(
+                        icon: const Icon(Icons.edit, color: Colors.white, size: 16),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        onPressed: () async {
+                          final result = await Navigator.push<bool>(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ManageNotePage(
+                                buildId: buildId,
+                                note: note,
+                                reloadBuildData: reloadBuildData,
+                              ),
+                            ),
+                          );
+                          if (result == true) {
+                            reloadBuildData();
+                          }
+                        },
+                      ),
+                  ],
+                ),
               );
             }),
         ],

@@ -1,3 +1,4 @@
+// main.dart
 // ignore_for_file: unused_local_variable
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -6,6 +7,7 @@ import 'package:pd/services/api/auth/auth_service.dart';
 import 'package:pd/services/api/auth/bloc/auth_bloc.dart';
 import 'package:pd/services/api/auth/bloc/auth_event.dart';
 import 'package:pd/services/api/auth/bloc/auth_state.dart';
+import 'package:pd/views/builds/build_note_view.dart';
 import 'package:pd/views/builds/create_build_view.dart';
 import 'package:pd/views/builds/edit_build_view.dart';
 import 'package:pd/views/auth/login_view.dart';
@@ -18,6 +20,8 @@ import 'package:pd/views/search_results_view.dart';
 import 'package:pd/views/tag_view.dart';
 import 'package:pd/views/categories_view.dart';
 import 'package:pd/helpers/loading/loading_screen.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_quill/flutter_quill.dart' as quill;
 
 final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
 
@@ -54,6 +58,15 @@ class MyApp extends StatelessWidget {
         child: MaterialApp(
           navigatorObservers: [routeObserver],
           title: 'Passion Driven',
+          localizationsDelegates: const [
+            quill.FlutterQuillLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [
+            Locale('en', ''),
+          ],
           theme: ThemeData.dark().copyWith(
             appBarTheme: const AppBarTheme(
               backgroundColor: Color(0xFF0F141D),
@@ -166,6 +179,21 @@ class MyApp extends StatelessWidget {
               final query =
                   ModalRoute.of(context)!.settings.arguments as String;
               return SearchResultsView(query: query);
+            },
+            // New route for the manage note page.
+            '/manage-note': (context) {
+              final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
+              if (args == null || !args.containsKey('buildId')) {
+                return const Scaffold(
+                  body: Center(child: Text('Invalid note data')),
+                );
+              }
+              // Since callbacks are non-serializable, we provide a fallback no-op callback.
+              return ManageNotePage(
+                buildId: args['buildId'],
+                note: args['note'], // May be null if adding a new note.
+                reloadBuildData: args['reloadBuildData'] ?? () {},
+              );
             },
           },
         ),
