@@ -112,8 +112,8 @@ class _BuildFilesSectionState extends State<BuildFilesSection> {
               ? Column(
                   children: files.map((file) {
                     return Container(
-                      margin: const EdgeInsets.symmetric(vertical: 4),
-                      padding: const EdgeInsets.all(8),
+                      margin: const EdgeInsets.symmetric(vertical: 2),
+                      padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
                         color: Colors.black.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(8),

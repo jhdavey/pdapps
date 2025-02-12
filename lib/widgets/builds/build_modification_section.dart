@@ -66,6 +66,7 @@ class BuildModificationsSection extends StatelessWidget {
                 data: ThemeData(dividerColor: Colors.transparent),
                 child: ExpansionTile(
                   backgroundColor: Color(0xFF1F242C),
+                  iconColor: Colors.white,
                   collapsedBackgroundColor: Color(0xFF1F242C),
                   title: Text(
                     category,

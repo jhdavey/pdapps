@@ -1,3 +1,4 @@
+// manage_note_page.dart
 // ignore_for_file: use_build_context_synchronously
 
 import 'dart:convert';
@@ -6,10 +7,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:pd/services/api/build/note/create_note.dart';
 import 'package:pd/services/api/build/note/edit_note.dart';
+import 'package:pd/utilities/dialogs/generic_dialog.dart'; // For showGenericDialog
 
 class ManageNotePage extends StatefulWidget {
   final int buildId;
-  final Map<String, dynamic>? note; 
+  final Map<String, dynamic>? note; // if null, it's "add note" mode.
   final VoidCallback reloadBuildData;
 
   const ManageNotePage({
@@ -32,8 +34,6 @@ class _ManageNotePageState extends State<ManageNotePage> {
   @override
   void initState() {
     super.initState();
-    // If editing an existing note and its 'note' field is non-empty,
-    // try to decode it as JSON (Delta) and initialize the document.
     if (widget.note != null &&
         widget.note!['note'] != null &&
         widget.note!['note'].toString().trim().isNotEmpty) {
@@ -44,7 +44,6 @@ class _ManageNotePageState extends State<ManageNotePage> {
           selection: const TextSelection.collapsed(offset: 0),
         );
       } catch (e) {
-        // Fall back to a blank document if parsing fails.
         _controller = quill.QuillController.basic();
       }
     } else {
@@ -61,7 +60,6 @@ class _ManageNotePageState extends State<ManageNotePage> {
   }
 
   Future<void> _submitNote() async {
-    // Convert the document's Delta to JSON.
     final delta = _controller.document.toDelta();
     final noteContent = jsonEncode(delta.toJson());
     bool success = false;
@@ -116,8 +114,15 @@ class _ManageNotePageState extends State<ManageNotePage> {
             IconButton(
               icon: isDeleting
                   ? const CircularProgressIndicator()
-                  : const Icon(Icons.delete),
-              onPressed: isDeleting ? null : _deleteNote,
+                  : const Icon(Icons.delete, color: Colors.red),
+              onPressed: isDeleting
+                  ? null
+                  : () async {
+                      final shouldDelete = await showDeleteDialog(context, 'note');
+                      if (shouldDelete) {
+                        await _deleteNote();
+                      }
+                    },
             ),
           IconButton(
             icon: const Icon(Icons.check),
@@ -130,7 +135,7 @@ class _ManageNotePageState extends State<ManageNotePage> {
         child: Column(
           children: [
             SizedBox(
-              child: quill.QuillSimpleToolbar(controller: _controller,),
+              child: quill.QuillSimpleToolbar(controller: _controller),
             ),
             const SizedBox(height: 8),
             Padding(
@@ -138,7 +143,7 @@ class _ManageNotePageState extends State<ManageNotePage> {
               child: Container(
                 height: min(300, 500),
                 decoration: BoxDecoration(
-                  color: Color(0xFF1F242C),
+                  color: const Color(0xFF1F242C),
                   borderRadius: BorderRadius.circular(8.0),
                 ),
                 child: Padding(
@@ -156,4 +161,17 @@ class _ManageNotePageState extends State<ManageNotePage> {
       ),
     );
   }
+}
+
+/// Shows a generic delete confirmation dialog and returns true if the user confirms.
+Future<bool> showDeleteDialog(BuildContext context, String itemType) {
+  return showGenericDialog(
+    context: context,
+    title: 'Delete',
+    content: 'Are you sure you want to delete this $itemType?',
+    optionsBuilder: () => {
+      'Cancel': false,
+      'Yes': true,
+    },
+  ).then((value) => value ?? false);
 }
