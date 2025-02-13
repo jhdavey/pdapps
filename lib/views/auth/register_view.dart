@@ -65,7 +65,7 @@ class _RegisterViewState extends State<RegisterView> {
               child: Column(
                 children: [
                   Text(
-                  'Registertest',
+                  'Register',
                   style: TextStyle(fontSize: 24),
                 ),
                   TextField(
