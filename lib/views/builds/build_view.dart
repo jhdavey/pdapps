@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:pd/helpers/build_ownership_helper.dart';
 import 'package:pd/helpers/route_arguments_helper.dart';
+import 'package:pd/main.dart';
 import 'package:pd/services/api/build/build_data_loader.dart';
 import 'package:pd/widgets/builds/build_additional_media_section.dart';
 import 'package:pd/widgets/builds/build_comment_section.dart';
@@ -19,7 +20,7 @@ class BuildView extends StatefulWidget {
   State<BuildView> createState() => _BuildViewState();
 }
 
-class _BuildViewState extends State<BuildView> {
+class _BuildViewState extends State<BuildView> with RouteAware {
   late Map<String, dynamic> _build;
   bool _initialized = false;
   String? _currentUserId;
@@ -27,6 +28,10 @@ class _BuildViewState extends State<BuildView> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    final ModalRoute<dynamic>? route = ModalRoute.of(context);
+    if (route is PageRoute) {
+      routeObserver.subscribe(this, route);
+    }
     if (!_initialized) {
       _build = getRouteArguments(context);
 
@@ -34,6 +39,7 @@ class _BuildViewState extends State<BuildView> {
 
       updateBuildOwnership(context, _build).then((userId) {
         _currentUserId = userId;
+        print(_currentUserId);
         setState(() {});
       });
 
@@ -41,12 +47,25 @@ class _BuildViewState extends State<BuildView> {
     }
   }
 
+  @override
+  void dispose() {
+    routeObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+    _loadBuildData();
+  }
+
   Future<void> _loadBuildData() async {
     if (_build.isNotEmpty && _build.containsKey('id')) {
       final buildId = _build['id'].toString();
       final data = await loadBuildDataHelper(buildId, context);
-      if (data != null && data['build'] != null) {
+      if (data != null) {
         setState(() {
+          _build = data['build'];
+          _build['additional_media'] = data['additional_media'];
           _build['modificationsByCategory'] = data['modificationsByCategory'];
           _build['notes'] = data['notes'];
           _build['comments'] = data['comments'];
@@ -60,7 +79,8 @@ class _BuildViewState extends State<BuildView> {
   Widget build(BuildContext context) {
     final user = _build['user'] ?? {};
     final userName = user['name'] ?? 'Unknown User';
-    final bool isOwner = _build['is_owner'] ?? false;
+    final bool isOwner = _currentUserId != null &&
+    _build['user_id'].toString() == _currentUserId.toString();
 
     return Scaffold(
       appBar: AppBar(
@@ -138,7 +158,8 @@ class _BuildViewState extends State<BuildView> {
             },
           ),
         ),
-        buildAdditionalMediaSection(_build),
+        buildAdditionalMediaSection(_build,
+            reloadBuildData: _loadBuildData, isOwner: isOwner),
         const SizedBox(height: 8),
         BuildTags(buildData: _build),
         buildSection(

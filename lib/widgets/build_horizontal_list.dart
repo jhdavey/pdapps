@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pd/widgets/tag_chip_list.dart';
+import 'package:pd/services/api/report_user.dart';
 
 Widget buildHorizontalList(List<dynamic> builds) {
   return SizedBox(
@@ -15,8 +16,46 @@ Widget buildHorizontalList(List<dynamic> builds) {
             onTap: () {
               Navigator.of(context).pushNamed('/build-view', arguments: build);
             },
+            onLongPress: () {
+              // Show a Snackbar with Report and Block actions.
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  backgroundColor: Colors.grey[900],
+                  duration: const Duration(seconds: 5),
+                  content: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      TextButton(
+                        onPressed: () {
+                          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                          if (build['user'] != null) {
+                            reportUser(build['user'], context);
+                          }
+                        },
+                        child: const Text(
+                          "Report",
+                          style: TextStyle(color: Colors.redAccent),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                          if (build['user'] != null) {
+                            blockUser(build['user'], context);
+                          }
+                        },
+                        child: const Text(
+                          "Block",
+                          style: TextStyle(color: Colors.orange),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
             child: SizedBox(
-              width: 275, // Doubled the width from 150 to 300
+              width: 275,
               child: Card(
                 clipBehavior: Clip.hardEdge,
                 shape: RoundedRectangleBorder(
@@ -25,23 +64,20 @@ Widget buildHorizontalList(List<dynamic> builds) {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Use AspectRatio to maintain the image's aspect ratio.
                     AspectRatio(
-                      aspectRatio: 3 / 2, // Adjust the ratio as needed
+                      aspectRatio: 3 / 2,
                       child: Image.network(
                         build['image'] ?? 'https://via.placeholder.com/150',
                         fit: BoxFit.cover,
                       ),
                     ),
                     Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 4),
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            build['user'] != null &&
-                                    build['user']['name'] != null
+                            build['user'] != null && build['user']['name'] != null
                                 ? "${build['user']['name']}'s"
                                 : 'Unknown User',
                             style: const TextStyle(

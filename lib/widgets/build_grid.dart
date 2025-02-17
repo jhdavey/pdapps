@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pd/widgets/tag_chip_list.dart';
+import 'package:pd/services/api/report_user.dart';
 
 Widget buildGrid(List<dynamic> builds, int columns) {
   return GridView.builder(
@@ -18,6 +19,44 @@ Widget buildGrid(List<dynamic> builds, int columns) {
       return GestureDetector(
         onTap: () {
           Navigator.of(context).pushNamed('/build-view', arguments: build);
+        },
+        onLongPress: () {
+          // Show a Snackbar with both Report and Block actions.
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              backgroundColor: Colors.grey[900],
+              duration: const Duration(seconds: 5),
+              content: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  TextButton(
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                      if (build['user'] != null) {
+                        reportUser(build['user'], context);
+                      }
+                    },
+                    child: const Text(
+                      "Report",
+                      style: TextStyle(color: Colors.redAccent),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                      if (build['user'] != null) {
+                        blockUser(build['user'], context);
+                      }
+                    },
+                    child: const Text(
+                      "Block",
+                      style: TextStyle(color: Colors.orange),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
         },
         child: Card(
           clipBehavior: Clip.hardEdge,

@@ -1,8 +1,8 @@
-// ignore_for_file: use_build_context_synchronously
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:pd/utilities/dialogs/comments/add_comment_dialog.dart';
 import 'package:pd/utilities/dialogs/comments/manage_comment_dialogs.dart';
+import 'package:pd/services/api/report_user.dart'; // Import reporting functions
 
 class BuildCommentsSection extends StatelessWidget {
   final List<dynamic> comments;
@@ -64,6 +64,42 @@ class BuildCommentsSection extends StatelessWidget {
                 contentPadding:
                     const EdgeInsets.symmetric(horizontal: 8.0, vertical: 0),
                 dense: true,
+                onLongPress: () {
+                  // Only show options if the comment is not owned by the current user.
+                  if (!commentIsOwner && comment['user'] != null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        backgroundColor: Colors.grey[900],
+                        duration: const Duration(seconds: 5),
+                        content: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            TextButton(
+                              onPressed: () {
+                                ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                                reportUser(comment['user'], context);
+                              },
+                              child: const Text(
+                                "Report",
+                                style: TextStyle(color: Colors.redAccent),
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                                blockUser(comment['user'], context);
+                              },
+                              child: const Text(
+                                "Block",
+                                style: TextStyle(color: Colors.orange),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+                },
                 title: Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
@@ -83,8 +119,7 @@ class BuildCommentsSection extends StatelessWidget {
                         TextSpan(
                           children: [
                             TextSpan(
-                              text:
-                                  "${comment['user'] != null ? comment['user']['name'] : 'User ${comment['user_id']}'}\n",
+                              text: "${comment['user'] != null ? comment['user']['name'] : 'User ${comment['user_id']}'}\n",
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
@@ -117,13 +152,11 @@ class BuildCommentsSection extends StatelessWidget {
                     ),
                     if (commentIsOwner)
                       IconButton(
-                        icon: const Icon(Icons.edit,
-                            color: Colors.white, size: 16),
+                        icon: const Icon(Icons.edit, color: Colors.white, size: 16),
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(),
                         onPressed: () async {
-                          final result = await showManageCommentDialog(
-                              context, comment, reloadBuildData);
+                          final result = await showManageCommentDialog(context, comment, reloadBuildData);
                           if (result == true) {
                             reloadBuildData();
                           }
@@ -132,7 +165,7 @@ class BuildCommentsSection extends StatelessWidget {
                   ],
                 ),
               );
-            })
+            }),
         ],
       ),
     );

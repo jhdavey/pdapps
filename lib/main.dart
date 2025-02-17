@@ -19,10 +19,10 @@ import 'package:pd/views/auth/register_view.dart';
 import 'package:pd/views/search_results_view.dart';
 import 'package:pd/views/tag_view.dart';
 import 'package:pd/views/categories_view.dart';
+import 'package:pd/widgets/user_list.dart';
 import 'package:pd/helpers/loading/loading_screen.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
-import 'package:pd/widgets/user_list.dart';
 
 final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
 
