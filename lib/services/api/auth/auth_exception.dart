@@ -26,7 +26,7 @@ class EmailAlreadyInUseException extends ApiException {
 
 class WeakPasswordException extends ApiException {
   WeakPasswordException()
-      : super(message: 'The provided password is too weak.', code: 'weak_password');
+      : super(message: 'The provided password must be at least 8 characters long.', code: 'weak_password');
 }
 
 class InvalidEmailException extends ApiException {

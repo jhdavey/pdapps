@@ -58,31 +58,38 @@ class ApiAuthProvider {
   }
 
   Future<void> logIn({
-    required String email,
-    required String password,
-  }) async {
-    final url = Uri.parse('$baseUrl/login');
-    final response = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'email': email,
-        'password': password,
-      }),
-    );
+  required String email,
+  required String password,
+}) async {
+  final url = Uri.parse('$baseUrl/login');
+  final response = await http.post(
+    url,
+    headers: {'Content-Type': 'application/json'},
+    body: jsonEncode({
+      'email': email,
+      'password': password,
+    }),
+  );
 
-    if (response.statusCode == 200) {
-      final responseData = jsonDecode(response.body);
-      final token = responseData['token'] as String;
-      await _saveToken(token);
+  if (response.statusCode == 200) {
+    final responseData = jsonDecode(response.body);
+    final token = responseData['token'] as String;
+    await _saveToken(token);
+  } else {
+    final responseData = jsonDecode(response.body);
+    final code = responseData['code'] as String?;
+    if (code == 'user_not_found') {
+      throw UserNotFoundException();
+    } else if (code == 'invalid_credentials') {
+      throw InvalidCredentialsException();
     } else {
-      final responseData = jsonDecode(response.body);
       throw ApiException(
         message: responseData['message'] ?? 'Login failed',
         code: responseData['code'] ?? 'login_failed',
       );
     }
   }
+}
 
   Future<void> logOut() async {
     if (_token == null) return;

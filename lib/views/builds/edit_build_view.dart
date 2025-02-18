@@ -58,7 +58,7 @@ class _EditBuildViewState extends State<EditBuildView> {
   String? _selectedCategory;
   File? _selectedImage;
 
-  List<Map<String, String>> _existingAdditionalMedia = [];
+  List<Map<String, dynamic>> _existingAdditionalMedia = [];
   List<String> removedAdditionalMedia = [];
   List<AdditionalMedia> newAdditionalMedia = [];
 
@@ -101,7 +101,7 @@ class _EditBuildViewState extends State<EditBuildView> {
       if (item is String) {
         _existingAdditionalMedia.add({'url': item, 'type': 'image'});
       } else if (item is Map) {
-        final mediaMap = Map<String, String>.from(item);
+        final mediaMap = Map<String, dynamic>.from(item);
         if (!mediaMap.containsKey('type')) {
           mediaMap['type'] = 'image';
         }

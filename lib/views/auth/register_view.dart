@@ -1,3 +1,5 @@
+// ignore_for_file: library_private_types_in_public_api
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -75,7 +77,11 @@ The App is provided “as is” without warranties of any kind. We are not liabl
 Governing Law
 This EULA is governed by the laws of the state of Florida.
 ''',
-                  style: const TextStyle(color: Colors.white, fontSize: 14, height: 1.5),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    height: 1.5,
+                  ),
                 ),
               ),
             ),
@@ -93,27 +99,30 @@ This EULA is governed by the laws of the state of Florida.
     );
   }
 
+  void _onRegisterButtonPressed() async {
+    final displayName = _displayName.text.trim();
+    final email = _email.text.trim();
+    final password = _password.text.trim();
+
+    if (displayName.isEmpty || email.isEmpty || password.isEmpty) {
+      await showErrorDialog(context, 'Please fill in all fields.');
+      return;
+    }
+
+    context.read<AuthBloc>().add(
+          AuthEventRegister(displayName, email, password),
+        );
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) async {
         if (state is AuthStateRegistering && state.exception != null) {
-          if (state.exception is WeakPasswordException) {
-            if (!mounted) return;
-            await showErrorDialog(context, 'Weak password');
-          } else if (state.exception is InvalidCredentialsException) {
-            if (!mounted) return;
-            await showErrorDialog(context, 'Display name is unavailable');
-          } else if (state.exception is EmailAlreadyInUseException) {
-            if (!mounted) return;
-            await showErrorDialog(context, 'Email is unavailable');
-          } else if (state.exception is InvalidEmailException) {
-            if (!mounted) return;
-            await showErrorDialog(context, 'Invalid email');
-          } else if (state.exception is GenericApiException) {
-            if (!mounted) return;
-            await showErrorDialog(context, 'Failed to register');
-          }
+          final errorMessage = state.exception is ApiException
+              ? (state.exception as ApiException).message
+              : "An unknown error occurred. Please try again.";
+          await showErrorDialog(context, errorMessage);
         }
       },
       child: Scaffold(
@@ -192,29 +201,7 @@ This EULA is governed by the laws of the state of Florida.
                   ),
                   const SizedBox(height: 24),
                   ElevatedButton(
-                    onPressed: _agreedToEULA
-                        ? () async {
-                            final displayName = _displayName.text.trim();
-                            final email = _email.text.trim();
-                            final password = _password.text.trim();
-
-                            if (displayName.isEmpty ||
-                                email.isEmpty ||
-                                password.isEmpty) {
-                              if (!mounted) return;
-                              await showErrorDialog(context, 'Please fill in all fields.');
-                              return;
-                            }
-
-                            context.read<AuthBloc>().add(
-                                  AuthEventRegister(
-                                    displayName,
-                                    email,
-                                    password,
-                                  ),
-                                );
-                          }
-                        : null,
+                    onPressed: _agreedToEULA ? _onRegisterButtonPressed : null,
                     child: const Text('Register'),
                   ),
                   TextButton(

@@ -80,7 +80,7 @@ class _BuildViewState extends State<BuildView> with RouteAware {
     final user = _build['user'] ?? {};
     final userName = user['name'] ?? 'Unknown User';
     final bool isOwner = _currentUserId != null &&
-    _build['user_id'].toString() == _currentUserId.toString();
+        _build['user_id'].toString() == _currentUserId.toString();
 
     return Scaffold(
       appBar: AppBar(
@@ -158,6 +158,7 @@ class _BuildViewState extends State<BuildView> with RouteAware {
             },
           ),
         ),
+        const SizedBox(height: 8),
         buildAdditionalMediaSection(_build,
             reloadBuildData: _loadBuildData, isOwner: isOwner),
         const SizedBox(height: 8),
