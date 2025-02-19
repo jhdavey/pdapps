@@ -1,8 +1,9 @@
-// ignore_for_file: library_private_types_in_public_api
+// ignore_for_file: library_private_types_in_public_api, use_build_context_synchronously
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pd/services/api/auth/auth_exception.dart';
+import 'package:pd/services/api/auth/auth_service.dart';
 import 'package:pd/services/api/auth/bloc/auth_bloc.dart';
 import 'package:pd/services/api/auth/bloc/auth_event.dart';
 import 'package:pd/services/api/auth/bloc/auth_state.dart';
@@ -86,6 +87,54 @@ class _LoginViewState extends State<LoginView> {
                     },
                     child: const Text('Register'),
                   ),
+                  TextButton(
+                    onPressed: () async {
+                      final email = await showDialog<String>(
+                        context: context,
+                        builder: (context) {
+                          final controller = TextEditingController();
+                          return AlertDialog(
+                            title: const Text('Reset Password'),
+                            content: TextField(
+                              controller: controller,
+                              decoration: const InputDecoration(
+                                labelText: 'Enter your email',
+                              ),
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, null),
+                                child: const Text('Cancel'),
+                              ),
+                              ElevatedButton(
+                                onPressed: () => Navigator.pop(
+                                    context, controller.text.trim()),
+                                child: const Text('Send Reset Link'),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                      if (email != null && email.isNotEmpty) {
+                        try {
+                          await context
+                              .read<ApiAuthService>()
+                              .sendPasswordReset(toEmail: email);
+                          // Show success message, e.g.:
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text('Password reset email sent.')),
+                          );
+                        } on ApiException catch (e) {
+                          await showErrorDialog(context, e.message);
+                        } catch (e) {
+                          await showErrorDialog(
+                              context, 'An unknown error occurred.');
+                        }
+                      }
+                    },
+                    child: const Text('Forgot Password?'),
+                  )
                 ],
               ),
             ),

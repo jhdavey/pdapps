@@ -163,22 +163,27 @@ class ApiAuthProvider {
     }
   }
 
-  Future<void> sendPasswordReset({required String toEmail}) async {
-    final url = Uri.parse('$baseUrl/password-reset');
-    final response = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'email': toEmail}),
-    );
+Future<void> sendPasswordReset({required String toEmail}) async {
+  final url = Uri.parse('$baseUrl/password-reset');
+  final response = await http.post(
+    url,
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+    body: jsonEncode({'email': toEmail}),
+  );
 
-    if (response.statusCode != 200) {
-      final responseData = jsonDecode(response.body);
-      throw ApiException(
-        message: responseData['message'] ?? 'Password reset failed',
-        code: responseData['code'] ?? 'password_reset_failed',
-      );
-    }
+  if (response.statusCode == 200) {
+    return;
+  } else {
+    final responseData = jsonDecode(response.body);
+    throw ApiException(
+      message: responseData['message'] ?? 'Password reset failed',
+      code: responseData['code'] ?? 'password_reset_failed',
+    );
   }
+}
 
   Future<void> initialize() async {
     await _loadToken();
