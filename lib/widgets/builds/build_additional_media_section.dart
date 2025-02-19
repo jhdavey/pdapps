@@ -1,9 +1,10 @@
 // ignore_for_file: use_build_context_synchronously
-
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:pd/services/api/build/build_image_caption_controller.dart';
+import 'package:pd/services/api/build/media/additional_media_controller.dart';
+import 'package:pd/services/api/build/media/build_image_caption_controller.dart';
+import 'package:pd/utilities/dialogs/delete_dialog.dart';
+import 'package:pd/utilities/dialogs/additional_media_dialog.dart';
 import 'package:pd/widgets/video_player.dart';
 
 Widget buildAdditionalMediaSection(
@@ -16,143 +17,245 @@ Widget buildAdditionalMediaSection(
           ? jsonDecode(build['additional_images'])
           : build['additional_images']);
 
-  if (rawMedia is! List || rawMedia.isEmpty) return const SizedBox.shrink();
-
   // Convert rawMedia into a list of maps.
-  final List<Map<String, dynamic>> mediaList = rawMedia
-      .map<Map<String, dynamic>>((item) {
-        if (item is String) {
-          return {
-            'id': null,
-            'url': item,
-            'type': 'image',
-            'caption': '',
-          };
-        } else if (item is Map) {
-          final mapItem = Map<String, dynamic>.from(item);
-          mapItem.putIfAbsent('type', () => 'image');
-          mapItem.putIfAbsent('caption', () => '');
-          mapItem.putIfAbsent('id', () => null);
-          return mapItem;
-        } else {
-          return {};
-        }
-      })
-      .where((element) => element.isNotEmpty)
-      .toList();
+  final List<Map<String, dynamic>> mediaList = rawMedia is List
+      ? rawMedia
+          .map<Map<String, dynamic>>((item) {
+            if (item is String) {
+              return {
+                'id': null,
+                'url': item,
+                'type': 'image',
+                'caption': '',
+              };
+            } else if (item is Map) {
+              final mapItem = Map<String, dynamic>.from(item);
+              mapItem.putIfAbsent('type', () => 'image');
+              mapItem.putIfAbsent('caption', () => '');
+              mapItem.putIfAbsent('id', () => null);
+              return mapItem;
+            } else {
+              return {};
+            }
+          })
+          .where((element) => element.isNotEmpty)
+          .toList()
+      : [];
 
-  // Build a horizontally scrolling list of media items.
-  return SizedBox(
-    height: 200,
-    child: ListView.separated(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      itemCount: mediaList.length,
-      separatorBuilder: (context, index) => const SizedBox(width: 8),
-      itemBuilder: (context, index) {
-        final media = mediaList[index];
-
-        Widget mediaWidget;
-        if (media['type'] == 'video') {
-          mediaWidget = GestureDetector(
-            onTap: () => showVideoDialog(context, media['url']),
-            child: Container(
-              width: 200,
-              height: 200,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(8),
-                color: Colors.black,
-              ),
-              child: const Center(
-                child: Icon(
-                  Icons.play_circle_fill,
-                  color: Colors.white,
-                  size: 50,
-                ),
-              ),
-            ),
-          );
-        } else {
-          mediaWidget = GestureDetector(
-            onTap: () => showImageDialog(
-                context,
-                mediaList.map((m) {
-                  return {
-                    'url': m['url'].toString(),
-                    'type': m['type'].toString(),
-                    'caption': m['caption']?.toString() ?? '',
-                  };
-                }).toList(),
-                index),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Image.network(
-                media['url'],
-                width: 200,
-                height: 200,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) =>
-                    const Icon(Icons.error),
-              ),
-            ),
-          );
-        }
-
-        return Stack(
-          children: [
-            mediaWidget,
-            // Show the edit button if the user is the owner.
-            if (isOwner)
-              Positioned(
-                top: 0,
-                right: 0,
-                child: IconButton(
-                  icon: const Icon(Icons.edit, color: Colors.white),
-                  onPressed: () =>
-                      editCaption(context, index, mediaList, reloadBuildData),
-                ),
-              ),
-            // If a caption exists, overlay a semi-transparent caption box.
-            if ((media['caption'] as String).isNotEmpty)
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                child: Container(
-                  height: 40,
-                  color: Colors.black.withOpacity(0.8),
-                  alignment: Alignment.centerLeft,
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Text(
-                    (media['caption'] as String).length > 30
-                        ? "${(media['caption'] as String).substring(0, 30)}..."
-                        : media['caption'],
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                    ),
+  return Builder(
+    builder: (BuildContext outerContext) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Header row with "Media" label and plus button (if owner)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Media',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
                 ),
-              ),
-          ],
-        );
-      },
-    ),
+                if (isOwner)
+                  IconButton(
+                    icon: const Icon(Icons.add, color: Colors.white, size: 30),
+                    onPressed: () async {
+                      final bool? result = await showDialog<bool>(
+                        context: outerContext,
+                        builder: (BuildContext dialogContext) {
+                          return AdditionalMediaDialog(
+                            buildId: int.parse(build['id'].toString()),
+                            reloadBuildData: reloadBuildData,
+                          );
+                        },
+                      );
+                      if (result == true) {
+                        ScaffoldMessenger.of(outerContext).showSnackBar(
+                          const SnackBar(
+                            content:
+                                Text('Additional media added successfully.'),
+                          ),
+                        );
+                      }
+                    },
+                  ),
+              ],
+            ),
+          ),
+          // Content area: show message if no media, else show horizontally scrolling list.
+          mediaList.isEmpty
+              ? Container(
+                  alignment: Alignment.center,
+                  child: const Text(
+                    "No additional media added yet...",
+                    style: TextStyle(fontSize: 16, color: Colors.white),
+                  ),
+                )
+              : SizedBox(
+                  height: 200,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    itemCount: mediaList.length,
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(width: 8),
+                    itemBuilder: (context, index) {
+                      final media = mediaList[index];
+                      Widget mediaWidget;
+                      if (media['type'] == 'video') {
+                        mediaWidget = GestureDetector(
+                          onTap: () => showVideoDialog(context, media['url']),
+                          child: Container(
+                            width: 200,
+                            height: 200,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8),
+                              color: Colors.black,
+                            ),
+                            child: const Center(
+                              child: Icon(
+                                Icons.play_circle_fill,
+                                color: Colors.white,
+                                size: 50,
+                              ),
+                            ),
+                          ),
+                        );
+                      } else {
+                        mediaWidget = GestureDetector(
+                          onTap: () => showImageDialog(
+                            context,
+                            mediaList.map((m) {
+                              return {
+                                'url': m['url'].toString(),
+                                'type': m['type'].toString(),
+                                'caption': m['caption']?.toString() ?? '',
+                              };
+                            }).toList(),
+                            index,
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.network(
+                              media['url'],
+                              width: 200,
+                              height: 200,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  const Icon(Icons.error),
+                            ),
+                          ),
+                        );
+                      }
+
+                      return Stack(
+                        children: [
+                          mediaWidget,
+                          // Edit button (if owner)
+                          if (isOwner)
+                            Positioned(
+                              top: 0,
+                              right: 0,
+                              child: IconButton(
+                                icon:
+                                    const Icon(Icons.edit, color: Colors.white),
+                                onPressed: () => editCaption(
+                                    context, index, mediaList, reloadBuildData),
+                              ),
+                            ),
+                          // Delete button (if owner and media has an ID)
+                          if (isOwner && media['id'] != null)
+                            Positioned(
+                              top: 0,
+                              right: 48,
+                              child: IconButton(
+                                icon:
+                                    const Icon(Icons.delete, color: Colors.red),
+                                onPressed: () async {
+                                  final bool confirm =
+                                      await showDeleteDialog(context, 'media');
+                                  if (confirm) {
+                                    final buildImageId = media['id'] as int;
+                                    final additionalMediaController =
+                                        AdditionalMediaController(
+                                            baseUrl:
+                                                'https://passiondrivenbuilds.com');
+                                    final success =
+                                        await additionalMediaController
+                                            .deleteAdditionalMedia(
+                                                mediaId: buildImageId);
+                                    if (success) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                            content: Text(
+                                                'Media deleted successfully.')),
+                                      );
+                                      await reloadBuildData();
+                                    } else {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                            content:
+                                                Text('Error deleting media.')),
+                                      );
+                                    }
+                                  }
+                                },
+                              ),
+                            ),
+                          // Caption overlay (if exists)
+                          if ((media['caption'] as String).isNotEmpty)
+                            Positioned(
+                              bottom: 0,
+                              left: 0,
+                              right: 0,
+                              child: Container(
+                                height: 40,
+                                color: Colors.black.withOpacity(0.8),
+                                alignment: Alignment.centerLeft,
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 8),
+                                child: Text(
+                                  (media['caption'] as String).length > 30
+                                      ? "${(media['caption'] as String).substring(0, 30)}..."
+                                      : media['caption'],
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+        ],
+      );
+    },
   );
 }
 
-// Separate helper for editing captions.
+// Helper for editing captions.
 void editCaption(
-    BuildContext context,
-    int index,
-    List<Map<String, dynamic>> mediaList,
-    Future<void> Function() reloadBuildData) {
+  BuildContext context,
+  int index,
+  List<Map<String, dynamic>> mediaList,
+  Future<void> Function() reloadBuildData,
+) {
   final currentCaption = mediaList[index]['caption'] as String;
   final TextEditingController controller =
       TextEditingController(text: currentCaption);
   showDialog<bool>(
     context: context,
-    builder: (context) {
+    builder: (BuildContext dialogContext) {
       String newCaption = currentCaption;
       return AlertDialog(
         title: const Text("Edit Caption"),
@@ -169,10 +272,9 @@ void editCaption(
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
+            onPressed: () => Navigator.of(dialogContext).pop(false),
             child: const Text("Cancel"),
           ),
-          // Delete button (if caption exists).
           if (currentCaption.isNotEmpty)
             IconButton(
               icon: const Icon(Icons.delete, color: Colors.red),
@@ -193,7 +295,7 @@ void editCaption(
                   }
                   if (success) {
                     mediaList[index]['caption'] = '';
-                    Navigator.of(context).pop(true);
+                    Navigator.of(dialogContext).pop(true);
                     await reloadBuildData();
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -219,7 +321,7 @@ void editCaption(
               }
               if (success) {
                 mediaList[index]['caption'] = newCaption;
-                Navigator.of(context).pop(true);
+                Navigator.of(dialogContext).pop(true);
                 await reloadBuildData();
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -239,27 +341,6 @@ void editCaption(
   });
 }
 
-// Generic delete dialog.
-Future<bool> showDeleteDialog(BuildContext context, String itemType) {
-  return showDialog<bool>(
-    context: context,
-    barrierDismissible: false,
-    builder: (context) => AlertDialog(
-      title: const Text('Delete'),
-      content: Text('Are you sure you want to delete this $itemType?'),
-      actions: {
-        'Cancel': () => Navigator.of(context).pop(false),
-        'Yes': () => Navigator.of(context).pop(true),
-      }.entries.map((entry) {
-        return TextButton(
-          onPressed: entry.value,
-          child: Text(entry.key),
-        );
-      }).toList(),
-    ),
-  ).then((value) => value ?? false);
-}
-
 void showImageDialog(
   BuildContext context,
   List<Map<String, String>> media,
@@ -268,8 +349,7 @@ void showImageDialog(
   showDialog(
     context: context,
     barrierDismissible: true,
-    builder: (BuildContext context) {
-      // Declare currentIndex outside the StatefulBuilder's builder so it persists.
+    builder: (BuildContext dialogContext) {
       int currentIndex = initialIndex;
       final PageController controller =
           PageController(initialPage: initialIndex);
@@ -283,19 +363,17 @@ void showImageDialog(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Row 1: Close button at the far right.
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       IconButton(
                         icon: const Icon(Icons.close, color: Colors.red),
-                        onPressed: () => Navigator.of(context).pop(),
+                        onPressed: () => Navigator.of(dialogContext).pop(),
                       ),
                     ],
                   ),
-                  // Row 2: PageView to scroll horizontally through media items.
                   Container(
-                    height: 300, // Adjust height as needed.
+                    height: 300,
                     child: PageView.builder(
                       controller: controller,
                       onPageChanged: (index) {
@@ -304,7 +382,7 @@ void showImageDialog(
                         });
                       },
                       itemCount: media.length,
-                      itemBuilder: (context, index) {
+                      itemBuilder: (BuildContext context, int index) {
                         final mediaItem = media[index];
                         return Hero(
                           tag: mediaItem['url']!,
@@ -339,7 +417,6 @@ void showImageDialog(
                       },
                     ),
                   ),
-                  // Row 3: Caption directly below the media.
                   if ((media[currentIndex]['caption'] ?? '')
                       .toString()
                       .isNotEmpty)
@@ -347,10 +424,7 @@ void showImageDialog(
                       padding: const EdgeInsets.all(16),
                       color: Colors.black,
                       child: ConstrainedBox(
-                        constraints: const BoxConstraints(
-                          maxHeight:
-                              200, // Allow vertical scrolling if caption is long.
-                        ),
+                        constraints: const BoxConstraints(maxHeight: 200),
                         child: SingleChildScrollView(
                           child: Text(
                             media[currentIndex]['caption']!,
@@ -377,7 +451,7 @@ void showVideoDialog(BuildContext context, String videoUrl) {
   showDialog(
     context: context,
     barrierDismissible: true,
-    builder: (BuildContext context) {
+    builder: (BuildContext dialogContext) {
       return Dialog(
         backgroundColor: Colors.black,
         child: AspectRatio(
