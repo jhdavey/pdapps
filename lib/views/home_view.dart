@@ -86,9 +86,15 @@ class _HomeViewState extends State<HomeView> with RouteAware {
             onSelected: (value) {
               if (value == 'logout') {
                 context.read<AuthBloc>().add(const AuthEventLogOut());
+              } else if (value == 'feedback') {
+                Navigator.pushNamed(context, '/feedback');
               }
             },
             itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'feedback',
+                child: Text('Feedback'),
+              ),
               const PopupMenuItem(
                 value: 'logout',
                 child: Text('Logout'),

@@ -11,7 +11,6 @@ Future<bool> createBuild(
   required Map<String, String> fields,
   File? imageFile,
 }) async {
-  // Retrieve the token from SharedPreferences.
   final prefs = await SharedPreferences.getInstance();
   final token = prefs.getString('auth_token');
 

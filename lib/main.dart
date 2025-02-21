@@ -12,6 +12,7 @@ import 'package:pd/views/builds/create_build_view.dart';
 import 'package:pd/views/builds/edit_build_view.dart';
 import 'package:pd/views/auth/login_view.dart';
 import 'package:pd/views/edit_profile_view.dart';
+import 'package:pd/views/feedback_view.dart';
 import 'package:pd/views/home_view.dart';
 import 'package:pd/views/garage_view.dart';
 import 'package:pd/views/builds/build_view.dart';
@@ -115,6 +116,7 @@ class MyApp extends StatelessWidget {
           home: const AppNavigator(),
           routes: {
             '/login': (context) => const LoginView(),
+            '/feedback': (context) => const FeedbackView(),
             '/build-view': (context) {
               final args = ModalRoute.of(context)!.settings.arguments
                   as Map<String, dynamic>?;
