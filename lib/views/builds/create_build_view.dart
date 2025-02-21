@@ -1,7 +1,7 @@
 // ignore_for_file: library_private_types_in_public_api, use_build_context_synchronously
 
-import 'package:flutter/material.dart';
 import 'dart:io';
+import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:pd/services/api/build/create_build.dart';
 
@@ -48,32 +48,32 @@ class _CreateBuildViewState extends State<CreateBuildView> {
 
     if (pickedFile != null) {
       setState(() {
+        // Replace the old featured image with the new one.
         _selectedImage = File(pickedFile.path);
       });
     }
   }
 
-Future<void> _createBuild() async {
-  if (!_formKey.currentState!.validate()) return;
+  Future<void> _createBuild() async {
+    if (!_formKey.currentState!.validate()) return;
 
-  final fields = <String, String>{
-    'year': _yearController.text,
-    'make': _makeController.text,
-    'model': _modelController.text,
-    'build_category': _selectedCategory!,
-  };
+    final fields = <String, String>{
+      'year': _yearController.text,
+      'make': _makeController.text,
+      'model': _modelController.text,
+      'build_category': _selectedCategory!,
+    };
 
-  final success = await createBuild(
-    context,
-    fields: fields,
-    imageFile: _selectedImage,
-  );
+    final success = await createBuild(
+      context,
+      fields: fields,
+      imageFile: _selectedImage,
+    );
 
-  if (success) {
-    Navigator.pop(context);
+    if (success) {
+      Navigator.pop(context);
+    }
   }
-}
-
 
   @override
   Widget build(BuildContext context) {
@@ -132,6 +132,23 @@ Future<void> _createBuild() async {
                       : null,
                 ),
                 const SizedBox(height: 12),
+                // Preview of the selected featured image.
+                if (_selectedImage != null)
+                  Center(
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      width: 200,
+                      height: 200,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey),
+                        borderRadius: BorderRadius.circular(8),
+                        image: DecorationImage(
+                          image: FileImage(_selectedImage!),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                  ),
                 Center(
                   child: ElevatedButton(
                     onPressed: _pickImage,
@@ -142,11 +159,9 @@ Future<void> _createBuild() async {
                   ),
                 ),
                 const SizedBox(height: 12),
-                const Center(
-                  child: Text(
-                    'Add additional details by editing your build',
-                    style: TextStyle(fontWeight: FontWeight.w600),
-                  ),
+                Text(
+                  'Add additional details and media by editing your build after creating it.',
+                  textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 20),
                 Center(
