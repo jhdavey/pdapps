@@ -72,6 +72,7 @@ class _FeedbackViewState extends State<FeedbackView> {
           child: SingleChildScrollView(
             child: Column(
               children: [
+                Text('Tell us what you think about the app. Good and bad, we want to hear it all so that we can continue to improve your experience.'),
                 TextFormField(
                   controller: _nameController,
                   decoration:

@@ -47,20 +47,11 @@ Widget buildAdditionalMediaSection(
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Header row with "Media" label and plus button (if owner)
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                const Text(
-                  'Media',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
                 if (isOwner)
                   IconButton(
                     icon: const Icon(Icons.add, color: Colors.white, size: 30),
@@ -87,7 +78,6 @@ Widget buildAdditionalMediaSection(
               ],
             ),
           ),
-          // Content area: show message if no media, else show horizontally scrolling list.
           mediaList.isEmpty
               ? Container(
                   alignment: Alignment.center,
@@ -115,7 +105,7 @@ Widget buildAdditionalMediaSection(
                             height: 200,
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(8),
-                              color: Colors.black,
+                              color: Color(0xFF1F242C),
                             ),
                             child: const Center(
                               child: Icon(
@@ -354,7 +344,7 @@ void showImageDialog(
       final PageController controller =
           PageController(initialPage: initialIndex);
       return Dialog(
-        backgroundColor: Colors.black,
+        backgroundColor: Color(0xFF1F242C),
         insetPadding: const EdgeInsets.all(16),
         child: StatefulBuilder(
           builder: (BuildContext context, StateSetter setState) {
@@ -372,7 +362,7 @@ void showImageDialog(
                       ),
                     ],
                   ),
-                  Container(
+                  SizedBox(
                     height: 300,
                     child: PageView.builder(
                       controller: controller,
@@ -422,7 +412,7 @@ void showImageDialog(
                       .isNotEmpty)
                     Container(
                       padding: const EdgeInsets.all(16),
-                      color: Colors.black,
+                      color: Color(0xFF1F242C),
                       child: ConstrainedBox(
                         constraints: const BoxConstraints(maxHeight: 200),
                         child: SingleChildScrollView(
@@ -453,7 +443,7 @@ void showVideoDialog(BuildContext context, String videoUrl) {
     barrierDismissible: true,
     builder: (BuildContext dialogContext) {
       return Dialog(
-        backgroundColor: Colors.black,
+        backgroundColor: Color(0xFF1F242C),
         child: AspectRatio(
           aspectRatio: 16 / 9,
           child: VideoPlayerWidget(videoUrl: videoUrl),

@@ -83,6 +83,10 @@ class _HomeViewState extends State<HomeView> with RouteAware {
             },
           ),
           PopupMenuButton<String>(
+            shape: RoundedRectangleBorder(
+              borderRadius:
+                  BorderRadius.circular(20.0),
+            ),
             onSelected: (value) {
               if (value == 'logout') {
                 context.read<AuthBloc>().add(const AuthEventLogOut());
