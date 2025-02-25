@@ -55,6 +55,8 @@ class _EditBuildViewState extends State<EditBuildView> {
   final TextEditingController _transController = TextEditingController();
   final TextEditingController _suspensionController = TextEditingController();
   final TextEditingController _brakesController = TextEditingController();
+  final TextEditingController _tagsController = TextEditingController();
+
   String? _selectedCategory;
   File? _selectedImage;
 
@@ -92,10 +94,15 @@ class _EditBuildViewState extends State<EditBuildView> {
     _suspensionController.text = widget.build['suspension']?.toString() ?? '';
     _brakesController.text = widget.build['brakes']?.toString() ?? '';
     _selectedCategory = widget.build['build_category']?.toString();
+
+    if (widget.build['tags'] != null && widget.build['tags'] is List) {
+      List<dynamic> tagsList = widget.build['tags'];
+      _tagsController.text = tagsList.map((tag) => tag['name']).join(', ');
+    }
+
     final mediaRaw = widget.build['additional_media'] ??
         widget.build['additional_images'] ??
         [];
-
     _existingAdditionalMedia = [];
     for (var item in mediaRaw) {
       if (item is String) {
@@ -108,6 +115,31 @@ class _EditBuildViewState extends State<EditBuildView> {
         _existingAdditionalMedia.add(mediaMap);
       }
     }
+  }
+
+  @override
+  void dispose() {
+    _yearController.dispose();
+    _makeController.dispose();
+    _modelController.dispose();
+    _trimController.dispose();
+    _hpController.dispose();
+    _whpController.dispose();
+    _torqueController.dispose();
+    _weightController.dispose();
+    _vehicleLayoutController.dispose();
+    _fuelController.dispose();
+    _zeroSixtyController.dispose();
+    _zeroOneHundredController.dispose();
+    _quarterMileController.dispose();
+    _engineTypeController.dispose();
+    _engineCodeController.dispose();
+    _forcedInductionController.dispose();
+    _transController.dispose();
+    _suspensionController.dispose();
+    _brakesController.dispose();
+    _tagsController.dispose();
+    super.dispose();
   }
 
   Future<void> _pickImage() async {
@@ -128,32 +160,33 @@ class _EditBuildViewState extends State<EditBuildView> {
     });
   }
 
-Future<void> _pickAdditionalMedia() async {
-  final picker = ImagePicker();
-  final pickedFile = await picker.pickMedia();
-  if (pickedFile != null) {
-    final String lowerCasePath = pickedFile.path.toLowerCase();
-    final String extension = lowerCasePath.split('.').last;
-    final String fileType = (lowerCasePath.endsWith(".mp4") ||
-            lowerCasePath.endsWith(".mov"))
-        ? "video"
-        : "image";
-    setState(() {
-      newAdditionalMedia.add(
-        AdditionalMedia(
-          file: File(pickedFile.path),
-          type: fileType,
-          extension: extension,
-        ),
-      );
-    });
+  Future<void> _pickAdditionalMedia() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickMedia();
+    if (pickedFile != null) {
+      final String lowerCasePath = pickedFile.path.toLowerCase();
+      final String extension = lowerCasePath.split('.').last;
+      final String fileType =
+          (lowerCasePath.endsWith(".mp4") || lowerCasePath.endsWith(".mov"))
+              ? "video"
+              : "image";
+      setState(() {
+        newAdditionalMedia.add(
+          AdditionalMedia(
+            file: File(pickedFile.path),
+            type: fileType,
+            extension: extension,
+          ),
+        );
+      });
+    }
   }
-}
 
   Future<void> _updateBuild() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final fields = <String, String>{
+    // Use Map<String, dynamic> so that arrays are preserved.
+    final fields = <String, dynamic>{
       'year': _yearController.text.trim(),
       'make': _makeController.text.trim(),
       'model': _modelController.text.trim(),
@@ -175,6 +208,17 @@ Future<void> _pickAdditionalMedia() async {
       'suspension': _suspensionController.text.trim(),
       'brakes': _brakesController.text.trim(),
     };
+
+// Process tags input: split by comma into a List<String>
+    final tagsInput = _tagsController.text;
+    final List<String> tags = tagsInput
+        .split(',')
+        .map((tag) => tag.trim())
+        .where((tag) => tag.isNotEmpty)
+        .toList();
+    if (tags.isNotEmpty) {
+      fields['tags'] = tags;
+    }
 
     Uint8List? imageBytes;
     if (_selectedImage != null) {
@@ -198,9 +242,10 @@ Future<void> _pickAdditionalMedia() async {
     final updatedBuild = await updateBuild(
       context,
       buildId: widget.build['id'].toString(),
-      fields: fields,
+      fields: fields, // now a Map<String, dynamic>
       imageBytes: imageBytes,
       additionalMediaBytes: additionalMediaBytes,
+      additionalMediaTypes: additionalMediaTypes,
       removedImages: removedMedia,
     );
 
@@ -288,11 +333,20 @@ Future<void> _pickAdditionalMedia() async {
                 _buildTextField(
                     controller: _suspensionController, label: 'Suspension'),
                 _buildTextField(controller: _brakesController, label: 'Brakes'),
-                const SizedBox(height: 20),
+                const SizedBox(height: 12),
+                // Tags input field.
+                TextFormField(
+                  controller: _tagsController,
+                  decoration: const InputDecoration(
+                    labelText: 'Tags (comma-separated)',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                // Featured image preview container.
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    // Featured image preview container
                     if (_selectedImage != null)
                       Container(
                         width: 100,
@@ -343,7 +397,7 @@ Future<void> _pickAdditionalMedia() async {
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 10),
-                // Existing Additional Media Preview
+                // Existing Additional Media Preview.
                 Wrap(
                   spacing: 10,
                   runSpacing: 10,
@@ -361,7 +415,6 @@ Future<void> _pickAdditionalMedia() async {
                           decoration: BoxDecoration(
                             border: Border.all(color: Colors.grey),
                             borderRadius: BorderRadius.circular(8),
-                            // If the existing media is an image, show it; otherwise show a video icon.
                             image: mediaType == 'image'
                                 ? DecorationImage(
                                     image: NetworkImage(mediaUrl),
@@ -396,13 +449,13 @@ Future<void> _pickAdditionalMedia() async {
                   }).toList(),
                 ),
                 const SizedBox(height: 10),
-                // Button to pick new additional media (image or video)
+                // Button to pick new additional media (image or video).
                 ElevatedButton(
                   onPressed: _pickAdditionalMedia,
                   child: const Text('Add Additional Media'),
                 ),
                 const SizedBox(height: 10),
-                // Preview of newly picked additional media
+                // Preview of newly picked additional media.
                 Wrap(
                   spacing: 10,
                   runSpacing: 10,
@@ -417,7 +470,6 @@ Future<void> _pickAdditionalMedia() async {
                           decoration: BoxDecoration(
                             border: Border.all(color: Colors.grey),
                             borderRadius: BorderRadius.circular(8),
-                            // For images, show a preview; for videos, display a placeholder icon.
                             image: media.type == 'image'
                                 ? DecorationImage(
                                     image: FileImage(media.file),

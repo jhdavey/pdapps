@@ -21,6 +21,10 @@ Future<bool> submitModification(
   final authService = RepositoryProvider.of<ApiAuthService>(context);
   final token = await authService.getToken();
 
+    if (price != null) {
+    price = price.replaceAll('\$', '');
+  }
+
   final String apiUrl =
       'https://passiondrivenbuilds.com/api/builds/$buildId/modifications';
 
@@ -34,8 +38,6 @@ Future<bool> submitModification(
     'installed_myself': installedMyself,
     'installed_by': installedMyself == 1 ? "" : installedBy,
   };
-
-  print("Final Payload Before Sending: ${json.encode(modificationData)}");
 
   try {
     final response = await http.post(

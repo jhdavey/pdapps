@@ -14,8 +14,15 @@ Future<bool> updateModification({
 }) async {
   final authService = RepositoryProvider.of<ApiAuthService>(context);
   final token = await authService.getToken();
+  
   final String apiUrl =
       'https://passiondrivenbuilds.com/api/builds/$buildId/modifications/$modificationId';
+  
+   if (modificationData['price'] != null) {
+    modificationData['price'] = modificationData['price']
+        .toString()
+        .replaceAll('\$', '');
+  }
   
   modificationData = {
     'category': modificationData['category'],
@@ -28,9 +35,6 @@ Future<bool> updateModification({
     'installed_by': modificationData['installed_by'],
     
   };
-
-  // Debugging output
-  print("Final Payload Before Sending: ${json.encode(modificationData)}");
 
   try {
     final response = await http.put(

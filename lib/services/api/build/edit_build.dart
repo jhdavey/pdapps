@@ -1,5 +1,4 @@
 // ignore_for_file: use_build_context_synchronously
-
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
@@ -9,7 +8,7 @@ import 'package:http/http.dart' as http;
 Future<dynamic> updateBuild(
   BuildContext context, {
   required String buildId,
-  required Map<String, String> fields,
+  required Map<String, dynamic> fields, // Note the dynamic type here
   Uint8List? imageBytes,
   List<Uint8List>? additionalMediaBytes,
   List<String>? additionalMediaTypes,
@@ -28,6 +27,7 @@ Future<dynamic> updateBuild(
   final String url = 'https://passiondrivenbuilds.com/api/builds/$buildId';
 
   try {
+    // Create the request body using the fields map (which now can include arrays)
     final Map<String, dynamic> body = Map.from(fields);
 
     if (removedImages != null && removedImages.isNotEmpty) {
@@ -39,9 +39,8 @@ Future<dynamic> updateBuild(
     }
 
     if (additionalMediaBytes != null && additionalMediaBytes.isNotEmpty) {
-      final List<String> newMediaBase64 = additionalMediaBytes
-          .map((bytes) => base64Encode(bytes))
-          .toList();
+      final List<String> newMediaBase64 =
+          additionalMediaBytes.map((bytes) => base64Encode(bytes)).toList();
       body['added_media'] = newMediaBase64;
 
       if (additionalMediaTypes != null && additionalMediaTypes.isNotEmpty) {
@@ -80,3 +79,4 @@ Future<dynamic> updateBuild(
     return null;
   }
 }
+

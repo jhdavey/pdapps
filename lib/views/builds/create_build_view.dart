@@ -1,5 +1,4 @@
-// ignore_for_file: library_private_types_in_public_api, use_build_context_synchronously
-
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -17,6 +16,7 @@ class _CreateBuildViewState extends State<CreateBuildView> {
   final TextEditingController _yearController = TextEditingController();
   final TextEditingController _makeController = TextEditingController();
   final TextEditingController _modelController = TextEditingController();
+  final TextEditingController _tagsController = TextEditingController();
   String? _selectedCategory;
   File? _selectedImage;
 
@@ -48,7 +48,6 @@ class _CreateBuildViewState extends State<CreateBuildView> {
 
     if (pickedFile != null) {
       setState(() {
-        // Replace the old featured image with the new one.
         _selectedImage = File(pickedFile.path);
       });
     }
@@ -57,12 +56,24 @@ class _CreateBuildViewState extends State<CreateBuildView> {
   Future<void> _createBuild() async {
     if (!_formKey.currentState!.validate()) return;
 
+    // Build the basic fields.
     final fields = <String, String>{
       'year': _yearController.text,
       'make': _makeController.text,
       'model': _modelController.text,
       'build_category': _selectedCategory!,
     };
+
+    // Process tags input: split by comma and remove empty parts.
+    final tagsInput = _tagsController.text;
+    final List<String> tags = tagsInput.split(',')
+        .map((tag) => tag.trim())
+        .where((tag) => tag.isNotEmpty)
+        .toList();
+    if (tags.isNotEmpty) {
+      // Encode the list as a JSON string.
+      fields['tags'] = jsonEncode(tags);
+    }
 
     final success = await createBuild(
       context,
@@ -73,6 +84,15 @@ class _CreateBuildViewState extends State<CreateBuildView> {
     if (success) {
       Navigator.pop(context);
     }
+  }
+
+  @override
+  void dispose() {
+    _yearController.dispose();
+    _makeController.dispose();
+    _modelController.dispose();
+    _tagsController.dispose();
+    super.dispose();
   }
 
   @override
@@ -91,30 +111,26 @@ class _CreateBuildViewState extends State<CreateBuildView> {
                   controller: _yearController,
                   decoration: const InputDecoration(labelText: 'Year *'),
                   keyboardType: TextInputType.number,
-                  validator: (value) => (value == null || value.isEmpty)
-                      ? 'Year is required'
-                      : null,
+                  validator: (value) =>
+                      (value == null || value.isEmpty) ? 'Year is required' : null,
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _makeController,
                   decoration: const InputDecoration(labelText: 'Make *'),
-                  validator: (value) => (value == null || value.isEmpty)
-                      ? 'Make is required'
-                      : null,
+                  validator: (value) =>
+                      (value == null || value.isEmpty) ? 'Make is required' : null,
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _modelController,
                   decoration: const InputDecoration(labelText: 'Model *'),
-                  validator: (value) => (value == null || value.isEmpty)
-                      ? 'Model is required'
-                      : null,
+                  validator: (value) =>
+                      (value == null || value.isEmpty) ? 'Model is required' : null,
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  decoration:
-                      const InputDecoration(labelText: 'Build Category *'),
+                  decoration: const InputDecoration(labelText: 'Build Category *'),
                   value: _selectedCategory,
                   items: _categories
                       .map((category) => DropdownMenuItem(
@@ -127,9 +143,17 @@ class _CreateBuildViewState extends State<CreateBuildView> {
                       _selectedCategory = value;
                     });
                   },
-                  validator: (value) => (value == null || value.isEmpty)
-                      ? 'Category is required'
-                      : null,
+                  validator: (value) =>
+                      (value == null || value.isEmpty) ? 'Category is required' : null,
+                ),
+                const SizedBox(height: 12),
+                // New input field for tags.
+                TextFormField(
+                  controller: _tagsController,
+                  decoration: const InputDecoration(
+                    labelText: 'Tags (comma-separated)',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
                 const SizedBox(height: 12),
                 // Preview of the selected featured image.
@@ -159,7 +183,7 @@ class _CreateBuildViewState extends State<CreateBuildView> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                Text(
+                const Text(
                   'Add additional details and media by editing your build after creating it.',
                   textAlign: TextAlign.center,
                 ),

@@ -8,7 +8,7 @@ import 'package:http/http.dart' as http;
 
 Future<bool> createBuild(
   BuildContext context, {
-  required Map<String, String> fields,
+  required Map<String, dynamic> fields,
   File? imageFile,
 }) async {
   final prefs = await SharedPreferences.getInstance();
@@ -29,9 +29,26 @@ Future<bool> createBuild(
     // Add the authorization header.
     request.headers['Authorization'] = 'Bearer $token';
 
-    // Add all the fields to the request.
+    // If a tags field is provided as a comma-separated string,
+    // split it and add each tag individually.
+    if (fields.containsKey('tags') && fields['tags'] is String) {
+      final tagsInput = fields['tags'] as String;
+      final List<String> tags = tagsInput
+          .split(',')
+          .map((tag) => tag.trim())
+          .where((tag) => tag.isNotEmpty)
+          .toList();
+      // Remove the original 'tags' entry.
+      fields.remove('tags');
+      // Add each tag as a separate field.
+      for (int i = 0; i < tags.length; i++) {
+        request.fields['tags[$i]'] = tags[i];
+      }
+    }
+
+    // Add the remaining fields.
     fields.forEach((key, value) {
-      request.fields[key] = value;
+      request.fields[key] = value.toString();
     });
 
     // If an image file was selected, add it to the request.
