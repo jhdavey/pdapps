@@ -209,7 +209,6 @@ class _EditBuildViewState extends State<EditBuildView> {
       'brakes': _brakesController.text.trim(),
     };
 
-// Process tags input: split by comma into a List<String>
     final tagsInput = _tagsController.text;
     final List<String> tags = tagsInput
         .split(',')
@@ -242,7 +241,7 @@ class _EditBuildViewState extends State<EditBuildView> {
     final updatedBuild = await updateBuild(
       context,
       buildId: widget.build['id'].toString(),
-      fields: fields, // now a Map<String, dynamic>
+      fields: fields,
       imageBytes: imageBytes,
       additionalMediaBytes: additionalMediaBytes,
       additionalMediaTypes: additionalMediaTypes,
@@ -334,7 +333,6 @@ class _EditBuildViewState extends State<EditBuildView> {
                     controller: _suspensionController, label: 'Suspension'),
                 _buildTextField(controller: _brakesController, label: 'Brakes'),
                 const SizedBox(height: 12),
-                // Tags input field.
                 TextFormField(
                   controller: _tagsController,
                   decoration: const InputDecoration(
@@ -343,7 +341,6 @@ class _EditBuildViewState extends State<EditBuildView> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                // Featured image preview container.
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [

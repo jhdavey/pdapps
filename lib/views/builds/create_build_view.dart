@@ -1,7 +1,10 @@
+// ignore_for_file: library_private_types_in_public_api, use_build_context_synchronously
+
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:pd/data/build_categories.dart';
 import 'package:pd/services/api/build/create_build.dart';
 
 class CreateBuildView extends StatefulWidget {
@@ -20,28 +23,6 @@ class _CreateBuildViewState extends State<CreateBuildView> {
   String? _selectedCategory;
   File? _selectedImage;
 
-  final List<String> _categories = [
-    'Classic/Antique',
-    'Drag',
-    'Drift',
-    'Exotic',
-    'Hot rod/Rat rod',
-    'Lowrider',
-    'Mudder',
-    'Muscle',
-    'Offroad/Overlander',
-    'Rally',
-    'Restomod',
-    'Show',
-    'Sleeper',
-    'Stance',
-    'Street/daily',
-    'Time attack',
-    'Track/circuit/road race',
-    'VIP',
-    'Other',
-  ];
-
   Future<void> _pickImage() async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
@@ -57,21 +38,20 @@ class _CreateBuildViewState extends State<CreateBuildView> {
     if (!_formKey.currentState!.validate()) return;
 
     // Build the basic fields.
-    final fields = <String, String>{
+    final fields = <String, dynamic>{
       'year': _yearController.text,
       'make': _makeController.text,
       'model': _modelController.text,
       'build_category': _selectedCategory!,
     };
 
-    // Process tags input: split by comma and remove empty parts.
     final tagsInput = _tagsController.text;
-    final List<String> tags = tagsInput.split(',')
+    final List<String> tags = tagsInput
+        .split(',')
         .map((tag) => tag.trim())
         .where((tag) => tag.isNotEmpty)
         .toList();
     if (tags.isNotEmpty) {
-      // Encode the list as a JSON string.
       fields['tags'] = jsonEncode(tags);
     }
 
@@ -111,28 +91,32 @@ class _CreateBuildViewState extends State<CreateBuildView> {
                   controller: _yearController,
                   decoration: const InputDecoration(labelText: 'Year *'),
                   keyboardType: TextInputType.number,
-                  validator: (value) =>
-                      (value == null || value.isEmpty) ? 'Year is required' : null,
+                  validator: (value) => (value == null || value.isEmpty)
+                      ? 'Year is required'
+                      : null,
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _makeController,
                   decoration: const InputDecoration(labelText: 'Make *'),
-                  validator: (value) =>
-                      (value == null || value.isEmpty) ? 'Make is required' : null,
+                  validator: (value) => (value == null || value.isEmpty)
+                      ? 'Make is required'
+                      : null,
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _modelController,
                   decoration: const InputDecoration(labelText: 'Model *'),
-                  validator: (value) =>
-                      (value == null || value.isEmpty) ? 'Model is required' : null,
+                  validator: (value) => (value == null || value.isEmpty)
+                      ? 'Model is required'
+                      : null,
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  decoration: const InputDecoration(labelText: 'Build Category *'),
+                  decoration:
+                      const InputDecoration(labelText: 'Build Category *'),
                   value: _selectedCategory,
-                  items: _categories
+                  items: staticCategories
                       .map((category) => DropdownMenuItem(
                             value: category,
                             child: Text(category),
@@ -143,11 +127,11 @@ class _CreateBuildViewState extends State<CreateBuildView> {
                       _selectedCategory = value;
                     });
                   },
-                  validator: (value) =>
-                      (value == null || value.isEmpty) ? 'Category is required' : null,
+                  validator: (value) => (value == null || value.isEmpty)
+                      ? 'Category is required'
+                      : null,
                 ),
                 const SizedBox(height: 12),
-                // New input field for tags.
                 TextFormField(
                   controller: _tagsController,
                   decoration: const InputDecoration(
@@ -156,7 +140,6 @@ class _CreateBuildViewState extends State<CreateBuildView> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                // Preview of the selected featured image.
                 if (_selectedImage != null)
                   Center(
                     child: Container(

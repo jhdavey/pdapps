@@ -8,7 +8,7 @@ import 'package:http/http.dart' as http;
 Future<dynamic> updateBuild(
   BuildContext context, {
   required String buildId,
-  required Map<String, dynamic> fields, // Note the dynamic type here
+  required Map<String, dynamic> fields,
   Uint8List? imageBytes,
   List<Uint8List>? additionalMediaBytes,
   List<String>? additionalMediaTypes,
@@ -27,7 +27,6 @@ Future<dynamic> updateBuild(
   final String url = 'https://passiondrivenbuilds.com/api/builds/$buildId';
 
   try {
-    // Create the request body using the fields map (which now can include arrays)
     final Map<String, dynamic> body = Map.from(fields);
 
     if (removedImages != null && removedImages.isNotEmpty) {
