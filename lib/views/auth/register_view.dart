@@ -51,32 +51,32 @@ class _RegisterViewState extends State<RegisterView> {
               child: SingleChildScrollView(
                 child: Text(
                   '''
-End User License Agreement (EULA) for Passion Driven
-Last Updated: Feb 13, 2025
+                  End User License Agreement (EULA) for Passion Driven
+                  Last Updated: Feb 13, 2025
 
-By creating an account or using the Passion Driven app (“App”), you agree to be bound by this End User License Agreement (“EULA”) and our Privacy Policy. If you do not agree to these terms, do not register for or use the App.
+                  By creating an account or using the Passion Driven app (“App”), you agree to be bound by this End User License Agreement (“EULA”) and our Privacy Policy. If you do not agree to these terms, do not register for or use the App.
 
-User-Generated Content & Guidelines
-You agree that any content you post will comply with our community guidelines.
-Objectionable content—including hate speech, harassment, explicit or violent material—is strictly prohibited.
+                  User-Generated Content & Guidelines
+                  You agree that any content you post will comply with our community guidelines.
+                  Objectionable content—including hate speech, harassment, explicit or violent material—is strictly prohibited.
 
-Content Moderation, Reporting, and Blocking
-We monitor user-generated content and reserve the right to remove or modify content that violates these guidelines.
+                  Content Moderation, Reporting, and Blocking
+                  We monitor user-generated content and reserve the right to remove or modify content that violates these guidelines.
 
-The App provides tools that allow you to hide or flag objectionable content, report inappropriate build cards and images, or user profiles, and block abusive users by selecting their profiles. Reports will be reviewed and acted upon within 24 hours.
+                  The App provides tools that allow you to hide or flag objectionable content, report inappropriate build cards and images, or user profiles, and block abusive users by selecting their profiles. Reports will be reviewed and acted upon within 24 hours.
 
-Enforcement & Account Termination
-Repeated or severe violations may result in the suspension or termination of your account.
+                  Enforcement & Account Termination
+                  Repeated or severe violations may result in the suspension or termination of your account.
 
-User Agreement
-By using the App and checking the box below, you acknowledge that you have read and agree to this EULA and our Privacy Policy.
+                  User Agreement
+                  By using the App and checking the box below, you acknowledge that you have read and agree to this EULA and our Privacy Policy.
 
-Disclaimers & Limitation of Liability
-The App is provided “as is” without warranties of any kind. We are not liable for any damages arising from user-generated content.
+                  Disclaimers & Limitation of Liability
+                  The App is provided “as is” without warranties of any kind. We are not liable for any damages arising from user-generated content.
 
-Governing Law
-This EULA is governed by the laws of the state of Florida.
-''',
+                  Governing Law
+                  This EULA is governed by the laws of the state of Florida.
+                  ''',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 14,
@@ -118,7 +118,11 @@ This EULA is governed by the laws of the state of Florida.
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) async {
-        if (state is AuthStateRegistering && state.exception != null) {
+        if (state is AuthStateNeedsVerification) {
+          Navigator.pushReplacementNamed(context, '/verify-email');
+        } else if (state is AuthStateLoggedOut && !state.isLoading) {
+          Navigator.pushReplacementNamed(context, '/login');
+        } else if (state is AuthStateRegistering && state.exception != null) {
           final errorMessage = state.exception is ApiException
               ? (state.exception as ApiException).message
               : "An unknown error occurred. Please try again.";
@@ -126,6 +130,7 @@ This EULA is governed by the laws of the state of Florida.
         }
       },
       child: Scaffold(
+        appBar: AppBar(),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24.0),
@@ -203,14 +208,6 @@ This EULA is governed by the laws of the state of Florida.
                   ElevatedButton(
                     onPressed: _agreedToEULA ? _onRegisterButtonPressed : null,
                     child: const Text('Register'),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      context.read<AuthBloc>().add(
-                            const AuthEventShouldLogIn(),
-                          );
-                    },
-                    child: const Text('Already registered? Login here!'),
                   ),
                 ],
               ),

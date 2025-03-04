@@ -20,9 +20,16 @@ class AuthStateUninitialized extends AuthState {
 
 class AuthStateRegistering extends AuthState {
   final Exception? exception;
-  const AuthStateRegistering({required this.exception, required bool isLoading})
-      : super(isLoading: isLoading);
+  final DateTime timestamp;
+  AuthStateRegistering({
+    required this.exception,
+    required bool isLoading,
+  })  : timestamp = DateTime.now(),
+        super(isLoading: isLoading);
+
+  List<Object?> get props => [exception, isLoading, timestamp];
 }
+
 
 class AuthStateForgotPassword extends AuthState {
   final Exception? exception;

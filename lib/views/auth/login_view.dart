@@ -8,6 +8,7 @@ import 'package:pd/services/api/auth/bloc/auth_bloc.dart';
 import 'package:pd/services/api/auth/bloc/auth_event.dart';
 import 'package:pd/services/api/auth/bloc/auth_state.dart';
 import 'package:pd/utilities/dialogs/error_dialog.dart';
+import 'package:pd/views/auth/register_view.dart';
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -44,7 +45,11 @@ class _LoginViewState extends State<LoginView> {
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) async {
-        if (state is AuthStateLoggedOut && state.exception != null) {
+        if (state is AuthStateNeedsVerification) {
+          Navigator.pushNamed(context, '/verify-email');
+        } else if (state is AuthStateLoggedIn) {
+          Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+        } else if (state is AuthStateLoggedOut && state.exception != null) {
           final error = state.exception is ApiException
               ? state.exception as ApiException
               : GenericApiException();
@@ -76,17 +81,22 @@ class _LoginViewState extends State<LoginView> {
                   ),
                   const SizedBox(height: 20),
                   ElevatedButton(
-                    onPressed: _onLoginButtonPressed,
+                    onPressed: () {
+                      print("Login button pressed");
+                      _onLoginButtonPressed();
+                    },
                     child: const Text('Login'),
                   ),
                   TextButton(
-                    onPressed: () {
-                      context
-                          .read<AuthBloc>()
-                          .add(const AuthEventShouldRegister());
-                    },
-                    child: const Text('Register'),
-                  ),
+  onPressed: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => RegisterView()),
+    );
+  },
+  child: const Text('Register'),
+),
+
                   TextButton(
                     onPressed: () async {
                       final email = await showDialog<String>(
@@ -120,7 +130,6 @@ class _LoginViewState extends State<LoginView> {
                           await context
                               .read<ApiAuthService>()
                               .sendPasswordReset(toEmail: email);
-                          // Show success message, e.g.:
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                                 content: Text('Password reset email sent.')),

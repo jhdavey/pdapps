@@ -7,6 +7,7 @@ import 'package:pd/services/api/auth/auth_service.dart';
 import 'package:pd/services/api/auth/bloc/auth_bloc.dart';
 import 'package:pd/services/api/auth/bloc/auth_event.dart';
 import 'package:pd/services/api/auth/bloc/auth_state.dart';
+import 'package:pd/views/auth/verify_email_view.dart';
 import 'package:pd/views/builds/build_note_view.dart';
 import 'package:pd/views/builds/create_build_view.dart';
 import 'package:pd/views/builds/edit_build_view.dart';
@@ -113,10 +114,12 @@ class MyApp extends StatelessWidget {
             ),
           ),
           debugShowCheckedModeBanner: false,
-          home: const AppNavigator(),
+          home: AppNavigator(),
           routes: {
-            '/login': (context) => const LoginView(),
-            '/feedback': (context) => const FeedbackView(),
+            '/register': (context) => RegisterView(),
+            '/login': (context) => LoginView(),
+            '/home': (context) => HomeView(),
+            '/feedback': (context) => FeedbackView(),
             '/build-view': (context) {
               final args = ModalRoute.of(context)!.settings.arguments
                   as Map<String, dynamic>?;
@@ -212,6 +215,7 @@ class MyApp extends StatelessWidget {
                 title: args['title'],
               );
             },
+            '/verify-email': (context) => const VerifyEmailView(),
           },
         ),
       ),
@@ -234,11 +238,11 @@ class AppNavigator extends StatelessWidget {
       },
       builder: (context, state) {
         if (state is AuthStateLoggedIn) {
-          return const HomeView();
+          return HomeView();
         } else if (state is AuthStateRegistering) {
-          return const RegisterView();
+          return RegisterView();
         } else {
-          return const LoginView();
+          return LoginView();
         }
       },
     );

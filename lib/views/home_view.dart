@@ -246,7 +246,10 @@ class _HomeViewState extends State<HomeView> with RouteAware {
                   ),
                   const SizedBox(height: 10),
                   if (followingBuilds.isEmpty)
-                    const Text('You are not following any builds yet.')
+                    Padding(
+                      padding: const EdgeInsets.only(left: 8.0),
+                      child: const Text('You are not following anyone yet.'),
+                    )
                   else
                     buildHorizontalList(followingBuilds),
 

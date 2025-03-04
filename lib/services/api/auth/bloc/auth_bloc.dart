@@ -8,21 +8,19 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
   AuthBloc(this.authService)
       : super(const AuthStateUninitialized(isLoading: true)) {
-    // Handle register navigation
     on<AuthEventShouldRegister>((event, emit) {
-      emit(const AuthStateRegistering(
+      emit(AuthStateRegistering(
         exception: null,
         isLoading: false,
       ));
     });
 
-    // Handle register
     on<AuthEventRegister>((event, emit) async {
       final displayName = event.displayName;
       final email = event.email;
       final password = event.password;
 
-      emit(const AuthStateRegistering(
+      emit( AuthStateRegistering(
         exception: null,
         isLoading: true,
       ));
@@ -34,16 +32,29 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           password: password,
         );
 
-        // Automatically log in after registration
         await authService.logIn(email: email, password: password);
         final user = await authService.getCurrentUser();
 
-        emit(AuthStateLoggedIn(user: user!, isLoading: false));
+        if (user != null && !user.isEmailVerified) {
+          emit(const AuthStateNeedsVerification(isLoading: false));
+        } else {
+          emit(AuthStateLoggedIn(user: user!, isLoading: false));
+        }
       } on Exception catch (e) {
         emit(AuthStateRegistering(
           exception: e,
           isLoading: false,
         ));
+      }
+    });
+
+    on<AuthEventSendEmailVerification>((event, emit) async {
+      try {
+        final user = await authService.getCurrentUser();
+        if (user == null) throw Exception("User not found");
+        await authService.sendEmailVerification();
+      } catch (e) {
+        // Handle error
       }
     });
 
@@ -124,7 +135,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
       final email = event.email;
       if (email == null) {
-        return; // User just wants to go to the forgot-password screen
+        return;
       }
 
       emit(const AuthStateForgotPassword(
