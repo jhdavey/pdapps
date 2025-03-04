@@ -37,24 +37,15 @@ class _EditBuildViewState extends State<EditBuildView> {
   final TextEditingController _makeController = TextEditingController();
   final TextEditingController _modelController = TextEditingController();
   final TextEditingController _trimController = TextEditingController();
-  final TextEditingController _hpController = TextEditingController();
   final TextEditingController _whpController = TextEditingController();
   final TextEditingController _torqueController = TextEditingController();
   final TextEditingController _weightController = TextEditingController();
-  final TextEditingController _vehicleLayoutController =
-      TextEditingController();
-  final TextEditingController _fuelController = TextEditingController();
   final TextEditingController _zeroSixtyController = TextEditingController();
-  final TextEditingController _zeroOneHundredController =
-      TextEditingController();
   final TextEditingController _quarterMileController = TextEditingController();
   final TextEditingController _engineTypeController = TextEditingController();
-  final TextEditingController _engineCodeController = TextEditingController();
   final TextEditingController _forcedInductionController =
       TextEditingController();
   final TextEditingController _transController = TextEditingController();
-  final TextEditingController _suspensionController = TextEditingController();
-  final TextEditingController _brakesController = TextEditingController();
   final TextEditingController _tagsController = TextEditingController();
 
   String? _selectedCategory;
@@ -75,24 +66,17 @@ class _EditBuildViewState extends State<EditBuildView> {
     _makeController.text = widget.build['make']?.toString() ?? '';
     _modelController.text = widget.build['model']?.toString() ?? '';
     _trimController.text = widget.build['trim']?.toString() ?? '';
-    _hpController.text = widget.build['hp']?.toString() ?? '';
     _whpController.text = widget.build['whp']?.toString() ?? '';
     _torqueController.text = widget.build['torque']?.toString() ?? '';
     _weightController.text = widget.build['weight']?.toString() ?? '';
-    _vehicleLayoutController.text =
         widget.build['vehicleLayout']?.toString() ?? '';
-    _fuelController.text = widget.build['fuel']?.toString() ?? '';
     _zeroSixtyController.text = widget.build['zeroSixty']?.toString() ?? '';
-    _zeroOneHundredController.text =
         widget.build['zeroOneHundred']?.toString() ?? '';
     _quarterMileController.text = widget.build['quarterMile']?.toString() ?? '';
     _engineTypeController.text = widget.build['engineType']?.toString() ?? '';
-    _engineCodeController.text = widget.build['engineCode']?.toString() ?? '';
     _forcedInductionController.text =
         widget.build['forcedInduction']?.toString() ?? '';
     _transController.text = widget.build['trans']?.toString() ?? '';
-    _suspensionController.text = widget.build['suspension']?.toString() ?? '';
-    _brakesController.text = widget.build['brakes']?.toString() ?? '';
     _selectedCategory = widget.build['build_category']?.toString();
 
     if (widget.build['tags'] != null && widget.build['tags'] is List) {
@@ -123,21 +107,14 @@ class _EditBuildViewState extends State<EditBuildView> {
     _makeController.dispose();
     _modelController.dispose();
     _trimController.dispose();
-    _hpController.dispose();
     _whpController.dispose();
     _torqueController.dispose();
     _weightController.dispose();
-    _vehicleLayoutController.dispose();
-    _fuelController.dispose();
     _zeroSixtyController.dispose();
-    _zeroOneHundredController.dispose();
     _quarterMileController.dispose();
     _engineTypeController.dispose();
-    _engineCodeController.dispose();
     _forcedInductionController.dispose();
     _transController.dispose();
-    _suspensionController.dispose();
-    _brakesController.dispose();
     _tagsController.dispose();
     super.dispose();
   }
@@ -192,21 +169,14 @@ class _EditBuildViewState extends State<EditBuildView> {
       'model': _modelController.text.trim(),
       'trim': _trimController.text.trim(),
       'build_category': _selectedCategory ?? '',
-      'hp': _hpController.text.trim(),
       'whp': _whpController.text.trim(),
       'torque': _torqueController.text.trim(),
       'weight': _weightController.text.trim(),
-      'vehicleLayout': _vehicleLayoutController.text.trim(),
-      'fuel': _fuelController.text.trim(),
       'zeroSixty': _zeroSixtyController.text.trim(),
-      'zeroOneHundred': _zeroOneHundredController.text.trim(),
       'quarterMile': _quarterMileController.text.trim(),
       'engineType': _engineTypeController.text.trim(),
-      'engineCode': _engineCodeController.text.trim(),
       'forcedInduction': _forcedInductionController.text.trim(),
       'trans': _transController.text.trim(),
-      'suspension': _suspensionController.text.trim(),
-      'brakes': _brakesController.text.trim(),
     };
 
     final tagsInput = _tagsController.text;
@@ -302,36 +272,22 @@ class _EditBuildViewState extends State<EditBuildView> {
                 _buildTextField(controller: _trimController, label: 'Trim'),
                 _buildDropdownField(),
                 _buildTextField(
-                    controller: _hpController, label: 'Horsepower (HP)'),
-                _buildTextField(
                     controller: _whpController,
                     label: 'Wheel Horsepower (WHP)'),
                 _buildTextField(controller: _torqueController, label: 'Torque'),
                 _buildTextField(controller: _weightController, label: 'Weight'),
                 _buildTextField(
-                    controller: _vehicleLayoutController,
-                    label: 'Vehicle Layout'),
-                _buildTextField(controller: _fuelController, label: 'Fuel'),
-                _buildTextField(
                     controller: _zeroSixtyController, label: '0-60 mph Time'),
-                _buildTextField(
-                    controller: _zeroOneHundredController,
-                    label: '0-100 mph Time'),
                 _buildTextField(
                     controller: _quarterMileController,
                     label: 'Quarter Mile Time'),
                 _buildTextField(
                     controller: _engineTypeController, label: 'Engine Type'),
                 _buildTextField(
-                    controller: _engineCodeController, label: 'Engine Code'),
-                _buildTextField(
                     controller: _forcedInductionController,
                     label: 'Forced Induction'),
                 _buildTextField(
                     controller: _transController, label: 'Transmission'),
-                _buildTextField(
-                    controller: _suspensionController, label: 'Suspension'),
-                _buildTextField(controller: _brakesController, label: 'Brakes'),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _tagsController,

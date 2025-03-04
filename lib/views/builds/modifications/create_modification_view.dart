@@ -32,10 +32,6 @@ class _CreateModificationViewState extends State<CreateModificationView> {
       _isSubmitting = true;
     });
 
-    // ✅ DEBUGGING: Print Data Before Sending to API
-    print("Installed Myself: $_installedMyself");
-    print("Installed By: $_installedBy");
-
     final success = await submitModification(
       context,
       widget.buildId.toString(),
@@ -51,6 +47,54 @@ class _CreateModificationViewState extends State<CreateModificationView> {
 
     if (success) {
       Navigator.pop(context, true);
+    }
+
+    if (mounted) {
+      setState(() {
+        _isSubmitting = false;
+      });
+    }
+  }
+
+  Future<void> _submitAndAddAnotherModification() async {
+    if (!_formKey.currentState!.validate()) return;
+    _formKey.currentState!.save();
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    final success = await submitModification(
+      context,
+      widget.buildId.toString(),
+      category: _selectedCategory!,
+      name: _name,
+      brand: _brand,
+      price: _price,
+      part: _part,
+      notes: _notes,
+      installedMyself: _installedMyself,
+      installedBy: _installedMyself == 1 ? null : _installedBy,
+    );
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Modification submitted. You can add another.'),
+        ),
+      );
+      _formKey.currentState!.reset();
+
+      setState(() {
+        _selectedCategory = null;
+        _name = null;
+        _brand = null;
+        _price = null;
+        _part = null;
+        _notes = null;
+        _installedMyself = 0;
+        _installedBy = null;
+      });
     }
 
     if (mounted) {
@@ -130,14 +174,28 @@ class _CreateModificationViewState extends State<CreateModificationView> {
                 },
               ),
               const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: _isSubmitting ? null : _submitModification,
-                child: _isSubmitting
-                    ? const CircularProgressIndicator(
-                        color: Colors.white,
-                      )
-                    : const Text('Submit Modification'),
-              ),
+              Column(
+                children: [
+                  ElevatedButton(
+                    onPressed: _isSubmitting ? null : _submitModification,
+                    child: _isSubmitting
+                        ? const CircularProgressIndicator(
+                            color: Colors.white,
+                          )
+                        : const Text('Submit Modification'),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed:
+                        _isSubmitting ? null : _submitAndAddAnotherModification,
+                    child: _isSubmitting
+                        ? const CircularProgressIndicator(
+                            color: Colors.white,
+                          )
+                        : const Text('Submit and Add Another'),
+                  ),
+                ],
+              )
             ],
           ),
         ),

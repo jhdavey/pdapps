@@ -42,6 +42,10 @@ Widget buildAdditionalMediaSection(
           .toList()
       : [];
 
+  // Reverse the media order so that the most recent added media shows up first.
+  final List<Map<String, dynamic>> reversedMediaList =
+      mediaList.reversed.toList();
+
   return Builder(
     builder: (BuildContext outerContext) {
       return Column(
@@ -78,7 +82,7 @@ Widget buildAdditionalMediaSection(
               ],
             ),
           ),
-          mediaList.isEmpty
+          reversedMediaList.isEmpty
               ? Container(
                   alignment: Alignment.center,
                   child: const Text(
@@ -91,11 +95,11 @@ Widget buildAdditionalMediaSection(
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     padding: const EdgeInsets.symmetric(horizontal: 8),
-                    itemCount: mediaList.length,
+                    itemCount: reversedMediaList.length,
                     separatorBuilder: (context, index) =>
                         const SizedBox(width: 8),
                     itemBuilder: (context, index) {
-                      final media = mediaList[index];
+                      final media = reversedMediaList[index];
                       Widget mediaWidget;
                       if (media['type'] == 'video') {
                         mediaWidget = GestureDetector(
@@ -105,7 +109,7 @@ Widget buildAdditionalMediaSection(
                             height: 200,
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(8),
-                              color: Color(0xFF1F242C),
+                              color: const Color(0xFF1F242C),
                             ),
                             child: const Center(
                               child: Icon(
@@ -120,7 +124,8 @@ Widget buildAdditionalMediaSection(
                         mediaWidget = GestureDetector(
                           onTap: () => showImageDialog(
                             context,
-                            mediaList.map((m) {
+                            // Use reversedMediaList for consistency.
+                            reversedMediaList.map((m) {
                               return {
                                 'url': m['url'].toString(),
                                 'type': m['type'].toString(),
@@ -154,8 +159,8 @@ Widget buildAdditionalMediaSection(
                               child: IconButton(
                                 icon:
                                     const Icon(Icons.edit, color: Colors.white),
-                                onPressed: () => editCaption(
-                                    context, index, mediaList, reloadBuildData),
+                                onPressed: () => editCaption(context, index,
+                                    reversedMediaList, reloadBuildData),
                               ),
                             ),
                           // Delete button (if owner and media has an ID)
@@ -233,7 +238,6 @@ Widget buildAdditionalMediaSection(
   );
 }
 
-// Helper for editing captions.
 void editCaption(
   BuildContext context,
   int index,
@@ -325,9 +329,7 @@ void editCaption(
       );
     },
   ).then((result) async {
-    if (result == true) {
-      // Additional actions if needed.
-    }
+    if (result == true) {}
   });
 }
 

@@ -18,7 +18,7 @@
     'Recovery Gear',
     'Steering',
     'Suspension',
-    'Tires and Wheels',
+    'Tires & Wheels',
     'Transmission',
     'Utilities',
     'Other'

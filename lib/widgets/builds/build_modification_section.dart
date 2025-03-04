@@ -1,3 +1,4 @@
+// ignore_for_file: use_build_context_synchronously
 import 'package:flutter/material.dart';
 import 'package:pd/views/builds/modifications/create_modification_view.dart';
 import 'package:pd/views/builds/modifications/edit_modification_view.dart';
@@ -20,54 +21,19 @@ class BuildModificationsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool hasModifications = modificationsByCategory.isNotEmpty;
 
-    return Container(
-      padding: const EdgeInsets.all(10.0),
-      decoration: BoxDecoration(
-        color: Color(0xFF1F242C),
-        borderRadius: BorderRadius.circular(16.0),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Modifications',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              if (isOwner)
-                IconButton(
-                  icon: const Icon(Icons.add, color: Colors.white),
-                  onPressed: () async {
-                    final result = await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            CreateModificationView(buildId: buildId),
-                      ),
-                    );
-                    if (result == true) {
-                      reloadBuildData();
-                    }
-                  },
-                ),
-            ],
-          ),
-          if (hasModifications)
-            ...modificationsByCategory.entries.map((entry) {
+    Widget content = hasModifications
+        ? Column(
+            children: modificationsByCategory.entries.map((entry) {
               final String category = entry.key;
               final List<dynamic> mods = entry.value as List<dynamic>;
               return Theme(
                 data: ThemeData(dividerColor: Colors.transparent),
                 child: ExpansionTile(
-                  backgroundColor: Color(0xFF1F242C),
+                  backgroundColor: const Color(0xFF1F242C),
                   iconColor: Colors.white,
-                  collapsedBackgroundColor: Color(0xFF1F242C),
+                  collapsedBackgroundColor: const Color(0xFF1F242C),
+                  // Set titlePadding to match other sections.
+                  tilePadding: const EdgeInsets.symmetric(horizontal: 10.0),
                   title: Text(
                     category,
                     style: const TextStyle(color: Colors.white),
@@ -119,7 +85,9 @@ class BuildModificationsSection extends StatelessWidget {
                               ),
                             const SizedBox(height: 10),
                             if (modification['notes'] != null &&
-                                modification['notes'].toString().isNotEmpty)
+                                modification['notes']
+                                    .toString()
+                                    .isNotEmpty)
                               Text(
                                 modification['notes'],
                                 style: const TextStyle(color: Colors.white70),
@@ -142,14 +110,100 @@ class BuildModificationsSection extends StatelessWidget {
                   }).toList(),
                 ),
               );
-            })
-          else
-            Text(
-              'No modifications have been added yet.',
-              style: TextStyle(color: Colors.white70),
+            }).toList(),
+          )
+        : const Text(
+            'No modifications have been added yet.',
+            style: TextStyle(color: Colors.white70),
+          );
+
+    if (hasModifications) {
+      content = ExpansionTile(
+        backgroundColor: const Color(0xFF1F242C),
+        iconColor: Colors.white,
+        collapsedBackgroundColor: const Color(0xFF1F242C),
+        // Set the titlePadding to match other sections.
+        tilePadding: const EdgeInsets.symmetric(horizontal: 10.0),
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Modifications',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
             ),
+            if (isOwner)
+              IconButton(
+                icon: const Icon(Icons.add, color: Colors.white),
+                onPressed: () async {
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          CreateModificationView(buildId: buildId),
+                    ),
+                  );
+                  if (result == true) {
+                    reloadBuildData();
+                  }
+                },
+              ),
+          ],
+        ),
+        children: [content],
+      );
+    } else {
+      content = Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Modifications',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              if (isOwner)
+                IconButton(
+                  icon: const Icon(Icons.add, color: Colors.white),
+                  onPressed: () async {
+                    final result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            CreateModificationView(buildId: buildId),
+                      ),
+                    );
+                    if (result == true) {
+                      reloadBuildData();
+                    }
+                  },
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'No modifications have been added yet.',
+            style: TextStyle(color: Colors.white70),
+          ),
         ],
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(10.0), // Changed from 5.0 to 10.0.
+      decoration: BoxDecoration(
+        color: const Color(0xFF1F242C),
+        borderRadius: BorderRadius.circular(16.0),
       ),
+      child: content,
     );
   }
 }
