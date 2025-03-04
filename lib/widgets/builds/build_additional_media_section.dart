@@ -58,7 +58,8 @@ Widget buildAdditionalMediaSection(
               children: [
                 if (isOwner)
                   IconButton(
-                    icon: const Icon(Icons.add, color: Colors.white, size: 30),
+                    icon:
+                        const Icon(Icons.add, color: Colors.white, size: 30),
                     onPressed: () async {
                       final bool? result = await showDialog<bool>(
                         context: outerContext,
@@ -124,15 +125,10 @@ Widget buildAdditionalMediaSection(
                         mediaWidget = GestureDetector(
                           onTap: () => showImageDialog(
                             context,
-                            // Use reversedMediaList for consistency.
-                            reversedMediaList.map((m) {
-                              return {
-                                'url': m['url'].toString(),
-                                'type': m['type'].toString(),
-                                'caption': m['caption']?.toString() ?? '',
-                              };
-                            }).toList(),
+                            reversedMediaList,
                             index,
+                            isOwner: isOwner,
+                            reloadBuildData: reloadBuildData,
                           ),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(8),
@@ -151,59 +147,6 @@ Widget buildAdditionalMediaSection(
                       return Stack(
                         children: [
                           mediaWidget,
-                          // Edit button (if owner)
-                          if (isOwner)
-                            Positioned(
-                              top: 0,
-                              right: 0,
-                              child: IconButton(
-                                icon:
-                                    const Icon(Icons.edit, color: Colors.white),
-                                onPressed: () => editCaption(context, index,
-                                    reversedMediaList, reloadBuildData),
-                              ),
-                            ),
-                          // Delete button (if owner and media has an ID)
-                          if (isOwner && media['id'] != null)
-                            Positioned(
-                              top: 0,
-                              right: 48,
-                              child: IconButton(
-                                icon:
-                                    const Icon(Icons.delete, color: Colors.red),
-                                onPressed: () async {
-                                  final bool confirm =
-                                      await showDeleteDialog(context, 'media');
-                                  if (confirm) {
-                                    final buildImageId = media['id'] as int;
-                                    final additionalMediaController =
-                                        AdditionalMediaController(
-                                            baseUrl:
-                                                'https://passiondrivenbuilds.com');
-                                    final success =
-                                        await additionalMediaController
-                                            .deleteAdditionalMedia(
-                                                mediaId: buildImageId);
-                                    if (success) {
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        const SnackBar(
-                                            content: Text(
-                                                'Media deleted successfully.')),
-                                      );
-                                      await reloadBuildData();
-                                    } else {
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        const SnackBar(
-                                            content:
-                                                Text('Error deleting media.')),
-                                      );
-                                    }
-                                  }
-                                },
-                              ),
-                            ),
                           // Caption overlay (if exists)
                           if ((media['caption'] as String).isNotEmpty)
                             Positioned(
@@ -233,6 +176,166 @@ Widget buildAdditionalMediaSection(
                   ),
                 ),
         ],
+      );
+    },
+  );
+}
+
+/// Updated showImageDialog with owner controls and caption below the image.
+void showImageDialog(
+  BuildContext context,
+  List<Map<String, dynamic>> media,
+  int initialIndex, {
+  bool isOwner = false,
+  required Future<void> Function() reloadBuildData,
+}) {
+  showDialog(
+    context: context,
+    barrierDismissible: true,
+    builder: (BuildContext dialogContext) {
+      int currentIndex = initialIndex;
+      final PageController controller =
+          PageController(initialPage: initialIndex);
+      return Dialog(
+        backgroundColor: const Color(0xFF1F242C),
+        insetPadding: const EdgeInsets.all(16),
+        child: StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return SafeArea(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Top row with close button and, if owner, edit & delete icons.
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      if (isOwner) ...[
+                        IconButton(
+                          icon: const Icon(Icons.edit, color: Colors.white),
+                          onPressed: () {
+                            editCaption(
+                              context,
+                              currentIndex,
+                              media,
+                              reloadBuildData,
+                            );
+                          },
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.red),
+                          onPressed: () async {
+                            final bool confirm =
+                                await showDeleteDialog(context, 'media');
+                            if (confirm) {
+                              final mediaId = media[currentIndex]['id'];
+                              if (mediaId != null) {
+                                final additionalMediaController =
+                                    AdditionalMediaController(
+                                        baseUrl:
+                                            'https://passiondrivenbuilds.com');
+                                final success =
+                                    await additionalMediaController
+                                        .deleteAdditionalMedia(
+                                            mediaId: mediaId);
+                                if (success) {
+                                  ScaffoldMessenger.of(context)
+                                      .showSnackBar(const SnackBar(
+                                          content: Text(
+                                              'Media deleted successfully.')));
+                                  await reloadBuildData();
+                                  Navigator.of(dialogContext).pop();
+                                } else {
+                                  ScaffoldMessenger.of(context)
+                                      .showSnackBar(const SnackBar(
+                                          content:
+                                              Text('Error deleting media.')));
+                                }
+                              }
+                            }
+                          },
+                        ),
+                      ],
+                      IconButton(
+                        icon: const Icon(Icons.close, color: Colors.red),
+                        onPressed: () => Navigator.of(dialogContext).pop(),
+                      ),
+                    ],
+                  ),
+                  // The media PageView.
+                  SizedBox(
+                    height: 300,
+                    child: PageView.builder(
+                      controller: controller,
+                      onPageChanged: (index) {
+                        setState(() {
+                          currentIndex = index;
+                        });
+                      },
+                      itemCount: media.length,
+                      itemBuilder: (BuildContext context, int index) {
+                        final mediaItem = media[index];
+                        return Hero(
+                          tag: mediaItem['url']!,
+                          child: mediaItem['type'] == 'image'
+                              ? Image.network(
+                                  mediaItem['url']!,
+                                  fit: BoxFit.contain,
+                                  width: double.infinity,
+                                  loadingBuilder:
+                                      (context, child, loadingProgress) {
+                                    if (loadingProgress == null) return child;
+                                    return const Center(
+                                      child: CircularProgressIndicator(
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                                Colors.white),
+                                      ),
+                                    );
+                                  },
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      const Center(
+                                    child: Icon(Icons.error,
+                                        size: 50, color: Colors.white),
+                                  ),
+                                )
+                              : AspectRatio(
+                                  aspectRatio: 16 / 9,
+                                  child: VideoPlayerWidget(
+                                      videoUrl: mediaItem['url']!),
+                                ),
+                        );
+                      },
+                    ),
+                  ),
+                  // Spacer between the image and the caption.
+                  const SizedBox(height: 8),
+                  // Display caption below the expanded image.
+                  if ((media[currentIndex]['caption'] ?? '')
+                      .toString()
+                      .isNotEmpty)
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      color: const Color(0xFF1F242C),
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxHeight: 200),
+                        child: SingleChildScrollView(
+                          child: Text(
+                            media[currentIndex]['caption']!,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                            ),
+                            textAlign: TextAlign.left,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            );
+          },
+        ),
       );
     },
   );
@@ -333,119 +436,13 @@ void editCaption(
   });
 }
 
-void showImageDialog(
-  BuildContext context,
-  List<Map<String, String>> media,
-  int initialIndex,
-) {
-  showDialog(
-    context: context,
-    barrierDismissible: true,
-    builder: (BuildContext dialogContext) {
-      int currentIndex = initialIndex;
-      final PageController controller =
-          PageController(initialPage: initialIndex);
-      return Dialog(
-        backgroundColor: Color(0xFF1F242C),
-        insetPadding: const EdgeInsets.all(16),
-        child: StatefulBuilder(
-          builder: (BuildContext context, StateSetter setState) {
-            return SafeArea(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.close, color: Colors.red),
-                        onPressed: () => Navigator.of(dialogContext).pop(),
-                      ),
-                    ],
-                  ),
-                  SizedBox(
-                    height: 300,
-                    child: PageView.builder(
-                      controller: controller,
-                      onPageChanged: (index) {
-                        setState(() {
-                          currentIndex = index;
-                        });
-                      },
-                      itemCount: media.length,
-                      itemBuilder: (BuildContext context, int index) {
-                        final mediaItem = media[index];
-                        return Hero(
-                          tag: mediaItem['url']!,
-                          child: mediaItem['type'] == 'image'
-                              ? Image.network(
-                                  mediaItem['url']!,
-                                  fit: BoxFit.contain,
-                                  width: double.infinity,
-                                  loadingBuilder:
-                                      (context, child, loadingProgress) {
-                                    if (loadingProgress == null) return child;
-                                    return const Center(
-                                      child: CircularProgressIndicator(
-                                        valueColor:
-                                            AlwaysStoppedAnimation<Color>(
-                                                Colors.white),
-                                      ),
-                                    );
-                                  },
-                                  errorBuilder: (context, error, stackTrace) =>
-                                      const Center(
-                                    child: Icon(Icons.error,
-                                        size: 50, color: Colors.white),
-                                  ),
-                                )
-                              : AspectRatio(
-                                  aspectRatio: 16 / 9,
-                                  child: VideoPlayerWidget(
-                                      videoUrl: mediaItem['url']!),
-                                ),
-                        );
-                      },
-                    ),
-                  ),
-                  if ((media[currentIndex]['caption'] ?? '')
-                      .toString()
-                      .isNotEmpty)
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      color: Color(0xFF1F242C),
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxHeight: 200),
-                        child: SingleChildScrollView(
-                          child: Text(
-                            media[currentIndex]['caption']!,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                            ),
-                            textAlign: TextAlign.left,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            );
-          },
-        ),
-      );
-    },
-  );
-}
-
 void showVideoDialog(BuildContext context, String videoUrl) {
   showDialog(
     context: context,
     barrierDismissible: true,
     builder: (BuildContext dialogContext) {
       return Dialog(
-        backgroundColor: Color(0xFF1F242C),
+        backgroundColor: const Color(0xFF1F242C),
         child: AspectRatio(
           aspectRatio: 16 / 9,
           child: VideoPlayerWidget(videoUrl: videoUrl),
