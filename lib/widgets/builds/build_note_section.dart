@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
-import 'package:pd/views/builds/build_note_view.dart'; // if needed for ManageNotePage
+import 'package:pd/views/builds/build_note_view.dart';
 
 class BuildNotesSection extends StatelessWidget {
   final List<dynamic> notes;
@@ -69,8 +69,9 @@ class BuildNotesSection extends StatelessWidget {
               style: TextStyle(color: Colors.white70),
             )
           else
-            ...notes.map((note) {
-              // Attempt to parse the note's content (stored as a JSON-encoded Delta).
+            ...notes.asMap().entries.map((entry) {
+              final int index = entry.key;
+              final note = entry.value;
               quill.Document document;
               try {
                 final deltaJson = jsonDecode(note['note']);
@@ -84,7 +85,7 @@ class BuildNotesSection extends StatelessWidget {
                 document: document,
                 selection: const TextSelection.collapsed(offset: 0),
               );
-              return Padding(
+              Widget noteWidget = Padding(
                 padding: const EdgeInsets.symmetric(vertical: 4.0),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -94,7 +95,7 @@ class BuildNotesSection extends StatelessWidget {
                       child: AbsorbPointer(
                         child: quill.QuillEditor(
                           controller: controller,
-                          focusNode: FocusNode(), // Create a temporary focus node.
+                          focusNode: FocusNode(), // Temporary focus node.
                           scrollController: ScrollController(), // Temporary scroll controller.
                         ),
                       ),
@@ -123,7 +124,20 @@ class BuildNotesSection extends StatelessWidget {
                   ],
                 ),
               );
-            }),
+              if (index != notes.length - 1) {
+                return Column(
+                  children: [
+                    noteWidget,
+                    const Divider(
+                      thickness: 1,
+                      color: Colors.white,
+                    ),
+                  ],
+                );
+              } else {
+                return noteWidget;
+              }
+            })
         ],
       ),
     );

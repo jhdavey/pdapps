@@ -32,7 +32,6 @@ class BuildModificationsSection extends StatelessWidget {
                   backgroundColor: const Color(0xFF1F242C),
                   iconColor: Colors.white,
                   collapsedBackgroundColor: const Color(0xFF1F242C),
-                  // Set titlePadding to match other sections.
                   tilePadding: const EdgeInsets.symmetric(horizontal: 10.0),
                   title: Text(
                     category,
@@ -85,9 +84,7 @@ class BuildModificationsSection extends StatelessWidget {
                               ),
                             const SizedBox(height: 10),
                             if (modification['notes'] != null &&
-                                modification['notes']
-                                    .toString()
-                                    .isNotEmpty)
+                                modification['notes'].toString().isNotEmpty)
                               Text(
                                 modification['notes'],
                                 style: const TextStyle(color: Colors.white70),
@@ -122,8 +119,7 @@ class BuildModificationsSection extends StatelessWidget {
         backgroundColor: const Color(0xFF1F242C),
         iconColor: Colors.white,
         collapsedBackgroundColor: const Color(0xFF1F242C),
-        // Set the titlePadding to match other sections.
-        tilePadding: const EdgeInsets.symmetric(horizontal: 10.0),
+        tilePadding: const EdgeInsets.symmetric(horizontal: 0.0),
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -198,7 +194,7 @@ class BuildModificationsSection extends StatelessWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.all(10.0), // Changed from 5.0 to 10.0.
+      padding: const EdgeInsets.all(10.0),
       decoration: BoxDecoration(
         color: const Color(0xFF1F242C),
         borderRadius: BorderRadius.circular(16.0),
