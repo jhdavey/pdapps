@@ -8,8 +8,8 @@ import 'package:pd/services/api/build/get_all_builds.dart';
 import 'package:pd/data/build_categories.dart';
 import 'package:pd/main.dart';
 import 'package:pd/utilities/dialogs/search_dialog.dart';
-import 'package:pd/widgets/build_grid.dart';
 import 'package:pd/widgets/build_horizontal_list.dart';
+import 'package:pd/widgets/build_vertical_list.dart';
 import 'package:pd/widgets/refreshable_content.dart';
 
 class HomeView extends StatefulWidget {
@@ -137,7 +137,6 @@ class _HomeViewState extends State<HomeView> with RouteAware {
                     .any((apiCat) => apiCat['build_category'] == cat))
                 .toList();
 
-            final builds = data['builds'] as List<dynamic>? ?? [];
             final featuredBuilds =
                 data['featuredBuilds'] as List<dynamic>? ?? [];
             final followingBuilds =
@@ -150,6 +149,7 @@ class _HomeViewState extends State<HomeView> with RouteAware {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Divider(),
+                  // Categories section
                   SizedBox(
                     height: 40,
                     child: ListView.builder(
@@ -188,6 +188,7 @@ class _HomeViewState extends State<HomeView> with RouteAware {
                     ),
                   ),
                   const Divider(),
+                  // Tags section
                   SizedBox(
                     height: 40,
                     child: ListView.builder(
@@ -226,7 +227,7 @@ class _HomeViewState extends State<HomeView> with RouteAware {
                     ),
                   ),
                   const Divider(),
-                  // Featured Builds
+                  // Featured Builds Section
                   if (featuredBuilds.isNotEmpty) ...[
                     Padding(
                       padding: const EdgeInsets.only(left: 8.0),
@@ -242,7 +243,6 @@ class _HomeViewState extends State<HomeView> with RouteAware {
                     buildHorizontalList(featuredBuilds),
                   ],
                   const Divider(),
-                  // Following Builds
                   Padding(
                     padding: const EdgeInsets.only(left: 8.0),
                     child: Text(
@@ -262,7 +262,7 @@ class _HomeViewState extends State<HomeView> with RouteAware {
                   else
                     buildHorizontalList(followingBuilds),
                   const Divider(),
-                  // Recently Updated Builds
+                  // Recently Updated Builds Section
                   Padding(
                     padding: const EdgeInsets.only(left: 8.0),
                     child: Text(
@@ -274,7 +274,16 @@ class _HomeViewState extends State<HomeView> with RouteAware {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  buildGrid(builds, 2),
+                  InfiniteVerticalBuildList(
+                    initialBuilds: [],
+                    fetchMoreBuilds: (page) async {
+                      return await fetchPaginatedBuilds(
+                        page: page,
+                        pageSize: 5,
+                        context: context,
+                      );
+                    },
+                  ),
                   const SizedBox(height: 20),
                 ],
               ),

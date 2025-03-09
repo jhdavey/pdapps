@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:pd/views/builds/build_note_view.dart';
+import 'package:pd/widgets/update_datetime.dart';
 
 class BuildNotesSection extends StatelessWidget {
   final List<dynamic> notes;
@@ -33,7 +34,7 @@ class BuildNotesSection extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
-                'Build Notes',
+                'Build Thread',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -44,7 +45,6 @@ class BuildNotesSection extends StatelessWidget {
                 IconButton(
                   icon: const Icon(Icons.add, color: Colors.white),
                   onPressed: () async {
-                    // Navigate to the ManageNotePage in "add note" mode.
                     final result = await Navigator.push<bool>(
                       context,
                       MaterialPageRoute(
@@ -77,57 +77,60 @@ class BuildNotesSection extends StatelessWidget {
                 final deltaJson = jsonDecode(note['note']);
                 document = quill.Document.fromJson(deltaJson);
               } catch (e) {
-                // Fallback to a plain text document if parsing fails.
                 document = quill.Document()..insert(0, note['note'] ?? '');
               }
-              // Create a temporary controller for rendering.
               final controller = quill.QuillController(
                 document: document,
                 selection: const TextSelection.collapsed(offset: 0),
               );
+              // Note content without the edit button.
               Widget noteWidget = Padding(
                 padding: const EdgeInsets.symmetric(vertical: 4.0),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Use AbsorbPointer to render the note as read-only rich text.
-                    Expanded(
-                      child: AbsorbPointer(
-                        child: quill.QuillEditor(
-                          controller: controller,
-                          focusNode: FocusNode(), // Temporary focus node.
-                          scrollController: ScrollController(), // Temporary scroll controller.
-                        ),
-                      ),
-                    ),
-                    if (isOwner)
-                      IconButton(
-                        icon: const Icon(Icons.edit, color: Colors.white, size: 16),
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                        onPressed: () async {
-                          final result = await Navigator.push<bool>(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => ManageNotePage(
-                                buildId: buildId,
-                                note: note,
-                                reloadBuildData: reloadBuildData,
-                              ),
-                            ),
-                          );
-                          if (result == true) {
-                            reloadBuildData();
-                          }
-                        },
-                      ),
-                  ],
+                child: AbsorbPointer(
+                  child: quill.QuillEditor(
+                    controller: controller,
+                    focusNode: FocusNode(),
+                    scrollController: ScrollController(),
+                  ),
                 ),
               );
+
+              final String updatedAtRaw = note['updated_at'] ?? '';
+              // Footer row with updated date/time and edit button at the right.
+              Widget footerWidget = Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  UpdatedDateTimeWidget(updatedAtRaw: updatedAtRaw),
+                  if (isOwner)
+                    IconButton(
+                      icon: const Icon(Icons.edit, color: Colors.white, size: 16),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      onPressed: () async {
+                        final result = await Navigator.push<bool>(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ManageNotePage(
+                              buildId: buildId,
+                              note: note,
+                              reloadBuildData: reloadBuildData,
+                            ),
+                          ),
+                        );
+                        if (result == true) {
+                          reloadBuildData();
+                        }
+                      },
+                    ),
+                ],
+              );
+
               if (index != notes.length - 1) {
                 return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     noteWidget,
+                    footerWidget,
                     const Divider(
                       thickness: 1,
                       color: Colors.white,
@@ -135,7 +138,13 @@ class BuildNotesSection extends StatelessWidget {
                   ],
                 );
               } else {
-                return noteWidget;
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    noteWidget,
+                    footerWidget,
+                  ],
+                );
               }
             })
         ],

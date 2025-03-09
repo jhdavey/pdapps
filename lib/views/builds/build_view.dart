@@ -8,9 +8,9 @@ import 'package:pd/services/api/build/build_data_loader.dart';
 import 'package:pd/widgets/builds/build_additional_media_section.dart';
 import 'package:pd/widgets/builds/build_comment_section.dart';
 import 'package:pd/widgets/builds/build_data_section.dart';
-import 'package:pd/widgets/builds/build_file_section.dart';
+// import 'package:pd/widgets/builds/build_file_section.dart';
 import 'package:pd/widgets/builds/build_modification_section.dart';
-import 'package:pd/widgets/builds/build_note_section.dart';
+import 'package:pd/widgets/builds/build_thread_section.dart';
 import 'package:pd/widgets/builds/build_tag_section.dart';
 
 class BuildView extends StatefulWidget {
@@ -209,12 +209,12 @@ class _BuildViewState extends State<BuildView> with RouteAware {
           isOwner: isOwner,
           reloadBuildData: _loadBuildData,
         ),
-        const SizedBox(height: 10),
-        BuildFilesSection(
-          build: _build,
-          isOwner: isOwner,
-          refreshBuild: _loadBuildData,
-        ),
+        // const SizedBox(height: 10),
+        // BuildFilesSection(
+        //   build: _build,
+        //   isOwner: isOwner,
+        //   refreshBuild: _loadBuildData,
+        // ),
         const SizedBox(height: 10),
         BuildCommentsSection(
           comments: _build['comments'] as List<dynamic>? ?? [],
