@@ -10,6 +10,7 @@ import 'package:pd/main.dart';
 import 'package:pd/utilities/dialogs/search_dialog.dart';
 import 'package:pd/widgets/build_grid.dart';
 import 'package:pd/widgets/build_horizontal_list.dart';
+import 'package:pd/widgets/refreshable_content.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
@@ -84,8 +85,7 @@ class _HomeViewState extends State<HomeView> with RouteAware {
           ),
           PopupMenuButton<String>(
             shape: RoundedRectangleBorder(
-              borderRadius:
-                  BorderRadius.circular(20.0),
+              borderRadius: BorderRadius.circular(20.0),
             ),
             onSelected: (value) {
               if (value == 'logout') {
@@ -108,34 +108,43 @@ class _HomeViewState extends State<HomeView> with RouteAware {
           ),
         ],
       ),
-      body: FutureBuilder<Map<String, dynamic>>(
-        future: _buildData,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
+      body: RefreshableContent(
+        onRefresh: () async {
+          setState(() {
+            _buildData = fetchBuildData(context: context);
+          });
+          await _buildData;
+        },
+        child: FutureBuilder<Map<String, dynamic>>(
+          future: _buildData,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(
                 child: CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white)));
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text('No builds found.'));
-          }
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              );
+            } else if (snapshot.hasError) {
+              return Center(child: Text('Error: ${snapshot.error}'));
+            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              return const Center(child: Text('No builds found.'));
+            }
 
-          final data = snapshot.data!;
-          final apiCategories = data['categories'] as List<dynamic>? ?? [];
-          final availableCategories = staticCategories
-              .where((cat) => apiCategories
-                  .any((apiCat) => apiCat['build_category'] == cat))
-              .toList();
+            final data = snapshot.data!;
+            final apiCategories = data['categories'] as List<dynamic>? ?? [];
+            final availableCategories = staticCategories
+                .where((cat) => apiCategories
+                    .any((apiCat) => apiCat['build_category'] == cat))
+                .toList();
 
-          final builds = data['builds'] as List<dynamic>? ?? [];
-          final featuredBuilds = data['featuredBuilds'] as List<dynamic>? ?? [];
-          final followingBuilds =
-              data['followingBuilds'] as List<dynamic>? ?? [];
-          final tags = data['tags'] as List<dynamic>? ?? [];
+            final builds = data['builds'] as List<dynamic>? ?? [];
+            final featuredBuilds =
+                data['featuredBuilds'] as List<dynamic>? ?? [];
+            final followingBuilds =
+                data['followingBuilds'] as List<dynamic>? ?? [];
+            final tags = data['tags'] as List<dynamic>? ?? [];
 
-          return SingleChildScrollView(
-            child: Padding(
+            return Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -252,7 +261,6 @@ class _HomeViewState extends State<HomeView> with RouteAware {
                     )
                   else
                     buildHorizontalList(followingBuilds),
-
                   const Divider(),
                   // Recently Updated Builds
                   Padding(
@@ -270,9 +278,9 @@ class _HomeViewState extends State<HomeView> with RouteAware {
                   const SizedBox(height: 20),
                 ],
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }
