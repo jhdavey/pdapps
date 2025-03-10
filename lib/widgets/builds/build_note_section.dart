@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:pd/views/builds/build_note_view.dart';
+import 'package:pd/widgets/quill_viewer.dart';
 import 'package:pd/widgets/update_datetime.dart';
 
 class BuildNotesSection extends StatelessWidget {
@@ -26,7 +27,6 @@ class BuildNotesSection extends StatelessWidget {
         color: const Color(0xFF1F242C),
         borderRadius: BorderRadius.circular(16.0),
       ),
-      // Limit overall height to 500
       constraints: const BoxConstraints(maxHeight: 300),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -88,24 +88,13 @@ class BuildNotesSection extends StatelessWidget {
                           } catch (e) {
                             document = quill.Document()..insert(0, note['note'] ?? '');
                           }
-                          final controller = quill.QuillController(
-                            document: document,
-                            selection: const TextSelection.collapsed(offset: 0),
-                          );
-                          // Note content without the edit button.
+                          // Replace the previous noteWidget with our custom LinkableQuillViewer.
                           Widget noteWidget = Padding(
                             padding: const EdgeInsets.symmetric(vertical: 4.0),
-                            child: AbsorbPointer(
-                              child: quill.QuillEditor(
-                                controller: controller,
-                                focusNode: FocusNode(),
-                                scrollController: ScrollController(),
-                              ),
-                            ),
+                            child: QuillViewer(document: document),
                           );
 
                           final String updatedAtRaw = note['updated_at'] ?? '';
-                          // Footer row with updated date/time and edit button at the right.
                           Widget footerWidget = Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -134,27 +123,18 @@ class BuildNotesSection extends StatelessWidget {
                             ],
                           );
 
-                          if (index != notes.length - 1) {
-                            return Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                noteWidget,
-                                footerWidget,
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              noteWidget,
+                              footerWidget,
+                              if (index != notes.length - 1)
                                 const Divider(
                                   thickness: 1,
                                   color: Colors.white,
                                 ),
-                              ],
-                            );
-                          } else {
-                            return Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                noteWidget,
-                                footerWidget,
-                              ],
-                            );
-                          }
+                            ],
+                          );
                         }),
                       ],
                     ),

@@ -7,11 +7,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:pd/services/api/build/note/create_note.dart';
 import 'package:pd/services/api/build/note/edit_note.dart';
-import 'package:pd/utilities/dialogs/generic_dialog.dart';
+import 'package:pd/utilities/dialogs/generic_dialog.dart'; // For showGenericDialog
 
 class ManageNotePage extends StatefulWidget {
   final int buildId;
-  final Map<String, dynamic>? note;
+  final Map<String, dynamic>? note; // if null, it's "add note" mode.
   final VoidCallback reloadBuildData;
 
   const ManageNotePage({
@@ -163,6 +163,7 @@ class _ManageNotePageState extends State<ManageNotePage> {
   }
 }
 
+/// Shows a generic delete confirmation dialog and returns true if the user confirms.
 Future<bool> showDeleteDialog(BuildContext context, String itemType) {
   return showGenericDialog(
     context: context,

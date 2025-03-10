@@ -10,7 +10,7 @@ import 'package:pd/widgets/builds/build_comment_section.dart';
 import 'package:pd/widgets/builds/build_data_section.dart';
 // import 'package:pd/widgets/builds/build_file_section.dart';
 import 'package:pd/widgets/builds/build_modification_section.dart';
-import 'package:pd/widgets/builds/build_thread_section.dart';
+import 'package:pd/widgets/builds/build_note_section.dart';
 import 'package:pd/widgets/builds/build_tag_section.dart';
 
 class BuildView extends StatefulWidget {
@@ -162,7 +162,11 @@ class _BuildViewState extends State<BuildView> with RouteAware {
         buildAdditionalMediaSection(_build,
             reloadBuildData: _loadBuildData, isOwner: isOwner),
         const SizedBox(height: 8),
-        BuildTags(buildData: _build),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: BuildTags(buildData: _build),
+        ),
+
         buildSection(
           title: 'Specs',
           dataPoints: [
