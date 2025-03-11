@@ -27,8 +27,8 @@ class BuildNotesSection extends StatelessWidget {
         color: const Color(0xFF1F242C),
         borderRadius: BorderRadius.circular(16.0),
       ),
-      // Only enforce a maximum height, not a fixed height.
-      constraints: const BoxConstraints(maxHeight: 500),
+      // Remove fixed constraints here so that the container's height 
+      // is determined by its children.
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -66,81 +66,86 @@ class BuildNotesSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
-          // This ConstrainedBox with SingleChildScrollView will only grow as much as needed,
-          // but no more than 500 pixels.
+          // The scrollable area for notes.
           ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: 500),
-            child: notes.isEmpty
-                ? const Center(
-                    child: Text(
-                      'No build notes have been added yet.',
-                      style: TextStyle(color: Colors.white70),
-                    ),
-                  )
-                : SingleChildScrollView(
-                    physics: const BouncingScrollPhysics(),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        ...notes.reversed.toList().asMap().entries.map((entry) {
-                          final int index = entry.key;
-                          final note = entry.value;
-                          quill.Document document;
-                          try {
-                            final deltaJson = jsonDecode(note['note']);
-                            document = quill.Document.fromJson(deltaJson);
-                          } catch (e) {
-                            document = quill.Document()
-                              ..insert(0, note['note'] ?? '');
-                          }
-                          Widget noteWidget = QuillViewer(document: document);
+            constraints: const BoxConstraints(
+              maxHeight: 500,
+            ),
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Column(
+                mainAxisSize: MainAxisSize.min, // only take the space needed
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: notes.isEmpty
+                    ? [
+                        const Center(
+                          child: Text(
+                            'No build notes have been added yet.',
+                            style: TextStyle(color: Colors.white70),
+                          ),
+                        )
+                      ]
+                    : notes.reversed
+                        .toList()
+                        .asMap()
+                        .entries
+                        .map((entry) {
+                        final int index = entry.key;
+                        final note = entry.value;
+                        quill.Document document;
+                        try {
+                          final deltaJson = jsonDecode(note['note']);
+                          document = quill.Document.fromJson(deltaJson);
+                        } catch (e) {
+                          document = quill.Document()..insert(0, note['note'] ?? '');
+                        }
+                        Widget noteWidget = QuillViewer(document: document);
 
-                          final String updatedAtRaw = note['updated_at'] ?? '';
-                          Widget footerWidget = Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              UpdatedDateTimeWidget(updatedAtRaw: updatedAtRaw),
-                              if (isOwner)
-                                IconButton(
-                                  icon: const Icon(Icons.edit, color: Colors.white, size: 16),
-                                  padding: EdgeInsets.zero,
-                                  constraints: const BoxConstraints(),
-                                  onPressed: () async {
-                                    final result = await Navigator.push<bool>(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => ManageNotePage(
-                                          buildId: buildId,
-                                          note: note,
-                                          reloadBuildData: reloadBuildData,
-                                        ),
+                        final String updatedAtRaw = note['updated_at'] ?? '';
+                        Widget footerWidget = Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            UpdatedDateTimeWidget(updatedAtRaw: updatedAtRaw),
+                            if (isOwner)
+                              IconButton(
+                                icon: const Icon(Icons.edit,
+                                    color: Colors.white, size: 16),
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                                onPressed: () async {
+                                  final result = await Navigator.push<bool>(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => ManageNotePage(
+                                        buildId: buildId,
+                                        note: note,
+                                        reloadBuildData: reloadBuildData,
                                       ),
-                                    );
-                                    if (result == true) {
-                                      reloadBuildData();
-                                    }
-                                  },
-                                ),
-                            ],
-                          );
+                                    ),
+                                  );
+                                  if (result == true) {
+                                    reloadBuildData();
+                                  }
+                                },
+                              ),
+                          ],
+                        );
 
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              noteWidget,
-                              footerWidget,
-                              if (index != notes.length - 1)
-                                const Divider(
-                                  thickness: 1,
-                                  color: Colors.white,
-                                ),
-                            ],
-                          );
-                        }),
-                      ],
-                    ),
-                  ),
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            noteWidget,
+                            footerWidget,
+                            if (index != notes.length - 1)
+                              const Divider(
+                                thickness: 1,
+                                color: Colors.white,
+                              ),
+                          ],
+                        );
+                      }).toList(),
+              ),
+            ),
           ),
         ],
       ),
