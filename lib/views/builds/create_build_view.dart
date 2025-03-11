@@ -22,6 +22,7 @@ class _CreateBuildViewState extends State<CreateBuildView> {
   final TextEditingController _tagsController = TextEditingController();
   String? _selectedCategory;
   File? _selectedImage;
+  bool _isSubmitting = false;
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
@@ -34,10 +35,9 @@ class _CreateBuildViewState extends State<CreateBuildView> {
     }
   }
 
-  Future<void> _createBuild() async {
-    if (!_formKey.currentState!.validate()) return;
+  Future<bool> _createBuild() async {
+    if (!_formKey.currentState!.validate()) return false;
 
-    // Build the basic fields.
     final fields = <String, dynamic>{
       'year': _yearController.text,
       'make': _makeController.text,
@@ -60,10 +60,7 @@ class _CreateBuildViewState extends State<CreateBuildView> {
       fields: fields,
       imageFile: _selectedImage,
     );
-
-    if (success) {
-      Navigator.pop(context);
-    }
+    return success;
   }
 
   @override
@@ -175,7 +172,22 @@ class _CreateBuildViewState extends State<CreateBuildView> {
                   child: SizedBox(
                     width: 200,
                     child: ElevatedButton(
-                      onPressed: _createBuild,
+                      onPressed: _isSubmitting
+                          ? null
+                          : () async {
+                              if (!_formKey.currentState!.validate()) return;
+                              setState(() {
+                                _isSubmitting = true;
+                              });
+                              final success = await _createBuild();
+                              if (success) {
+                                Navigator.pop(context);
+                              } else {
+                                setState(() {
+                                  _isSubmitting = false;
+                                });
+                              }
+                            },
                       style: ElevatedButton.styleFrom(
                         foregroundColor: Colors.white,
                       ),

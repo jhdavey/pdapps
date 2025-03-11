@@ -273,7 +273,7 @@ class _EditBuildViewState extends State<EditBuildView> {
                 _buildDropdownField(),
                 _buildTextField(
                     controller: _whpController,
-                    label: 'Wheel Horsepower (WHP)'),
+                    label: 'Wheel Horsepower (numbers only)'),
                 _buildTextField(controller: _torqueController, label: 'Torque'),
                 _buildTextField(controller: _weightController, label: 'Weight'),
                 _buildTextField(
