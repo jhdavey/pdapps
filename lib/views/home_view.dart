@@ -141,7 +141,10 @@ class _HomeViewState extends State<HomeView> with RouteAware {
                 data['featuredBuilds'] as List<dynamic>? ?? [];
             final followingBuilds =
                 data['followingBuilds'] as List<dynamic>? ?? [];
-            final tags = data['tags'] as List<dynamic>? ?? [];
+
+            final tags =
+                List<dynamic>.from(data['tags'] as List<dynamic>? ?? [])
+                  ..shuffle();
 
             return Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4),

@@ -42,7 +42,9 @@ class _CategoriesViewState extends State<CategoriesView> {
           }
 
           final builds = snapshot.data!;
-          return buildGrid(builds, 2);
+          return SingleChildScrollView(
+            child: buildGrid(builds, 2),
+          );
         },
       ),
     );

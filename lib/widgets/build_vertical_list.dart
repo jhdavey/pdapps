@@ -1,17 +1,18 @@
+// ignore_for_file: library_private_types_in_public_api
+
 import 'package:flutter/material.dart';
 import 'package:pd/widgets/tag_chip_list.dart';
 import 'package:pd/services/api/report_user.dart';
 
 class InfiniteVerticalBuildList extends StatefulWidget {
   final List<dynamic> initialBuilds;
-  // A function that, given a page number, returns a Future list of builds.
   final Future<List<dynamic>> Function(int page) fetchMoreBuilds;
 
   const InfiniteVerticalBuildList({
-    Key? key,
+    super.key,
     required this.initialBuilds,
     required this.fetchMoreBuilds,
-  }) : super(key: key);
+  });
 
   @override
   _InfiniteVerticalBuildListState createState() =>
@@ -21,15 +22,14 @@ class InfiniteVerticalBuildList extends StatefulWidget {
 class _InfiniteVerticalBuildListState extends State<InfiniteVerticalBuildList> {
   List<dynamic> _builds = [];
   bool _isLoadingMore = false;
-  int _currentPage = 1; // start at page 1
+  int _currentPage = 1;
   bool _hasMore = true;
 
   @override
   void initState() {
     super.initState();
-    // Ignore any passed initial builds and load page 1 fresh.
     _builds = [];
-    _loadMore(); // Trigger load of page 1 immediately.
+    _loadMore();
   }
 
   Future<void> _loadMore() async {
@@ -45,7 +45,7 @@ class _InfiniteVerticalBuildListState extends State<InfiniteVerticalBuildList> {
         _hasMore = false;
       } else {
         _builds.addAll(moreBuilds);
-        _currentPage++; // increment after successful load
+        _currentPage++;
       }
     } catch (e) {
       debugPrint("Error loading page $_currentPage: $e");
@@ -57,7 +57,6 @@ class _InfiniteVerticalBuildListState extends State<InfiniteVerticalBuildList> {
   }
 
   bool _onScrollNotification(ScrollNotification notification) {
-    // When the inner list's scroll extent is reached, try loading more.
     if (notification.metrics.pixels >=
             notification.metrics.maxScrollExtent - 200 &&
         !_isLoadingMore &&
@@ -69,7 +68,6 @@ class _InfiniteVerticalBuildListState extends State<InfiniteVerticalBuildList> {
 
   @override
   Widget build(BuildContext context) {
-    // This list is not individually scrollable; it relies on the parent scroll view.
     return NotificationListener<ScrollNotification>(
       onNotification: _onScrollNotification,
       child: ListView.builder(

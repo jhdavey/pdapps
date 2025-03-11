@@ -209,10 +209,13 @@ class _ManageNotePageState extends State<ManageNotePage> {
                     config: QuillEditorConfig(
                       placeholder: 'Start writing your notes...',
                       padding: const EdgeInsets.all(8),
+                      expands: true,
+                      scrollable: true,
                       embedBuilders: FlutterQuillEmbeds.editorBuilders(),
                     ),
                   )),
             ),
+                        const SizedBox(height: 20),
           ],
         ),
       ),
