@@ -8,7 +8,7 @@ import 'package:pd/services/api/auth/bloc/auth_bloc.dart';
 import 'package:pd/services/api/auth/bloc/auth_event.dart';
 import 'package:pd/services/api/auth/bloc/auth_state.dart';
 import 'package:pd/views/auth/verify_email_view.dart';
-import 'package:pd/views/builds/build_note_view.dart';
+import 'package:pd/views/builds/build_note_editor_view.dart';
 import 'package:pd/views/builds/create_build_view.dart';
 import 'package:pd/views/builds/edit_build_view.dart';
 import 'package:pd/views/auth/login_view.dart';

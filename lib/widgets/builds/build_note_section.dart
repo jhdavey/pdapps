@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
-import 'package:pd/views/builds/build_note_view.dart';
+import 'package:pd/views/builds/build_note_editor_view.dart';
 import 'package:pd/widgets/quill_viewer.dart';
 import 'package:pd/widgets/update_datetime.dart';
 
@@ -88,11 +88,7 @@ class BuildNotesSection extends StatelessWidget {
                           } catch (e) {
                             document = quill.Document()..insert(0, note['note'] ?? '');
                           }
-                          // Replace the previous noteWidget with our custom LinkableQuillViewer.
-                          Widget noteWidget = Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 4.0),
-                            child: QuillViewer(document: document),
-                          );
+                          Widget noteWidget = QuillViewer(document: document);
 
                           final String updatedAtRaw = note['updated_at'] ?? '';
                           Widget footerWidget = Row(

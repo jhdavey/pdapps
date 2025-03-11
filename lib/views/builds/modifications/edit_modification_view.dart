@@ -1,7 +1,5 @@
 // ignore_for_file: use_build_context_synchronously, library_private_types_in_public_api
 
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:pd/data/modification_categories.dart';
 import 'package:pd/services/api/build/modification/edit_modification.dart';
@@ -64,8 +62,6 @@ class _EditModificationViewState extends State<EditModificationView> {
       'installedMyself': _installedMyself,
       'installed_by': _installedMyself == 1 ? null : _installedBy,
     };
-
-    print("Final Payload Before Sending: ${json.encode(modificationData)}");
 
     final success = await updateModification(
       context: context,

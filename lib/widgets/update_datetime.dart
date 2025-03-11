@@ -5,9 +5,9 @@ class UpdatedDateTimeWidget extends StatelessWidget {
   final String updatedAtRaw;
 
   const UpdatedDateTimeWidget({
-    Key? key,
+    super.key,
     required this.updatedAtRaw,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -16,7 +16,7 @@ class UpdatedDateTimeWidget extends StatelessWidget {
         .format(updatedAtDateTime)
         .toLowerCase();
     return Padding(
-      padding: const EdgeInsets.only(top: 4.0),
+      padding: const EdgeInsets.only(top: 2.0),
       child: Text(
         'Updated: $formattedUpdatedAt',
         style: const TextStyle(
