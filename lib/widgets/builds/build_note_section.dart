@@ -27,7 +27,8 @@ class BuildNotesSection extends StatelessWidget {
         color: const Color(0xFF1F242C),
         borderRadius: BorderRadius.circular(16.0),
       ),
-      constraints: const BoxConstraints(maxHeight: 300),
+      // Only enforce a maximum height, not a fixed height.
+      constraints: const BoxConstraints(maxHeight: 500),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -36,7 +37,7 @@ class BuildNotesSection extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
-                'Build Thread',
+                'Build Notes',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -65,8 +66,10 @@ class BuildNotesSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
-          // Wrap the notes content in an Expanded with a scroll view.
-          Expanded(
+          // This ConstrainedBox with SingleChildScrollView will only grow as much as needed,
+          // but no more than 500 pixels.
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 500),
             child: notes.isEmpty
                 ? const Center(
                     child: Text(
@@ -75,7 +78,9 @@ class BuildNotesSection extends StatelessWidget {
                     ),
                   )
                 : SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
                     child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         ...notes.reversed.toList().asMap().entries.map((entry) {
@@ -86,7 +91,8 @@ class BuildNotesSection extends StatelessWidget {
                             final deltaJson = jsonDecode(note['note']);
                             document = quill.Document.fromJson(deltaJson);
                           } catch (e) {
-                            document = quill.Document()..insert(0, note['note'] ?? '');
+                            document = quill.Document()
+                              ..insert(0, note['note'] ?? '');
                           }
                           Widget noteWidget = QuillViewer(document: document);
 
