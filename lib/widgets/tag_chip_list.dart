@@ -2,8 +2,13 @@ import 'package:flutter/material.dart';
 
 class TagChipList extends StatelessWidget {
   final List<dynamic> tags;
+  final WrapAlignment alignment;
 
-  const TagChipList({Key? key, required this.tags}) : super(key: key);
+  const TagChipList({
+    super.key,
+    required this.tags,
+    this.alignment = WrapAlignment.start,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -22,13 +27,10 @@ class TagChipList extends StatelessWidget {
               child: Chip(
                 visualDensity: VisualDensity.compact,
                 padding: EdgeInsets.zero,
-                label: Container(
-                  alignment: Alignment.center,
-                  child: Text(
-                    tag['name'] ?? 'Tag',
-                    style: const TextStyle(fontSize: 14, color: Colors.white),
-                    textAlign: TextAlign.center,
-                  ),
+                label: Text(
+                  tag['name'] ?? 'Tag',
+                  style: const TextStyle(fontSize: 14, color: Colors.white),
+                  textAlign: TextAlign.center,
                 ),
               ),
             ),
@@ -40,7 +42,9 @@ class TagChipList extends StatelessWidget {
           child: ConstrainedBox(
             constraints: BoxConstraints(minWidth: constraints.maxWidth),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisAlignment: alignment == WrapAlignment.center
+                  ? MainAxisAlignment.center
+                  : MainAxisAlignment.start,
               children: children,
             ),
           ),

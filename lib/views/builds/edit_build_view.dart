@@ -3,6 +3,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:pd/data/build_categories.dart';
 import 'package:pd/helpers/image_picker.dart';
@@ -69,9 +70,9 @@ class _EditBuildViewState extends State<EditBuildView> {
     _whpController.text = widget.build['whp']?.toString() ?? '';
     _torqueController.text = widget.build['torque']?.toString() ?? '';
     _weightController.text = widget.build['weight']?.toString() ?? '';
-        widget.build['vehicleLayout']?.toString() ?? '';
+    widget.build['vehicleLayout']?.toString() ?? '';
     _zeroSixtyController.text = widget.build['zeroSixty']?.toString() ?? '';
-        widget.build['zeroOneHundred']?.toString() ?? '';
+    widget.build['zeroOneHundred']?.toString() ?? '';
     _quarterMileController.text = widget.build['quarterMile']?.toString() ?? '';
     _engineTypeController.text = widget.build['engineType']?.toString() ?? '';
     _forcedInductionController.text =
@@ -271,10 +272,36 @@ class _EditBuildViewState extends State<EditBuildView> {
                 ),
                 _buildTextField(controller: _trimController, label: 'Trim'),
                 _buildDropdownField(),
-                _buildTextField(
-                    controller: _whpController,
-                    label: 'Wheel Horsepower (numbers only)'),
-                _buildTextField(controller: _torqueController, label: 'Torque'),
+                TextFormField(
+                  controller: _whpController,
+                  decoration: const InputDecoration(
+                    labelText: 'Wheel Horsepower (numbers only)',
+                  ),
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  validator: (value) {
+                    if (value == null || value.isEmpty) return null;
+                    if (int.tryParse(value) == null) {
+                      return 'Please enter a valid number';
+                    }
+                    return null;
+                  },
+                ),
+                TextFormField(
+                  controller: _torqueController,
+                  decoration: const InputDecoration(
+                    labelText: 'Torque (numbers only)',
+                  ),
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  validator: (value) {
+                    if (value == null || value.isEmpty) return null;
+                    if (int.tryParse(value) == null) {
+                      return 'Please enter a valid number';
+                    }
+                    return null;
+                  },
+                ),
                 _buildTextField(controller: _weightController, label: 'Weight'),
                 _buildTextField(
                     controller: _zeroSixtyController, label: '0-60 mph Time'),

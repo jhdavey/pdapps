@@ -1,7 +1,6 @@
 // ignore_for_file: no_leading_underscores_for_local_identifiers
 
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:pd/helpers/loading/loading_screen_controller.dart';
 
@@ -38,16 +37,17 @@ class LoadingScreen {
     final _text = StreamController<String>();
     _text.add(text);
 
+    // Use MediaQuery to obtain the screen size instead of using context.findRenderObject()
+    final size = MediaQuery.of(context).size;
     final state = Overlay.of(context);
-    final renderBox = context.findRenderObject() as RenderBox;
-    final size = renderBox.size;
 
     final overlay = OverlayEntry(
       builder: (context) {
-        return Material(
-          color: Colors.black.withAlpha(150),
-          child: Center(
-            child: Container(
+        return Positioned.fill(
+          child: Material(
+            color: Colors.black.withAlpha(150),
+            child: Center(
+              child: Container(
                 constraints: BoxConstraints(
                   maxWidth: size.width * 0.8,
                   maxHeight: size.height * 0.8,
@@ -65,26 +65,28 @@ class LoadingScreen {
                       children: [
                         const SizedBox(height: 10),
                         const CircularProgressIndicator(
-                          valueColor:
-                              AlwaysStoppedAnimation<Color>(Colors.white),
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                         ),
                         const SizedBox(height: 20),
                         StreamBuilder(
-                            stream: _text.stream,
-                            builder: (context, snapshot) {
-                              if (snapshot.hasData) {
-                                return Text(
-                                  snapshot.data as String,
-                                  textAlign: TextAlign.center,
-                                );
-                              } else {
-                                return Container();
-                              }
-                            })
+                          stream: _text.stream,
+                          builder: (context, snapshot) {
+                            if (snapshot.hasData) {
+                              return Text(
+                                snapshot.data as String,
+                                textAlign: TextAlign.center,
+                              );
+                            } else {
+                              return Container();
+                            }
+                          },
+                        ),
                       ],
                     ),
                   ),
-                )),
+                ),
+              ),
+            ),
           ),
         );
       },
@@ -92,13 +94,16 @@ class LoadingScreen {
 
     state.insert(overlay);
 
-    return LoadingScreenController(close: () {
-      _text.close();
-      overlay.remove();
-      return true;
-    }, update: (text) {
-      _text.add(text);
-      return true;
-    });
+    return LoadingScreenController(
+      close: () {
+        _text.close();
+        overlay.remove();
+        return true;
+      },
+      update: (text) {
+        _text.add(text);
+        return true;
+      },
+    );
   }
 }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pd/services/api/tag_view_controller.dart';
-import 'package:pd/widgets/build_grid.dart';
+import 'package:pd/widgets/builds/build_grid.dart';
 
 class TagView extends StatefulWidget {
   final Map<String, dynamic> tag;

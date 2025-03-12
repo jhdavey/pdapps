@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pd/services/api/category_controller.dart';
-import 'package:pd/widgets/build_grid.dart';
+import 'package:pd/widgets/builds/build_vertical_list.dart';
 
 class CategoriesView extends StatefulWidget {
   final String category;
@@ -33,17 +33,27 @@ class _CategoriesViewState extends State<CategoriesView> {
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(
-                child: CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white)));
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              ),
+            );
           } else if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text('No builds found for this tag.'));
+            return const Center(child: Text('No builds found for this category.'));
           }
 
-          final builds = snapshot.data!;
-          return SingleChildScrollView(
-            child: buildGrid(builds, 2),
+          final initialBuilds = snapshot.data!;
+          return InfiniteVerticalBuildList(
+            initialBuilds: initialBuilds,
+            fetchMoreBuilds: (page) async {
+              // Since we don't have pagination for categories, we return an empty list for page > 1.
+              if (page > 1) {
+                return <dynamic>[];
+              } else {
+                return initialBuilds;
+              }
+            },
           );
         },
       ),

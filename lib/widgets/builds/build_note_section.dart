@@ -74,15 +74,13 @@ class BuildNotesSection extends StatelessWidget {
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
               child: Column(
-                mainAxisSize: MainAxisSize.min, // only take the space needed
+                mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: notes.isEmpty
                     ? [
-                        const Center(
-                          child: Text(
-                            'No build notes have been added yet.',
-                            style: TextStyle(color: Colors.white70),
-                          ),
+                        Text(
+                          'No build notes have been added yet.',
+                          style: TextStyle(color: Colors.white70),
                         )
                       ]
                     : notes.reversed

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pd/services/api/search_controller.dart';
-import 'package:pd/widgets/wide_build_tile.dart';
+import 'package:pd/widgets/builds/wide_build_tile.dart';
 
 class SearchResultsView extends StatefulWidget {
   final String query;

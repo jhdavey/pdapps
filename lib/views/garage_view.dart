@@ -7,7 +7,7 @@ import 'package:pd/services/api/auth/auth_service.dart';
 import 'package:pd/services/api/follower_controller.dart';
 import 'package:pd/services/api/garage_controller.dart';
 import 'package:pd/widgets/garage_profile_section.dart';
-import 'package:pd/widgets/wide_build_tile.dart';
+import 'package:pd/widgets/builds/wide_build_tile.dart';
 
 class GarageView extends StatefulWidget {
   const GarageView({super.key});

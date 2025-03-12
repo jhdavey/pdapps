@@ -135,48 +135,53 @@ class _InfiniteVerticalBuildListState extends State<InfiniteVerticalBuildList> {
                       ),
                     ),
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 4),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            build['user'] != null && build['user']['name'] != null
-                                ? "${build['user']['name']}'s"
-                                : 'Unknown User',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  build['user'] != null &&
+                                          build['user']['name'] != null
+                                      ? "${build['user']['name']}'s"
+                                      : 'Unknown User',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '${build['year']} ${build['make']} ${build['model']}',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.normal,
+                                    fontSize: 18,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 4),
+                                TagChipList(
+                                  tags: build['tags'] is List
+                                      ? build['tags']
+                                      : [],
+                                ),
+                              ],
                             ),
-                            textAlign: TextAlign.center,
                           ),
-                          const SizedBox(height: 2),
+                          // Right Column: Build category.
                           Text(
-                            '${build['build_category']}',
+                            build['build_category'] ?? '',
                             style: const TextStyle(
                               fontWeight: FontWeight.normal,
                               fontSize: 18,
                             ),
-                            textAlign: TextAlign.center,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                          ),
-                          Text(
-                            '${build['year']} ${build['make']} ${build['model']}',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.normal,
-                              fontSize: 18,
-                            ),
-                            textAlign: TextAlign.center,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 2),
-                          Container(
-                            width: double.infinity,
-                            alignment: Alignment.center,
-                            child: TagChipList(
-                              tags: build['tags'] is List ? build['tags'] : [],
-                            ),
                           ),
                         ],
                       ),

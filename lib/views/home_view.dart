@@ -8,8 +8,8 @@ import 'package:pd/services/api/build/get_all_builds.dart';
 import 'package:pd/data/build_categories.dart';
 import 'package:pd/main.dart';
 import 'package:pd/utilities/dialogs/search_dialog.dart';
-import 'package:pd/widgets/build_horizontal_list.dart';
-import 'package:pd/widgets/build_vertical_list.dart';
+import 'package:pd/widgets/builds/build_horizontal_list.dart';
+import 'package:pd/widgets/builds/build_vertical_list.dart';
 import 'package:pd/widgets/refreshable_content.dart';
 
 class HomeView extends StatefulWidget {
