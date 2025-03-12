@@ -26,7 +26,7 @@ class _EditModificationViewState extends State<EditModificationView> {
   late String? _brand;
   String? _price;
   String? _part;
-  String? _notes;
+  String? _notes; // Modification notes field
   bool _isSubmitting = false;
   int _installedMyself = 0;
   String? _installedBy;
@@ -39,7 +39,7 @@ class _EditModificationViewState extends State<EditModificationView> {
     _brand = widget.modification['brand'] ?? '';
     _price = widget.modification['price']?.toString();
     _part = widget.modification['part'] ?? '';
-    _notes = widget.modification['notes'] ?? '';
+    _notes = widget.modification['notes'] ?? ''; // Initialize modification notes
     _installedMyself = widget.modification['installed_myself'] ?? 0;
     _installedBy = widget.modification['installed_by'] ?? '';
   }
@@ -58,7 +58,7 @@ class _EditModificationViewState extends State<EditModificationView> {
       'brand': _brand,
       'price': _price,
       'part': _part,
-      'notes': _notes,
+      'notes': _notes, // Include modification notes
       'installedMyself': _installedMyself,
       'installed_by': _installedMyself == 1 ? null : _installedBy,
     };
@@ -150,11 +150,23 @@ class _EditModificationViewState extends State<EditModificationView> {
               const SizedBox(height: 16),
               _buildTextField('Brand*', _brand, (value) => _brand = value),
               const SizedBox(height: 16),
-              _buildTextField('Price', _price, (value) => _price = value,
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true)),
+              _buildTextField(
+                'Price',
+                _price,
+                (value) => _price = value,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+              ),
               const SizedBox(height: 16),
               _buildTextField('Part Number', _part, (value) => _part = value),
+              const SizedBox(height: 16),
+              // New text field for modification notes with 4 lines max.
+              _buildTextField(
+                'Notes',
+                _notes,
+                (value) => _notes = value,
+                maxLines: 4,
+              ),
               const SizedBox(height: 16),
               CheckboxListTile(
                 title: const Text('Installed Myself'),
@@ -173,11 +185,18 @@ class _EditModificationViewState extends State<EditModificationView> {
                 (value) => _installedBy = value,
                 enabled: _installedMyself == 0,
               ),
-              ElevatedButton(
-                onPressed: _isSubmitting ? null : _submitModification,
-                child: _isSubmitting
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text('Update Modification'),
+              const SizedBox(height: 16),
+              Column(
+                children: [
+                  ElevatedButton(
+                    onPressed: _isSubmitting ? null : _submitModification,
+                    child: _isSubmitting
+                        ? const CircularProgressIndicator(
+                            color: Colors.white,
+                          )
+                        : const Text('Update Modification'),
+                  ),
+                ],
               ),
             ],
           ),
