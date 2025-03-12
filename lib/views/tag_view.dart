@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pd/services/api/tag_view_controller.dart';
-import 'package:pd/widgets/builds/build_grid.dart';
+import 'package:pd/widgets/builds/build_vertical_list.dart';
 
 class TagView extends StatefulWidget {
   final Map<String, dynamic> tag;
@@ -33,8 +33,11 @@ class _TagViewState extends State<TagView> {
         future: _tagData,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white)));
+            return const Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              ),
+            );
           } else if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
@@ -46,7 +49,15 @@ class _TagViewState extends State<TagView> {
 
           return builds.isEmpty
               ? const Center(child: Text('No builds found for this tag.'))
-              : buildGrid(builds, 2); 
+              : InfiniteVerticalBuildList(
+                  initialBuilds: builds,
+                  // For tag view, we assume no additional pagination (pages > 1 return empty)
+                  isScrollable: true,
+                  fetchMoreBuilds: (page) async {
+                    if (page > 1) return <dynamic>[];
+                    return builds;
+                  },
+                );
         },
       ),
     );

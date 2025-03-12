@@ -46,13 +46,11 @@ class _CategoriesViewState extends State<CategoriesView> {
           final initialBuilds = snapshot.data!;
           return InfiniteVerticalBuildList(
             initialBuilds: initialBuilds,
+            isScrollable: true,
+            // No pagination for categories – for page > 1 we return an empty list.
             fetchMoreBuilds: (page) async {
-              // Since we don't have pagination for categories, we return an empty list for page > 1.
-              if (page > 1) {
-                return <dynamic>[];
-              } else {
-                return initialBuilds;
-              }
+              if (page > 1) return <dynamic>[];
+              return initialBuilds;
             },
           );
         },

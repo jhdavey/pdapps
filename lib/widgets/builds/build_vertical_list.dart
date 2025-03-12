@@ -1,3 +1,4 @@
+// infinite_vertical_build_list.dart
 // ignore_for_file: library_private_types_in_public_api
 
 import 'package:flutter/material.dart';
@@ -7,11 +8,13 @@ import 'package:pd/services/api/report_user.dart';
 class InfiniteVerticalBuildList extends StatefulWidget {
   final List<dynamic> initialBuilds;
   final Future<List<dynamic>> Function(int page) fetchMoreBuilds;
+  final bool isScrollable; // if true, let the internal list scroll
 
   const InfiniteVerticalBuildList({
     super.key,
     required this.initialBuilds,
     required this.fetchMoreBuilds,
+    this.isScrollable = false,
   });
 
   @override
@@ -28,8 +31,11 @@ class _InfiniteVerticalBuildListState extends State<InfiniteVerticalBuildList> {
   @override
   void initState() {
     super.initState();
-    _builds = [];
-    _loadMore();
+    // Initialize with provided builds.
+    _builds = widget.initialBuilds;
+    if (_builds.isEmpty) {
+      _loadMore();
+    }
   }
 
   Future<void> _loadMore() async {
@@ -71,16 +77,19 @@ class _InfiniteVerticalBuildListState extends State<InfiniteVerticalBuildList> {
     return NotificationListener<ScrollNotification>(
       onNotification: _onScrollNotification,
       child: ListView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
+        // If isScrollable is true (e.g. in CategoriesView), we let the ListView scroll naturally.
+        // Otherwise (e.g. HomeView where we wrap it in a SizedBox with a fixed height),
+        // we use shrinkWrap and disable its scrolling.
+        shrinkWrap: !widget.isScrollable,
+        physics:
+            widget.isScrollable ? null : const NeverScrollableScrollPhysics(),
         itemCount: _builds.length + (_isLoadingMore ? 1 : 0),
         itemBuilder: (context, index) {
           if (index < _builds.length) {
             final build = _builds[index];
             return GestureDetector(
               onTap: () {
-                Navigator.of(context)
-                    .pushNamed('/build-view', arguments: build);
+                Navigator.of(context).pushNamed('/build-view', arguments: build);
               },
               onLongPress: () {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -135,8 +144,7 @@ class _InfiniteVerticalBuildListState extends State<InfiniteVerticalBuildList> {
                       ),
                     ),
                     Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 4),
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -145,8 +153,7 @@ class _InfiniteVerticalBuildListState extends State<InfiniteVerticalBuildList> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  build['user'] != null &&
-                                          build['user']['name'] != null
+                                  build['user'] != null && build['user']['name'] != null
                                       ? "${build['user']['name']}'s"
                                       : 'Unknown User',
                                   style: const TextStyle(
@@ -166,14 +173,11 @@ class _InfiniteVerticalBuildListState extends State<InfiniteVerticalBuildList> {
                                 ),
                                 const SizedBox(height: 4),
                                 TagChipList(
-                                  tags: build['tags'] is List
-                                      ? build['tags']
-                                      : [],
+                                  tags: build['tags'] is List ? build['tags'] : [],
                                 ),
                               ],
                             ),
                           ),
-                          // Right Column: Build category.
                           Text(
                             build['build_category'] ?? '',
                             style: const TextStyle(
@@ -199,10 +203,5 @@ class _InfiniteVerticalBuildListState extends State<InfiniteVerticalBuildList> {
         },
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
   }
 }
