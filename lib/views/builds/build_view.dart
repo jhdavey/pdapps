@@ -8,10 +8,10 @@ import 'package:pd/services/api/build/build_data_loader.dart';
 import 'package:pd/widgets/builds/build_additional_media_section.dart';
 import 'package:pd/widgets/builds/build_comment_section.dart';
 import 'package:pd/widgets/builds/build_data_section.dart';
-// import 'package:pd/widgets/builds/build_file_section.dart';
 import 'package:pd/widgets/builds/build_modification_section.dart';
 import 'package:pd/widgets/builds/build_note_section.dart';
 import 'package:pd/widgets/builds/build_tag_section.dart';
+import 'package:pd/widgets/favorite_button.dart';
 
 class BuildView extends StatefulWidget {
   const BuildView({super.key});
@@ -34,15 +34,11 @@ class _BuildViewState extends State<BuildView> with RouteAware {
     }
     if (!_initialized) {
       _build = getRouteArguments(context);
-
       _loadBuildData();
-
       updateBuildOwnership(context, _build).then((userId) {
         _currentUserId = userId;
-        print(_currentUserId);
         setState(() {});
       });
-
       _initialized = true;
     }
   }
@@ -137,10 +133,24 @@ class _BuildViewState extends State<BuildView> with RouteAware {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          "${_build['year'] ?? ''} ${_build['make'] ?? ''} ${_build['model'] ?? ''}"
-          "${_build['trim'] != null ? ' ${_build['trim']}' : ''}",
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        // Row with build title and favorite button.
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              child: Text(
+                "${_build['year'] ?? ''} ${_build['make'] ?? ''} ${_build['model'] ?? ''}"
+                "${_build['trim'] != null ? ' ${_build['trim']}' : ''}",
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+            // Use the extracted FavoriteButton widget.
+            FavoriteButton(
+              buildId: _build['id'],
+              initialFavoriteCount: _build['favorite_count'] ?? 0,
+              initialIsFavorited: _build['is_favorited'] ?? false,
+            ),
+          ],
         ),
         const SizedBox(height: 8),
         ClipRRect(
@@ -166,7 +176,6 @@ class _BuildViewState extends State<BuildView> with RouteAware {
           scrollDirection: Axis.horizontal,
           child: BuildTags(buildData: _build),
         ),
-
         buildSection(
           title: 'Specs',
           dataPoints: [
@@ -213,12 +222,6 @@ class _BuildViewState extends State<BuildView> with RouteAware {
           isOwner: isOwner,
           reloadBuildData: _loadBuildData,
         ),
-        // const SizedBox(height: 10),
-        // BuildFilesSection(
-        //   build: _build,
-        //   isOwner: isOwner,
-        //   refreshBuild: _loadBuildData,
-        // ),
         const SizedBox(height: 10),
         BuildCommentsSection(
           comments: _build['comments'] as List<dynamic>? ?? [],

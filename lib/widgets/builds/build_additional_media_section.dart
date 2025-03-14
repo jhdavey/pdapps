@@ -5,7 +5,6 @@ import 'package:pd/services/api/build/media/additional_media_controller.dart';
 import 'package:pd/services/api/build/media/build_image_caption_controller.dart';
 import 'package:pd/utilities/dialogs/delete_dialog.dart';
 import 'package:pd/utilities/dialogs/additional_media_dialog.dart';
-import 'package:pd/widgets/video_player.dart';
 
 Widget buildAdditionalMediaSection(
   Map<String, dynamic> build, {
@@ -101,48 +100,27 @@ Widget buildAdditionalMediaSection(
                         const SizedBox(width: 8),
                     itemBuilder: (context, index) {
                       final media = reversedMediaList[index];
-                      Widget mediaWidget;
-                      if (media['type'] == 'video') {
-                        mediaWidget = GestureDetector(
-                          onTap: () => showVideoDialog(context, media['url']),
-                          child: Container(
+                      // Always treat media as an image.
+                      final Widget mediaWidget = GestureDetector(
+                        onTap: () => showImageDialog(
+                          context,
+                          reversedMediaList,
+                          index,
+                          isOwner: isOwner,
+                          reloadBuildData: reloadBuildData,
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.network(
+                            media['url'],
                             width: 200,
                             height: 200,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8),
-                              color: const Color(0xFF1F242C),
-                            ),
-                            child: const Center(
-                              child: Icon(
-                                Icons.play_circle_fill,
-                                color: Colors.white,
-                                size: 50,
-                              ),
-                            ),
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                const Icon(Icons.error),
                           ),
-                        );
-                      } else {
-                        mediaWidget = GestureDetector(
-                          onTap: () => showImageDialog(
-                            context,
-                            reversedMediaList,
-                            index,
-                            isOwner: isOwner,
-                            reloadBuildData: reloadBuildData,
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Image.network(
-                              media['url'],
-                              width: 200,
-                              height: 200,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) =>
-                                  const Icon(Icons.error),
-                            ),
-                          ),
-                        );
-                      }
+                        ),
+                      );
 
                       return Stack(
                         children: [
@@ -277,33 +255,26 @@ void showImageDialog(
                         final mediaItem = media[index];
                         return Hero(
                           tag: mediaItem['url']!,
-                          child: mediaItem['type'] == 'image'
-                              ? Image.network(
-                                  mediaItem['url']!,
-                                  fit: BoxFit.contain,
-                                  width: double.infinity,
-                                  loadingBuilder:
-                                      (context, child, loadingProgress) {
-                                    if (loadingProgress == null) return child;
-                                    return const Center(
-                                      child: CircularProgressIndicator(
-                                        valueColor:
-                                            AlwaysStoppedAnimation<Color>(
-                                                Colors.white),
-                                      ),
-                                    );
-                                  },
-                                  errorBuilder: (context, error, stackTrace) =>
-                                      const Center(
-                                    child: Icon(Icons.error,
-                                        size: 50, color: Colors.white),
-                                  ),
-                                )
-                              : AspectRatio(
-                                  aspectRatio: 16 / 9,
-                                  child: VideoPlayerWidget(
-                                      videoUrl: mediaItem['url']!),
+                          child: Image.network(
+                            mediaItem['url']!,
+                            fit: BoxFit.contain,
+                            width: double.infinity,
+                            loadingBuilder:
+                                (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return const Center(
+                                child: CircularProgressIndicator(
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white),
                                 ),
+                              );
+                            },
+                            errorBuilder: (context, error, stackTrace) =>
+                                const Center(
+                              child: Icon(Icons.error,
+                                  size: 50, color: Colors.white),
+                            ),
+                          ),
                         );
                       },
                     ),
@@ -434,20 +405,4 @@ void editCaption(
   ).then((result) async {
     if (result == true) {}
   });
-}
-
-void showVideoDialog(BuildContext context, String videoUrl) {
-  showDialog(
-    context: context,
-    barrierDismissible: true,
-    builder: (BuildContext dialogContext) {
-      return Dialog(
-        backgroundColor: const Color(0xFF1F242C),
-        child: AspectRatio(
-          aspectRatio: 16 / 9,
-          child: VideoPlayerWidget(videoUrl: videoUrl),
-        ),
-      );
-    },
-  );
 }

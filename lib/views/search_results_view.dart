@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pd/services/api/search_controller.dart';
-import 'package:pd/widgets/builds/wide_build_tile.dart';
+import 'package:pd/widgets/builds/build_card.dart';
 
 class SearchResultsView extends StatefulWidget {
   final String query;
@@ -40,11 +40,7 @@ class _SearchResultsViewState extends State<SearchResultsView> {
                   itemCount: _searchResults.length,
                   itemBuilder: (context, index) {
                     final build = _searchResults[index];
-                    return WideBuildTile(
-                      buildData: build,
-                      user: build['user'] ?? {},
-                      isOwner: false, // Modify logic as needed
-                    );
+                    return BuildCard(buildData: build);
                   },
                 ),
     );

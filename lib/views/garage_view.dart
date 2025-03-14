@@ -7,7 +7,7 @@ import 'package:pd/services/api/auth/auth_service.dart';
 import 'package:pd/services/api/follower_controller.dart';
 import 'package:pd/services/api/garage_controller.dart';
 import 'package:pd/widgets/garage_profile_section.dart';
-import 'package:pd/widgets/builds/wide_build_tile.dart';
+import 'package:pd/widgets/builds/build_card.dart';
 
 class GarageView extends StatefulWidget {
   const GarageView({super.key});
@@ -88,10 +88,8 @@ class _GarageViewState extends State<GarageView> {
                   !snapshot.hasData) {
                 return const SizedBox();
               }
-
               final data = snapshot.data!;
               final garageOwnerId = data['user']['id'];
-
               if (_currentUserId != null && _currentUserId == garageOwnerId) {
                 return IconButton(
                   icon: const Icon(Icons.add),
@@ -121,7 +119,8 @@ class _GarageViewState extends State<GarageView> {
           final data = snapshot.data!;
           final user = data['user'];
           final builds = data['builds'] as List<dynamic>? ?? [];
-          final isOwner = _currentUserId != null && _currentUserId == user['id'];
+          final isOwner =
+              _currentUserId != null && _currentUserId == user['id'];
 
           return SingleChildScrollView(
             child: Column(
@@ -171,14 +170,14 @@ class _GarageViewState extends State<GarageView> {
                     itemCount: builds.length,
                     itemBuilder: (context, index) {
                       final build = builds[index];
-                      if (build is! Map<String, dynamic>) {
+                      // Ensure each build contains a user property.
+                      final enrichedBuild = (build is Map<String, dynamic>)
+                          ? {...build, 'user': build['user'] ?? user}
+                          : build;
+                      if (enrichedBuild is! Map<String, dynamic>) {
                         return const Center(child: Text('Invalid build data.'));
                       }
-                      return WideBuildTile(
-                        buildData: build,
-                        user: user,
-                        isOwner: isOwner,
-                      );
+                      return BuildCard(buildData: enrichedBuild);
                     },
                   )
                 else if (isOwner)

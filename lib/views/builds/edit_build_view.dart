@@ -97,7 +97,10 @@ class _EditBuildViewState extends State<EditBuildView> {
         if (!mediaMap.containsKey('type')) {
           mediaMap['type'] = 'image';
         }
-        _existingAdditionalMedia.add(mediaMap);
+        // Only add media if it is an image.
+        if (mediaMap['type'] == 'image') {
+          _existingAdditionalMedia.add(mediaMap);
+        }
       }
     }
   }
@@ -140,19 +143,24 @@ class _EditBuildViewState extends State<EditBuildView> {
 
   Future<void> _pickAdditionalMedia() async {
     final picker = ImagePicker();
-    final pickedFile = await picker.pickMedia();
+    // Only allow picking images.
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
       final String lowerCasePath = pickedFile.path.toLowerCase();
       final String extension = lowerCasePath.split('.').last;
-      final String fileType =
-          (lowerCasePath.endsWith(".mp4") || lowerCasePath.endsWith(".mov"))
-              ? "video"
-              : "image";
+      // Validate the file extension to allow only image files.
+      final allowedExtensions = ['jpg', 'jpeg', 'png', 'gif'];
+      if (!allowedExtensions.contains(extension)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Only image files are allowed.')),
+        );
+        return;
+      }
       setState(() {
         newAdditionalMedia.add(
           AdditionalMedia(
             file: File(pickedFile.path),
-            type: fileType,
+            type: "image",
             extension: extension,
           ),
         );
@@ -386,7 +394,6 @@ class _EditBuildViewState extends State<EditBuildView> {
                     final index = entry.key;
                     final mediaItem = entry.value;
                     final mediaUrl = mediaItem['url'] ?? '';
-                    final mediaType = mediaItem['type'] ?? 'image';
                     return Stack(
                       children: [
                         Container(
@@ -395,19 +402,11 @@ class _EditBuildViewState extends State<EditBuildView> {
                           decoration: BoxDecoration(
                             border: Border.all(color: Colors.grey),
                             borderRadius: BorderRadius.circular(8),
-                            image: mediaType == 'image'
-                                ? DecorationImage(
-                                    image: NetworkImage(mediaUrl),
-                                    fit: BoxFit.cover,
-                                  )
-                                : null,
+                            image: DecorationImage(
+                              image: NetworkImage(mediaUrl),
+                              fit: BoxFit.cover,
+                            ),
                           ),
-                          child: mediaType == 'video'
-                              ? const Center(
-                                  child: Icon(Icons.videocam,
-                                      size: 40, color: Colors.grey),
-                                )
-                              : null,
                         ),
                         Positioned(
                           top: 4,
@@ -429,7 +428,7 @@ class _EditBuildViewState extends State<EditBuildView> {
                   }).toList(),
                 ),
                 const SizedBox(height: 10),
-                // Button to pick new additional media (image or video).
+                // Button to pick new additional media (images only).
                 ElevatedButton(
                   onPressed: _pickAdditionalMedia,
                   child: const Text('Add Additional Media'),
@@ -450,19 +449,11 @@ class _EditBuildViewState extends State<EditBuildView> {
                           decoration: BoxDecoration(
                             border: Border.all(color: Colors.grey),
                             borderRadius: BorderRadius.circular(8),
-                            image: media.type == 'image'
-                                ? DecorationImage(
-                                    image: FileImage(media.file),
-                                    fit: BoxFit.cover,
-                                  )
-                                : null,
+                            image: DecorationImage(
+                              image: FileImage(media.file),
+                              fit: BoxFit.cover,
+                            ),
                           ),
-                          child: media.type == 'video'
-                              ? const Center(
-                                  child: Icon(Icons.videocam,
-                                      size: 40, color: Colors.grey),
-                                )
-                              : null,
                         ),
                         Positioned(
                           top: 4,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pd/widgets/tag_chip_list.dart';
 import 'package:pd/services/api/report_user.dart';
+import 'package:pd/widgets/favorite_button.dart';
 
 class BuildCard extends StatelessWidget {
   final Map<String, dynamic> buildData;
@@ -9,8 +10,8 @@ class BuildCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Determine if there are tags.
-    final bool hasTags = buildData['tags'] is List && (buildData['tags'] as List).isNotEmpty;
+    final bool hasTags =
+        buildData['tags'] is List && (buildData['tags'] as List).isNotEmpty;
 
     return GestureDetector(
       onTap: () {
@@ -59,65 +60,90 @@ class BuildCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // The image will fill more space if there are no tags.
-            Expanded(
-              flex: hasTags ? 2 : 3,
+            // Image section using AspectRatio.
+            AspectRatio(
+              aspectRatio: 3 / 2,
               child: Image.network(
                 buildData['image'] ?? 'https://via.placeholder.com/150',
                 fit: BoxFit.cover,
               ),
             ),
-            // Information section.
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Left column: user info, year/make/model, and (if available) tags.
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          buildData['user'] != null && buildData['user']['name'] != null
-                              ? "${buildData['user']['name']}'s"
-                              : 'Unknown User',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18,
-                          ),
+            // Information section with LayoutBuilder.
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final availableWidth = constraints.maxWidth;
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Left column: user info, build details, and build category.
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              buildData['user'] != null &&
+                                      buildData['user']['name'] != null
+                                  ? "${buildData['user']['name']}'s"
+                                  : 'Unknown User',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '${buildData['year']} ${buildData['make']} ${buildData['model']}',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.normal,
+                                fontSize: 18,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              buildData['build_category'] ?? '',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.normal,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '${buildData['year']} ${buildData['make']} ${buildData['model']}',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.normal,
-                            fontSize: 18,
+                      ),
+                      // Right column: Favorite button on top and TagChipList below.
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          FavoriteButton(
+                            buildId: buildData['id'],
+                            initialFavoriteCount:
+                                buildData['favorite_count'] ?? 0,
+                            initialIsFavorited:
+                                buildData['is_favorited'] ?? false,
                           ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        if (hasTags) ...[
-                          const SizedBox(height: 4),
-                          TagChipList(
-                            tags: buildData['tags'] is List ? buildData['tags'] : [],
-                          ),
+                          const SizedBox(height: 8),
+                          if (hasTags)
+                            Container(
+                              // Limit the tag chip list container to 40% of the available width.
+                              width: availableWidth * 0.4,
+                              child: TagChipList(
+                                tags: buildData['tags'] is List
+                                    ? buildData['tags']
+                                    : [],
+                                alignment: MainAxisAlignment.end,
+                              ),
+                            ),
                         ],
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                  // Right column: Build category.
-                  Text(
-                    buildData['build_category'] ?? '',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.normal,
-                      fontSize: 18,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
+                );
+              },
             ),
           ],
         ),

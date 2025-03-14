@@ -5,6 +5,7 @@
     'Brakes',
     'Bushings',
     'Cooling',
+    'Drivetrain',
     'Electrical',
     'Engine Components',
     'Engine Management',

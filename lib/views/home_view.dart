@@ -139,9 +139,11 @@ class _HomeViewState extends State<HomeView> with RouteAware {
 
             final featuredBuilds =
                 data['featuredBuilds'] as List<dynamic>? ?? [];
+            final favoriteBuilds =
+                data['favoriteBuilds'] as List<dynamic>? ?? [];
+            // Extract followingBuilds.
             final followingBuilds =
                 data['followingBuilds'] as List<dynamic>? ?? [];
-
             final tags =
                 List<dynamic>.from(data['tags'] as List<dynamic>? ?? [])
                   ..shuffle();
@@ -152,7 +154,7 @@ class _HomeViewState extends State<HomeView> with RouteAware {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Divider(),
-                  // Categories section
+                  // Categories section.
                   SizedBox(
                     height: 40,
                     child: ListView.builder(
@@ -191,7 +193,7 @@ class _HomeViewState extends State<HomeView> with RouteAware {
                     ),
                   ),
                   const Divider(),
-                  // Tags section
+                  // Tags section.
                   SizedBox(
                     height: 40,
                     child: ListView.builder(
@@ -230,7 +232,7 @@ class _HomeViewState extends State<HomeView> with RouteAware {
                     ),
                   ),
                   const Divider(),
-                  // Featured Builds Section
+                  // Featured Builds Section.
                   if (featuredBuilds.isNotEmpty) ...[
                     Padding(
                       padding: const EdgeInsets.only(left: 8.0),
@@ -246,10 +248,31 @@ class _HomeViewState extends State<HomeView> with RouteAware {
                     buildHorizontalList(featuredBuilds),
                   ],
                   const Divider(),
+                  // Favorite Builds Section.
                   Padding(
                     padding: const EdgeInsets.only(left: 8.0),
                     child: Text(
-                      'Following',
+                      'Favorite Builds',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  if (favoriteBuilds.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 8.0),
+                      child: const Text("You haven't favorited any builds yet."),
+                    )
+                  else
+                    buildHorizontalList(favoriteBuilds),
+                  const Divider(),
+                  // Following Builds Section.
+                  Padding(
+                    padding: const EdgeInsets.only(left: 8.0),
+                    child: Text(
+                      'Garages You Follow',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -265,7 +288,7 @@ class _HomeViewState extends State<HomeView> with RouteAware {
                   else
                     buildHorizontalList(followingBuilds),
                   const Divider(),
-                  // Recently Updated Builds Section
+                  // Recently Updated Builds Section.
                   Padding(
                     padding: const EdgeInsets.only(left: 8.0),
                     child: Text(
