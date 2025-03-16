@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/material.dart'; // For debugPrint.
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -21,16 +22,23 @@ class FeedbackController {
       if (token != null) 'Authorization': 'Bearer $token',
     };
 
+    // Convert empty phone string to null.
+    final requestBody = jsonEncode({
+      'name': name,
+      'email': email,
+      'phone': phone.isEmpty ? null : phone,
+      'feedback': feedback,
+    });
+    debugPrint("Sending feedback with request body: $requestBody");
+
     final response = await http.post(
       uri,
       headers: headers,
-      body: jsonEncode({
-        'name': name,
-        'email': email,
-        'phone': phone,
-        'feedback': feedback,
-      }),
+      body: requestBody,
     );
+
+    debugPrint("Feedback response status: ${response.statusCode}");
+    debugPrint("Feedback response body: ${response.body}");
 
     if (response.statusCode != 201) {
       final responseData = jsonDecode(response.body);

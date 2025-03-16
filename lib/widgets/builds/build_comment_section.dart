@@ -1,8 +1,6 @@
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:pd/utilities/dialogs/comments/add_comment_dialog.dart';
-import 'package:pd/utilities/dialogs/comments/manage_comment_dialogs.dart';
-import 'package:pd/services/api/report_user.dart'; // Import reporting functions
+import 'package:pd/widgets/comment_tile.dart';
 
 class BuildCommentsSection extends StatelessWidget {
   final List<dynamic> comments;
@@ -18,9 +16,42 @@ class BuildCommentsSection extends StatelessWidget {
     required this.reloadBuildData,
   });
 
+  // Build a nested tree structure from the flat list of comments.
+  List<Map<String, dynamic>> buildCommentTree(List<dynamic> comments) {
+    // Create a map of comment id to comment object.
+    final Map<int, Map<String, dynamic>> commentMap = {};
+    for (var comment in comments) {
+      // Ensure each comment has a 'replies' key.
+      comment['replies'] = [];
+      commentMap[comment['id']] = comment;
+    }
+    
+    // List for top-level comments.
+    final List<Map<String, dynamic>> tree = [];
+    
+    for (var comment in comments) {
+      if (comment['parent_id'] == null) {
+        tree.add(comment);
+      } else {
+        // Add the comment to its parent's 'replies' list if the parent exists.
+        if (commentMap.containsKey(comment['parent_id'])) {
+          commentMap[comment['parent_id']]!['replies'].add(comment);
+        } else {
+          // If parent not found, treat it as top-level (optional fallback)
+          tree.add(comment);
+        }
+      }
+    }
+    return tree;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final List<dynamic> reversedComments = List.from(comments.reversed);
+    // Build the tree from the flat comments list.
+    final List<Map<String, dynamic>> commentTree = buildCommentTree(comments);
+    
+    // Optionally, reverse the order of top-level comments if desired.
+    final topLevelComments = commentTree.reversed.toList();
 
     return Container(
       padding: const EdgeInsets.all(10.0),
@@ -31,6 +62,7 @@ class BuildCommentsSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header with title and add button.
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -50,122 +82,21 @@ class BuildCommentsSection extends StatelessWidget {
               ),
             ],
           ),
-          if (reversedComments.isEmpty)
+          // Display a friendly message if there are no comments.
+          if (topLevelComments.isEmpty)
             const Text(
               'No comments have been added yet.',
               style: TextStyle(color: Colors.white70),
             )
           else
-            ...reversedComments.map((comment) {
-              final bool commentIsOwner = comment['user_id'] != null &&
-                  comment['user_id'].toString() == currentUserId?.toString();
-
-              return ListTile(
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 8.0, vertical: 0),
-                dense: true,
-                onLongPress: () {
-                  // Only show options if the comment is not owned by the current user.
-                  if (!commentIsOwner && comment['user'] != null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        backgroundColor: Colors.grey[900],
-                        duration: const Duration(seconds: 5),
-                        content: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            TextButton(
-                              onPressed: () {
-                                ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                                reportUser(comment['user'], context);
-                              },
-                              child: const Text(
-                                "Report",
-                                style: TextStyle(color: Colors.redAccent),
-                              ),
-                            ),
-                            TextButton(
-                              onPressed: () {
-                                ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                                blockUser(comment['user'], context);
-                              },
-                              child: const Text(
-                                "Block",
-                                style: TextStyle(color: Colors.orange),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  }
-                },
-                title: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    CircleAvatar(
-                      radius: 20,
-                      backgroundImage: comment['user'] != null &&
-                              comment['user']['profile_image'] != null &&
-                              comment['user']['profile_image'].isNotEmpty
-                          ? NetworkImage(comment['user']['profile_image'])
-                          : const AssetImage(
-                                  'assets/images/profile_placeholder.png')
-                              as ImageProvider,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text.rich(
-                        TextSpan(
-                          children: [
-                            TextSpan(
-                              text: "${comment['user'] != null ? comment['user']['name'] : 'User ${comment['user_id']}'}\n",
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                                height: 1.5,
-                              ),
-                              recognizer: TapGestureRecognizer()
-                                ..onTap = () {
-                                  if (comment['user'] != null &&
-                                      comment['user']['id'] != null) {
-                                    Navigator.pushNamed(
-                                      context,
-                                      '/garage',
-                                      arguments: comment['user']['id'],
-                                    );
-                                  }
-                                },
-                            ),
-                            TextSpan(
-                              text: comment['body'] ?? '',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
-                                height: 1.5,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    if (commentIsOwner)
-                      IconButton(
-                        icon: const Icon(Icons.edit, color: Colors.white, size: 16),
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                        onPressed: () async {
-                          final result = await showManageCommentDialog(context, comment, reloadBuildData);
-                          if (result == true) {
-                            reloadBuildData();
-                          }
-                        },
-                      ),
-                  ],
-                ),
-              );
-            }),
+            // Render each top-level comment using CommentTile.
+            ...topLevelComments.map((comment) => CommentTile(
+                  comment: comment,
+                  replies: comment['replies'] as List<dynamic>,
+                  buildId: buildId,
+                  currentUserId: currentUserId,
+                  reloadBuildData: reloadBuildData,
+                )),
         ],
       ),
     );

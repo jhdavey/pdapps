@@ -6,14 +6,20 @@ import 'package:pd/utilities/dialogs/create_dialog.dart';
 Future<void> showAddCommentDialog(
   BuildContext context,
   String buildId,
-  VoidCallback reloadBuildData,
-) async {
+  VoidCallback reloadBuildData, {
+  int? parentId,
+}) async {
   await showCreateDialog(
     context: context,
     title: 'Add Comment',
     label: 'Comment',
     onSubmit: (commentBody) async {
-      final success = await postComment(context, buildId, commentBody);
+      final success = await postComment(
+        context, 
+        buildId, 
+        commentBody,
+        parentId: parentId,
+      );
       if (success) {
         reloadBuildData();
       }

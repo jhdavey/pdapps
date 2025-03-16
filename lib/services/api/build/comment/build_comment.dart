@@ -6,10 +6,16 @@ import 'package:pd/services/api/auth/auth_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http/http.dart' as http;
 
-Future<bool> postComment(BuildContext context, String buildId, String body) async {
+Future<bool> postComment(BuildContext context, String buildId, String body, {int? parentId}) async {
   final authService = RepositoryProvider.of<ApiAuthService>(context);
   final token = await authService.getToken();
   final String apiUrl = 'https://passiondrivenbuilds.com/api/builds/$buildId/comments';
+
+  final Map<String, dynamic> bodyData = {'body': body};
+  if (parentId != null) {
+    bodyData['parent_id'] = parentId;
+  }
+
   try {
     final response = await http.post(
       Uri.parse(apiUrl),
@@ -17,11 +23,12 @@ Future<bool> postComment(BuildContext context, String buildId, String body) asyn
         'Content-Type': 'application/json',
         if (token != null) 'Authorization': 'Bearer $token',
       },
-      body: json.encode({'body': body}),
+      body: json.encode(bodyData),
     );
     return response.statusCode == 201;
   } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text('Error: $e')));
     return false;
   }
 }

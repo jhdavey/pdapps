@@ -1,7 +1,7 @@
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:flutter/material.dart';
-import 'package:pd/services/feedback_controller.dart';
+import 'package:pd/services/api/feedback_controller.dart';
 
 class FeedbackView extends StatefulWidget {
   const FeedbackView({super.key});
@@ -80,7 +80,7 @@ class _FeedbackViewState extends State<FeedbackView> {
                 ),
                 TextFormField(
                   controller: _emailController,
-                  decoration: const InputDecoration(labelText: 'Email'),
+                  decoration: const InputDecoration(labelText: 'Email*'),
                   keyboardType: TextInputType.emailAddress,
                   validator: (value) =>
                       (value == null || value.isEmpty)
@@ -95,7 +95,7 @@ class _FeedbackViewState extends State<FeedbackView> {
                 ),
                 TextFormField(
                   controller: _feedbackController,
-                  decoration: const InputDecoration(labelText: 'Feedback'),
+                  decoration: const InputDecoration(labelText: 'Feedback*'),
                   maxLines: 5,
                   validator: (value) =>
                       (value == null || value.isEmpty)
