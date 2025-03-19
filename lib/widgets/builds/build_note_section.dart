@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
+import 'package:pd/utilities/dialogs/maintenance/maintenance_record_dialog.dart';
 import 'package:pd/views/builds/build_note_editor_view.dart';
 import 'package:pd/widgets/quill_viewer.dart';
 import 'package:pd/widgets/update_datetime.dart';
@@ -27,26 +28,51 @@ class BuildNotesSection extends StatelessWidget {
         color: const Color(0xFF1F242C),
         borderRadius: BorderRadius.circular(16.0),
       ),
-      // Remove fixed constraints here so that the container's height 
-      // is determined by its children.
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header row with title and add button.
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Build Notes',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
+              Row(
+                children: [
+                  const Text(
+                    'Build Notes',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(width: 20),
+                  // Wrap the icon and text in a GestureDetector for a single tap event.
+                  GestureDetector(
+                    onTap: () {
+                      showMaintenanceRecordsDialog(context, buildId,
+                          isOwner: isOwner);
+                    },
+                    child: Row(
+                      children: [
+                        const Icon(Icons.build, color: Colors.white, size: 20),
+                        const SizedBox(width: 4),
+                        const Text(
+                          "Maintenance",
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
+              // Right group: "Add" icon (if owner).
               if (isOwner)
                 IconButton(
                   icon: const Icon(Icons.add, color: Colors.white),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
                   onPressed: () async {
                     final result = await Navigator.push<bool>(
                       context,
@@ -83,11 +109,7 @@ class BuildNotesSection extends StatelessWidget {
                           style: TextStyle(color: Colors.white70),
                         )
                       ]
-                    : notes.reversed
-                        .toList()
-                        .asMap()
-                        .entries
-                        .map((entry) {
+                    : notes.reversed.toList().asMap().entries.map((entry) {
                         final int index = entry.key;
                         final note = entry.value;
                         quill.Document document;
@@ -95,7 +117,8 @@ class BuildNotesSection extends StatelessWidget {
                           final deltaJson = jsonDecode(note['note']);
                           document = quill.Document.fromJson(deltaJson);
                         } catch (e) {
-                          document = quill.Document()..insert(0, note['note'] ?? '');
+                          document = quill.Document()
+                            ..insert(0, note['note'] ?? '');
                         }
                         Widget noteWidget = QuillViewer(document: document);
 

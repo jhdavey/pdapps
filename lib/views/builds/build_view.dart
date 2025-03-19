@@ -191,7 +191,7 @@ class _BuildViewState extends State<BuildView> with RouteAware {
         const SizedBox(height: 8),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
-          child: BuildTags(buildData: _build),
+          child: BuildTags(buildData: _build,),
         ),
         buildSection(
           title: 'Specs',
