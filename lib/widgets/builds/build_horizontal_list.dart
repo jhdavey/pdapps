@@ -3,7 +3,7 @@ import 'package:pd/widgets/builds/build_card.dart';
 
 Widget buildHorizontalList(List<dynamic> builds) {
   return SizedBox(
-    height: 390,
+    height: 400,
     child: ListView.builder(
       scrollDirection: Axis.horizontal,
       itemCount: builds.length,

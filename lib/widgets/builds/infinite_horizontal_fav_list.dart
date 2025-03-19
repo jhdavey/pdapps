@@ -2,33 +2,28 @@
 import 'package:flutter/material.dart';
 import 'package:pd/widgets/builds/build_card.dart';
 
-class InfiniteVerticalBuildList extends StatefulWidget {
+class InfiniteHorizontalFavoriteBuildList extends StatefulWidget {
   final List<dynamic> initialBuilds;
   final Future<List<dynamic>> Function(int page) fetchMoreBuilds;
-  final bool isScrollable; // If true, the list scrolls internally.
-
-  const InfiniteVerticalBuildList({
+  // This widget always scrolls horizontally.
+  const InfiniteHorizontalFavoriteBuildList({
     Key? key,
     required this.initialBuilds,
     required this.fetchMoreBuilds,
-    this.isScrollable = false,
   }) : super(key: key);
 
   @override
-  InfiniteVerticalBuildListState createState() =>
-      InfiniteVerticalBuildListState();
+  _InfiniteHorizontalFavoriteBuildListState createState() =>
+      _InfiniteHorizontalFavoriteBuildListState();
 }
 
-class InfiniteVerticalBuildListState extends State<InfiniteVerticalBuildList> {
+class _InfiniteHorizontalFavoriteBuildListState
+    extends State<InfiniteHorizontalFavoriteBuildList> {
   late List<dynamic> _builds;
   int _currentPage = 1;
   bool _isLoadingMore = false;
   bool _hasMore = true;
   final ScrollController _scrollController = ScrollController();
-
-  // Public getters to expose loading state.
-  bool get isLoadingMore => _isLoadingMore;
-  bool get hasMore => _hasMore;
 
   @override
   void initState() {
@@ -37,9 +32,7 @@ class InfiniteVerticalBuildListState extends State<InfiniteVerticalBuildList> {
     if (_builds.isEmpty) {
       _loadMore();
     }
-    if (widget.isScrollable) {
-      _scrollController.addListener(_onScroll);
-    }
+    _scrollController.addListener(_onScroll);
   }
 
   void _onScroll() {
@@ -67,7 +60,7 @@ class InfiniteVerticalBuildListState extends State<InfiniteVerticalBuildList> {
         });
       }
     } catch (e) {
-      debugPrint("Error loading page $_currentPage: $e");
+      debugPrint("Error loading favorites page $_currentPage: $e");
       _hasMore = false;
     }
     if (mounted) {
@@ -77,41 +70,40 @@ class InfiniteVerticalBuildListState extends State<InfiniteVerticalBuildList> {
     }
   }
 
-  // Public method to allow external triggering of loading more.
-  void loadMore() {
-    _loadMore();
-  }
-
   @override
   void dispose() {
-    if (widget.isScrollable) {
-      _scrollController.dispose();
-    }
+    _scrollController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-      controller: widget.isScrollable ? _scrollController : null,
-      shrinkWrap: true,
-      physics: widget.isScrollable
-          ? null
-          : const NeverScrollableScrollPhysics(),
-      itemCount: _builds.length + (_hasMore ? 1 : 0),
-      itemBuilder: (context, index) {
-        if (index < _builds.length) {
-          final build = _builds[index];
-          return BuildCard(buildData: build);
-        } else {
-          return const Padding(
-            padding: EdgeInsets.symmetric(vertical: 16.0),
-            child: Center(child: CircularProgressIndicator(
-              color: Colors.white,
-            )),
-          );
-        }
-      },
+    return SizedBox(
+      height: 400,
+      child: ListView.builder(
+        controller: _scrollController,
+        scrollDirection: Axis.horizontal,
+        itemCount: _builds.length + (_hasMore ? 1 : 0),
+        itemBuilder: (context, index) {
+          if (index < _builds.length) {
+            final build = _builds[index];
+            return GestureDetector(
+              onTap: () {
+                Navigator.of(context).pushNamed('/build-view', arguments: build);
+              },
+              child: SizedBox(
+                width: 420,
+                child: BuildCard(buildData: build),
+              ),
+            );
+          } else {
+            return const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.0),
+              child: Center(child: CircularProgressIndicator()),
+            );
+          }
+        },
+      ),
     );
   }
 }

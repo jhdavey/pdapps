@@ -21,11 +21,28 @@ class HomeView extends StatefulWidget {
 
 class _HomeViewState extends State<HomeView> with RouteAware {
   late Future<Map<String, dynamic>> _buildData;
+  // GlobalKey to access the state of InfiniteVerticalBuildList.
+  final GlobalKey<InfiniteVerticalBuildListState> verticalListKey =
+      GlobalKey<InfiniteVerticalBuildListState>();
+  // Outer scroll controller for the entire page.
+  final ScrollController _outerScrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
     _buildData = fetchBuildData(context: context);
+    _outerScrollController.addListener(_onOuterScroll);
+  }
+
+  void _onOuterScroll() {
+    // When the outer scroll view nears the bottom, trigger loading more builds in the vertical list.
+    if (_outerScrollController.position.pixels >=
+            _outerScrollController.position.maxScrollExtent - 200 &&
+        verticalListKey.currentState != null &&
+        !verticalListKey.currentState!.isLoadingMore &&
+        verticalListKey.currentState!.hasMore) {
+      verticalListKey.currentState?.loadMore();
+    }
   }
 
   @override
@@ -37,14 +54,17 @@ class _HomeViewState extends State<HomeView> with RouteAware {
   @override
   void dispose() {
     routeObserver.unsubscribe(this);
+    _outerScrollController.dispose();
     super.dispose();
   }
 
   @override
   void didPopNext() {
-    setState(() {
-      _buildData = fetchBuildData(context: context);
-    });
+    if (mounted) {
+      setState(() {
+        _buildData = fetchBuildData(context: context);
+      });
+    }
   }
 
   @override
@@ -68,7 +88,7 @@ class _HomeViewState extends State<HomeView> with RouteAware {
                   '/garage',
                   arguments: int.tryParse(user.id),
                 );
-                if (result == true) {
+                if (result == true && mounted) {
                   setState(() {
                     _buildData = fetchBuildData(context: context);
                   });
@@ -109,10 +129,13 @@ class _HomeViewState extends State<HomeView> with RouteAware {
         ],
       ),
       body: RefreshableContent(
+        controller: _outerScrollController,
         onRefresh: () async {
-          setState(() {
-            _buildData = fetchBuildData(context: context);
-          });
+          if (mounted) {
+            setState(() {
+              _buildData = fetchBuildData(context: context);
+            });
+          }
           await _buildData;
         },
         child: FutureBuilder<Map<String, dynamic>>(
@@ -141,12 +164,10 @@ class _HomeViewState extends State<HomeView> with RouteAware {
                 data['featuredBuilds'] as List<dynamic>? ?? [];
             final favoriteBuilds =
                 data['favoriteBuilds'] as List<dynamic>? ?? [];
-            // Extract followingBuilds.
             final followingBuilds =
                 data['followingBuilds'] as List<dynamic>? ?? [];
-            final tags =
-                List<dynamic>.from(data['tags'] as List<dynamic>? ?? [])
-                  ..shuffle();
+            final tags = List<dynamic>.from(data['tags'] as List<dynamic>? ?? [])
+              ..shuffle();
 
             return Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -263,7 +284,8 @@ class _HomeViewState extends State<HomeView> with RouteAware {
                   if (favoriteBuilds.isEmpty)
                     Padding(
                       padding: const EdgeInsets.only(left: 8.0),
-                      child: const Text("You haven't favorited any builds yet."),
+                      child:
+                          const Text("You haven't favorited any builds yet."),
                     )
                   else
                     buildHorizontalList(favoriteBuilds),
@@ -300,15 +322,18 @@ class _HomeViewState extends State<HomeView> with RouteAware {
                     ),
                   ),
                   const SizedBox(height: 10),
+                  // The InfiniteVerticalBuildList is non-scrollable (it expands fully) so that the outer scroll view controls scrolling.
                   InfiniteVerticalBuildList(
+                    key: verticalListKey,
                     initialBuilds: [],
                     fetchMoreBuilds: (page) async {
                       return await fetchPaginatedBuilds(
                         page: page,
-                        pageSize: 5,
+                        pageSize: 10,
                         context: context,
                       );
                     },
+                    isScrollable: false,
                   ),
                   const SizedBox(height: 20),
                 ],

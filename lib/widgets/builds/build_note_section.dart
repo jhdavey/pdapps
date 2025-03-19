@@ -56,7 +56,7 @@ class BuildNotesSection extends StatelessWidget {
                         const Icon(Icons.build, color: Colors.white, size: 20),
                         const SizedBox(width: 4),
                         const Text(
-                          "Maintenance",
+                          "Maintenance Record",
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.white,

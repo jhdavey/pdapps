@@ -34,11 +34,10 @@ Future<List<dynamic>> fetchPaginatedBuilds({
   int pageSize = 5,
   required BuildContext context,
 }) async {
-  // Construct the API URL with query parameters for pagination.
-  final String apiUrl =
-      'https://passiondrivenbuilds.com/api/builds?limit=$pageSize&page=$page';
   final authService = RepositoryProvider.of<ApiAuthService>(context);
   final token = await authService.getToken();
+  final String apiUrl =
+    'https://passiondrivenbuilds.com/api/builds/paginated?limit=$pageSize&page=$page';
 
   debugPrint('Token: $token');
 
@@ -50,13 +49,16 @@ Future<List<dynamic>> fetchPaginatedBuilds({
     },
   );
 
+  debugPrint('Response status: ${response.statusCode}');
+  debugPrint('Response body: ${response.body}');
+
   if (response.statusCode == 200) {
     final data = json.decode(response.body);
-    // Assuming the paginated response returns a Map with a "builds" key.
     if (data is Map && data.containsKey('builds')) {
-      return data['builds'] as List<dynamic>;
+      final builds = data['builds'] as List<dynamic>;
+      debugPrint('Paginated builds returned: ${builds.length} items');
+      return builds;
     } else if (data is List) {
-      // Fallback in case your API returns a List directly.
       return data;
     } else {
       throw Exception('Invalid response format for paginated builds');
@@ -65,3 +67,4 @@ Future<List<dynamic>> fetchPaginatedBuilds({
     throw Exception('Failed to load paginated builds: ${response.statusCode}');
   }
 }
+
