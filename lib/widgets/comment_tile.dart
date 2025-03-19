@@ -10,7 +10,7 @@ class CommentTile extends StatelessWidget {
   final String buildId;
   final String? currentUserId;
   final VoidCallback reloadBuildData;
-  // The level parameter is retained for potential styling, but will not affect indentation.
+  // The level parameter is retained for potential styling, but will not affect horizontal alignment.
   final int level;
 
   const CommentTile({
@@ -28,7 +28,7 @@ class CommentTile extends StatelessWidget {
     final bool commentIsOwner = comment['user_id'] != null &&
         comment['user_id'].toString() == currentUserId?.toString();
 
-    // No additional horizontal indentation is applied.
+    // No extra horizontal indentation.
     const double indent = 0.0;
 
     return Padding(
@@ -40,15 +40,53 @@ class CommentTile extends StatelessWidget {
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 8.0, vertical: 0),
             dense: true,
+            // Re-add reporting functionality on long press:
+            onLongPress: () {
+              if (!commentIsOwner && comment['user'] != null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    backgroundColor: Colors.grey[900],
+                    duration: const Duration(seconds: 5),
+                    content: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        TextButton(
+                          onPressed: () {
+                            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                            reportUser(comment['user'], context);
+                          },
+                          child: const Text(
+                            "Report",
+                            style: TextStyle(color: Colors.redAccent),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                            blockUser(comment['user'], context);
+                          },
+                          child: const Text(
+                            "Block",
+                            style: TextStyle(color: Colors.orange),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
+            },
             leading: CircleAvatar(
               radius: 20,
-              backgroundImage: comment['user'] != null &&
+              backgroundImage: (comment['user'] != null &&
                       comment['user']['profile_image'] != null &&
-                      comment['user']['profile_image'].isNotEmpty
+                      (comment['user']['profile_image'] as String).isNotEmpty &&
+                      !(comment['user']['profile_image'] as String)
+                          .contains("assets/images"))
                   ? NetworkImage(comment['user']['profile_image'])
-                  : const AssetImage('assets/images/profile_placeholder.png')
-                      as ImageProvider,
+                  : const AssetImage('assets/images/profile_placeholder.png'),
             ),
+
             title: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
@@ -101,8 +139,7 @@ class CommentTile extends StatelessWidget {
                   ),
                 ),
                 IconButton(
-                  icon:
-                      const Icon(Icons.reply, color: Colors.white, size: 16),
+                  icon: const Icon(Icons.reply, color: Colors.white, size: 16),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                   onPressed: () async {
@@ -134,7 +171,6 @@ class CommentTile extends StatelessWidget {
             ),
           ),
           // Render nested replies recursively.
-          // All nested replies are forced to have no extra horizontal indent.
           ...replies.map(
             (reply) => CommentTile(
               comment: reply,

@@ -38,6 +38,14 @@ class _CreateBuildViewState extends State<CreateBuildView> {
   Future<bool> _createBuild() async {
     if (!_formKey.currentState!.validate()) return false;
 
+    // Check if a featured image has been selected.
+    if (_selectedImage == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a featured image*')),
+      );
+      return false;
+    }
+
     final fields = <String, dynamic>{
       'year': _yearController.text,
       'make': _makeController.text,
@@ -61,15 +69,6 @@ class _CreateBuildViewState extends State<CreateBuildView> {
       imageFile: _selectedImage,
     );
     return success;
-  }
-
-  @override
-  void dispose() {
-    _yearController.dispose();
-    _makeController.dispose();
-    _modelController.dispose();
-    _tagsController.dispose();
-    super.dispose();
   }
 
   @override
@@ -159,7 +158,7 @@ class _CreateBuildViewState extends State<CreateBuildView> {
                     style: ElevatedButton.styleFrom(
                       foregroundColor: Colors.white,
                     ),
-                    child: const Text('Pick Featured Image'),
+                    child: const Text('Pick Featured Image*'),
                   ),
                 ),
                 const SizedBox(height: 12),

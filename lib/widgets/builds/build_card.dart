@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:pd/widgets/tag_chip_list.dart';
 import 'package:pd/services/api/report_user.dart';
 import 'package:pd/widgets/favorite_button.dart';
@@ -60,20 +61,36 @@ class BuildCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Image section using AspectRatio.
             AspectRatio(
               aspectRatio: 3 / 2,
-              child: Image.network(
-                buildData['image'] ?? 'https://via.placeholder.com/150',
-                fit: BoxFit.cover,
-              ),
+              child: (buildData['image'] != null &&
+                      buildData['image'].toString().isNotEmpty)
+                  ? CachedNetworkImage(
+                      imageUrl: buildData['image'],
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => Container(
+                        color: Colors.black12,
+                        child: const Center(
+                          child: CircularProgressIndicator(
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        ),
+                      ),
+                      errorWidget: (context, url, error) =>
+                          const Icon(Icons.error),
+                    )
+                  : Image.asset(
+                      'assets/images/placeholder_car_image.png',
+                      fit: BoxFit.cover,
+                    ),
             ),
-            // Information section with LayoutBuilder.
             LayoutBuilder(
               builder: (context, constraints) {
                 final availableWidth = constraints.maxWidth;
                 return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [

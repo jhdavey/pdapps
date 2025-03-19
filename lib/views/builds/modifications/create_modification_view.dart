@@ -139,7 +139,7 @@ class _CreateModificationViewState extends State<CreateModificationView> {
               const SizedBox(height: 16),
               _buildTextField('Name*', (value) => _name = value),
               const SizedBox(height: 16),
-              _buildTextField('Brand*', (value) => _brand = value),
+              _buildTextField('Brand', (value) => _brand = value),
               const SizedBox(height: 16),
               _buildTextField('Price', (value) => _price = value,
                   keyboardType:
@@ -220,7 +220,7 @@ class _CreateModificationViewState extends State<CreateModificationView> {
       onSaved: onSaved,
       enabled: enabled,
       validator: (value) {
-        if ((label == 'Name' || label == 'Brand') &&
+        if ((label.contains('Name')) &&
             (value == null || value.isEmpty)) {
           return 'Please enter a $label';
         }

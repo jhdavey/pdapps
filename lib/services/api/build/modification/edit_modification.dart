@@ -18,7 +18,7 @@ Future<bool> updateModification({
   final String apiUrl =
       'https://passiondrivenbuilds.com/api/builds/$buildId/modifications/$modificationId';
   
-   if (modificationData['price'] != null) {
+  if (modificationData['price'] != null) {
     modificationData['price'] = modificationData['price']
         .toString()
         .replaceAll('\$', '');
@@ -33,7 +33,6 @@ Future<bool> updateModification({
     'notes': modificationData['notes'],
     'installed_myself': modificationData['installedMyself'],
     'installed_by': modificationData['installed_by'],
-    
   };
 
   try {
@@ -41,6 +40,7 @@ Future<bool> updateModification({
       Uri.parse(apiUrl),
       headers: {
         'Content-Type': 'application/json',
+        'Accept': 'application/json', // Expect JSON responses.
         if (token != null) 'Authorization': 'Bearer $token',
       },
       body: json.encode(modificationData),
@@ -49,7 +49,22 @@ Future<bool> updateModification({
     if (response.statusCode == 200) {
       return true;
     } else {
-      _showErrorSnackbar(context, response.statusCode, response.body);
+      // Try to parse and extract a human-friendly error message.
+      String errorMessage = 'Unknown error';
+      try {
+        final Map<String, dynamic> errorData = json.decode(response.body);
+        if (errorData.containsKey('errors')) {
+          // For example, if the "name" field is required.
+          errorMessage = errorData['errors']['name']?[0] ?? errorMessage;
+        } else if (errorData.containsKey('message')) {
+          errorMessage = errorData['message'];
+        } else {
+          errorMessage = response.body;
+        }
+      } catch (e) {
+        errorMessage = response.body;
+      }
+      _showErrorSnackbar(context, response.statusCode, errorMessage);
       return false;
     }
   } catch (e) {
@@ -57,7 +72,6 @@ Future<bool> updateModification({
     return false;
   }
 }
-
 
 Future<bool> deleteModification({
   required BuildContext context,
@@ -74,6 +88,7 @@ Future<bool> deleteModification({
       Uri.parse(apiUrl),
       headers: {
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
         if (token != null) 'Authorization': 'Bearer $token',
       },
     );
@@ -94,7 +109,7 @@ void _showErrorSnackbar(BuildContext context, int? statusCode, String errorMessa
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
       content: Text(
-        'Error ${statusCode != null ? "($statusCode)" : ""}: $errorMessage',
+        'Error${statusCode != null ? " ($statusCode)" : ""}: $errorMessage',
         style: const TextStyle(color: Colors.white),
       ),
       backgroundColor: Colors.red,

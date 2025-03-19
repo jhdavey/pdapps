@@ -39,7 +39,8 @@ class _EditModificationViewState extends State<EditModificationView> {
     _brand = widget.modification['brand'] ?? '';
     _price = widget.modification['price']?.toString();
     _part = widget.modification['part'] ?? '';
-    _notes = widget.modification['notes'] ?? ''; // Initialize modification notes
+    _notes =
+        widget.modification['notes'] ?? ''; // Initialize modification notes
     _installedMyself = widget.modification['installed_myself'] ?? 0;
     _installedBy = widget.modification['installed_by'] ?? '';
   }
@@ -148,7 +149,7 @@ class _EditModificationViewState extends State<EditModificationView> {
               const SizedBox(height: 16),
               _buildTextField('Name*', _name, (value) => _name = value),
               const SizedBox(height: 16),
-              _buildTextField('Brand*', _brand, (value) => _brand = value),
+              _buildTextField('Brand', _brand, (value) => _brand = value),
               const SizedBox(height: 16),
               _buildTextField(
                 'Price',
@@ -224,7 +225,7 @@ class _EditModificationViewState extends State<EditModificationView> {
       onSaved: onSaved,
       enabled: enabled,
       validator: (value) {
-        if ((label == 'Name' || label == 'Brand') &&
+        if ((label.contains('Name')) &&
             (value == null || value.isEmpty)) {
           return 'Please enter a $label';
         }

@@ -1,5 +1,6 @@
 // ignore_for_file: use_build_context_synchronously
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:pd/helpers/build_ownership_helper.dart';
 import 'package:pd/helpers/route_arguments_helper.dart';
@@ -141,7 +142,8 @@ class _BuildViewState extends State<BuildView> with RouteAware {
               child: Text(
                 "${_build['year'] ?? ''} ${_build['make'] ?? ''} ${_build['model'] ?? ''}"
                 "${_build['trim'] != null ? ' ${_build['trim']}' : ''}",
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
             // Use the extracted FavoriteButton widget.
@@ -155,18 +157,33 @@ class _BuildViewState extends State<BuildView> with RouteAware {
         const SizedBox(height: 8),
         ClipRRect(
           borderRadius: BorderRadius.circular(8),
-          child: Image.network(
-            _build['image'] ?? '',
-            fit: BoxFit.cover,
-            width: double.infinity,
-            errorBuilder: (context, error, stackTrace) {
-              return Image.asset(
-                'assets/images/placeholder_car_image.png',
-                fit: BoxFit.cover,
-                width: double.infinity,
-              );
-            },
-          ),
+          child: (_build['image'] != null &&
+                  _build['image'].toString().isNotEmpty)
+              ? CachedNetworkImage(
+                  imageUrl: _build['image'],
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                  placeholder: (context, url) => Container(
+                    width: double.infinity,
+                    height: 200,
+                    color: Colors.black12,
+                    child: const Center(
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    ),
+                  ),
+                  errorWidget: (context, url, error) => Image.asset(
+                    'assets/images/placeholder_car_image.png',
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                  ),
+                )
+              : Image.asset(
+                  'assets/images/placeholder_car_image.png',
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                ),
         ),
         const SizedBox(height: 8),
         buildAdditionalMediaSection(_build,
@@ -206,6 +223,7 @@ class _BuildViewState extends State<BuildView> with RouteAware {
             {'label': 'Brakes', 'value': _build['brakes']},
           ],
         ),
+        const SizedBox(height: 5),
         BuildModificationsSection(
           modificationsByCategory:
               _build['modificationsByCategory'] is Map<String, dynamic>

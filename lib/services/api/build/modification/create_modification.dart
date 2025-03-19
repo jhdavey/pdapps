@@ -10,7 +10,7 @@ Future<bool> submitModification(
   BuildContext context,
   String buildId, {
   required String category,
-  String? name,
+  required String? name,
   String? brand,
   String? price,
   String? part,
@@ -21,7 +21,8 @@ Future<bool> submitModification(
   final authService = RepositoryProvider.of<ApiAuthService>(context);
   final token = await authService.getToken();
 
-    if (price != null) {
+  // Remove any dollar sign from price.
+  if (price != null) {
     price = price.replaceAll('\$', '');
   }
 
@@ -44,6 +45,7 @@ Future<bool> submitModification(
       Uri.parse(apiUrl),
       headers: {
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
         if (token != null) 'Authorization': 'Bearer $token',
       },
       body: json.encode(modificationData),
@@ -52,8 +54,21 @@ Future<bool> submitModification(
     if (response.statusCode == 201) {
       return true;
     } else {
+      String errorMessage = 'Unknown error';
+      try {
+        final Map<String, dynamic> errorData = json.decode(response.body);
+        if (errorData.containsKey('errors')) {
+          errorMessage = errorData['errors']['name']?.first ?? errorMessage;
+        } else if (errorData.containsKey('message')) {
+          errorMessage = errorData['message'];
+        } else {
+          errorMessage = response.body;
+        }
+      } catch (e) {
+        errorMessage = response.body;
+      }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: ${response.body}')),
+        SnackBar(content: Text('Error: $errorMessage')),
       );
       return false;
     }
@@ -64,3 +79,4 @@ Future<bool> submitModification(
     return false;
   }
 }
+

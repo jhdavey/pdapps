@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
-Widget buildSection(
-    {required String title, required List<Map<String, dynamic>> dataPoints}) {
+Widget buildSection({
+  required String title,
+  required List<Map<String, dynamic>> dataPoints,
+}) {
   final filteredData =
       dataPoints.where((data) => data['value'] != null).toList();
   if (filteredData.isEmpty) {
@@ -10,8 +12,8 @@ Widget buildSection(
   return SizedBox(
     width: double.infinity,
     child: Card(
-      color: Color(0xFF1F242C),
-      margin: const EdgeInsets.symmetric(vertical: 10),
+      color: const Color(0xFF1F242C),
+      margin: const EdgeInsets.symmetric(vertical: 5),
       child: Padding(
         padding: const EdgeInsets.all(10.0),
         child: Column(
@@ -19,7 +21,8 @@ Widget buildSection(
           children: [
             Text(
               title,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              style:
+                  const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             ...filteredData.map((data) => Padding(
                   padding: const EdgeInsets.symmetric(vertical: 4),
@@ -47,3 +50,4 @@ Widget buildSection(
     ),
   );
 }
+
