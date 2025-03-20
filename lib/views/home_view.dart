@@ -7,9 +7,11 @@ import 'package:pd/services/api/auth/bloc/auth_event.dart';
 import 'package:pd/services/api/build/get_all_builds.dart';
 import 'package:pd/data/build_categories.dart';
 import 'package:pd/main.dart';
+import 'package:pd/services/api/build/get_paginated_fav_builds_controller.dart';
 import 'package:pd/utilities/dialogs/search_dialog.dart';
 import 'package:pd/widgets/builds/build_horizontal_list.dart';
 import 'package:pd/widgets/builds/build_vertical_list.dart';
+import 'package:pd/widgets/builds/infinite_horizontal_fav_list.dart';
 import 'package:pd/widgets/refreshable_content.dart';
 
 class HomeView extends StatefulWidget {
@@ -21,21 +23,20 @@ class HomeView extends StatefulWidget {
 
 class _HomeViewState extends State<HomeView> with RouteAware {
   late Future<Map<String, dynamic>> _buildData;
-  // GlobalKey to access the state of InfiniteVerticalBuildList.
+  // GlobalKey to access the state of the vertical infinite list.
   final GlobalKey<InfiniteVerticalBuildListState> verticalListKey =
       GlobalKey<InfiniteVerticalBuildListState>();
   // Outer scroll controller for the entire page.
   final ScrollController _outerScrollController = ScrollController();
 
   @override
-  void initState() {
-    super.initState();
-    _buildData = fetchBuildData(context: context);
-    _outerScrollController.addListener(_onOuterScroll);
-  }
+void initState() {
+  super.initState();
+  _buildData = fetchBuildData(context: context);
+  _outerScrollController.addListener(_onOuterScroll);
+}
 
   void _onOuterScroll() {
-    // When the outer scroll view nears the bottom, trigger loading more builds in the vertical list.
     if (_outerScrollController.position.pixels >=
             _outerScrollController.position.maxScrollExtent - 200 &&
         verticalListKey.currentState != null &&
@@ -166,8 +167,8 @@ class _HomeViewState extends State<HomeView> with RouteAware {
                 data['favoriteBuilds'] as List<dynamic>? ?? [];
             final followingBuilds =
                 data['followingBuilds'] as List<dynamic>? ?? [];
-            final tags = List<dynamic>.from(data['tags'] as List<dynamic>? ?? [])
-              ..shuffle();
+            final tags =
+                List<dynamic>.from(data['tags'] as List<dynamic>? ?? [])..shuffle();
 
             return Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -269,7 +270,7 @@ class _HomeViewState extends State<HomeView> with RouteAware {
                     buildHorizontalList(featuredBuilds),
                   ],
                   const Divider(),
-                  // Favorite Builds Section.
+                  // Favorite Builds Section with pagination.
                   Padding(
                     padding: const EdgeInsets.only(left: 8.0),
                     child: Text(
@@ -284,11 +285,19 @@ class _HomeViewState extends State<HomeView> with RouteAware {
                   if (favoriteBuilds.isEmpty)
                     Padding(
                       padding: const EdgeInsets.only(left: 8.0),
-                      child:
-                          const Text("You haven't favorited any builds yet."),
+                      child: const Text("You haven't favorited any builds yet."),
                     )
                   else
-                    buildHorizontalList(favoriteBuilds),
+                    InfiniteHorizontalFavoriteBuildList(
+                      initialBuilds: favoriteBuilds,
+                      fetchMoreBuilds: (page) async {
+                        return await fetchPaginatedFavoriteBuilds(
+                          page: page,
+                          pageSize: 10,
+                          context: context,
+                        );
+                      },
+                    ),
                   const Divider(),
                   // Following Builds Section.
                   Padding(
@@ -322,7 +331,7 @@ class _HomeViewState extends State<HomeView> with RouteAware {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  // The InfiniteVerticalBuildList is non-scrollable (it expands fully) so that the outer scroll view controls scrolling.
+                  // The InfiniteVerticalBuildList is non-scrollable so that the outer scroll view controls scrolling.
                   InfiniteVerticalBuildList(
                     key: verticalListKey,
                     initialBuilds: [],
