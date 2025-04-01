@@ -1,4 +1,4 @@
-// ignore_for_file: use_build_context_synchronously
+// ignore_for_file: library_private_types_in_public_api
 import 'package:flutter/material.dart';
 import 'package:pd/views/builds/modifications/create_modification_view.dart';
 import 'package:pd/views/builds/modifications/edit_modification_view.dart';
@@ -38,70 +38,130 @@ class BuildModificationsSection extends StatelessWidget {
                     style: const TextStyle(color: Colors.white),
                   ),
                   children: mods.map((modification) {
+                    // Build a widget to display modification images if available.
+                    Widget imagesWidget = const SizedBox.shrink();
+                    if (modification['images'] != null &&
+                        modification['images'] is List &&
+                        (modification['images'] as List).isNotEmpty) {
+                      imagesWidget = SizedBox(
+                        height: 100,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: (modification['images'] as List).length,
+                          itemBuilder: (context, index) {
+                            final imageUrl = modification['images'][index];
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 8.0),
+                              child: Image.network(
+                                imageUrl,
+                                width: 100,
+                                height: 100,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    const Icon(Icons.broken_image,
+                                        color: Colors.white),
+                              ),
+                            );
+                          },
+                        ),
+                      );
+                    }
+                    
                     return Container(
+                      padding: const EdgeInsets.all(8.0),
                       decoration: const BoxDecoration(
                         border: Border(
                           bottom: BorderSide(color: Colors.white, width: 1),
                         ),
                       ),
-                      child: ListTile(
-                        title: Text(
-                          modification['name'] ?? 'Unnamed Modification',
-                          style: const TextStyle(color: Colors.white),
-                        ),
-                        trailing: isOwner
-                            ? IconButton(
-                                icon:
-                                    const Icon(Icons.edit, color: Colors.white),
-                                onPressed: () async {
-                                  final result = await Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          EditModificationView(
-                                        buildId: buildId,
-                                        modification: modification,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Row with modification name, "Not Installed" indicator, and edit icon.
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Row(
+                                  children: [
+                                    Text(
+                                      modification['name'] ?? 'Unnamed Modification',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
                                       ),
                                     ),
-                                  );
-                                  if (result == true) {
-                                    reloadBuildData();
-                                  }
-                                },
-                              )
-                            : null,
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
+                                    if (modification['not_installed'] == 1 ||
+                                        modification['not_installed'] == true)
+                                      const Padding(
+                                        padding: EdgeInsets.only(left: 4.0),
+                                        child: Text(
+                                          'Not Installed',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontStyle: FontStyle.italic,
+                                            color: Colors.white70,
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                              if (isOwner)
+                                IconButton(
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
+                                  icon: const Icon(Icons.edit, color: Colors.white),
+                                  onPressed: () async {
+                                    final result = await Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => EditModificationView(
+                                          buildId: buildId,
+                                          modification: modification,
+                                        ),
+                                      ),
+                                    );
+                                    if (result == true) {
+                                      reloadBuildData();
+                                    }
+                                  },
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          // Full width modification details.
+                          if (modification['brand'] != null &&
+                              modification['brand'].toString().trim().isNotEmpty)
                             Text(
-                              'Brand: ${modification['brand'] ?? 'Unknown'}',
+                              'Brand: ${modification['brand']}',
                               style: const TextStyle(color: Colors.white70),
                             ),
-                            if (modification['price'] != null)
-                              Text(
-                                'Price: \$${modification['price']}',
-                                style: const TextStyle(color: Colors.white70),
-                              ),
-                            const SizedBox(height: 10),
-                            if (modification['notes'] != null &&
-                                modification['notes'].toString().isNotEmpty)
-                              Text(
-                                modification['notes'],
-                                style: const TextStyle(color: Colors.white70),
-                              ),
-                            const SizedBox(height: 10),
-                            if (modification['installed_myself'] == 1 ||
-                                (modification['installed_by'] != null &&
-                                    modification['installed_by'].isNotEmpty))
-                              Text(
-                                modification['installed_myself'] == 1
-                                    ? "Self-Installed"
-                                    : "Installed by: ${modification['installed_by']}",
-                                style: const TextStyle(color: Colors.white70),
-                              ),
-                          ],
-                        ),
-                        isThreeLine: true,
+                          if (modification['price'] != null)
+                            Text(
+                              'Price: \$${modification['price']}',
+                              style: const TextStyle(color: Colors.white70),
+                            ),
+                          const SizedBox(height: 10),
+                          if (modification['notes'] != null &&
+                              modification['notes'].toString().isNotEmpty)
+                            Text(
+                              modification['notes'],
+                              style: const TextStyle(color: Colors.white70),
+                            ),
+                          const SizedBox(height: 10),
+                          if (modification['installed_myself'] == 1 ||
+                              (modification['installed_by'] != null &&
+                                  modification['installed_by'].toString().isNotEmpty))
+                            Text(
+                              modification['installed_myself'] == 1
+                                  ? "Self-Installed"
+                                  : "Installed by: ${modification['installed_by']}",
+                              style: const TextStyle(color: Colors.white70),
+                            ),
+                          const SizedBox(height: 10),
+                          imagesWidget,
+                        ],
                       ),
                     );
                   }).toList(),
@@ -138,8 +198,7 @@ class BuildModificationsSection extends StatelessWidget {
                   final result = await Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) =>
-                          CreateModificationView(buildId: buildId),
+                      builder: (context) => CreateModificationView(buildId: buildId),
                     ),
                   );
                   if (result == true) {
@@ -173,8 +232,7 @@ class BuildModificationsSection extends StatelessWidget {
                     final result = await Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) =>
-                            CreateModificationView(buildId: buildId),
+                        builder: (context) => CreateModificationView(buildId: buildId),
                       ),
                     );
                     if (result == true) {

@@ -30,11 +30,11 @@ class _HomeViewState extends State<HomeView> with RouteAware {
   final ScrollController _outerScrollController = ScrollController();
 
   @override
-void initState() {
-  super.initState();
-  _buildData = fetchBuildData(context: context);
-  _outerScrollController.addListener(_onOuterScroll);
-}
+  void initState() {
+    super.initState();
+    _buildData = fetchBuildData(context: context);
+    _outerScrollController.addListener(_onOuterScroll);
+  }
 
   void _onOuterScroll() {
     if (_outerScrollController.position.pixels >=
@@ -161,14 +161,13 @@ void initState() {
                     .any((apiCat) => apiCat['build_category'] == cat))
                 .toList();
 
-            final featuredBuilds =
-                data['featuredBuilds'] as List<dynamic>? ?? [];
             final favoriteBuilds =
                 data['favoriteBuilds'] as List<dynamic>? ?? [];
-            final followingBuilds =
-                data['followingBuilds'] as List<dynamic>? ?? [];
+            final topFavoritedBuilds =
+                data['topFavoritedBuilds'] as List<dynamic>? ?? [];
             final tags =
-                List<dynamic>.from(data['tags'] as List<dynamic>? ?? [])..shuffle();
+                List<dynamic>.from(data['tags'] as List<dynamic>? ?? [])
+                  ..shuffle();
 
             return Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -254,28 +253,28 @@ void initState() {
                     ),
                   ),
                   const Divider(),
-                  // Featured Builds Section.
-                  if (featuredBuilds.isNotEmpty) ...[
+                  // Top 10 Most Favorited Builds Section.
+                  if (topFavoritedBuilds.isNotEmpty) ...[
                     Padding(
                       padding: const EdgeInsets.only(left: 8.0),
                       child: Text(
-                        'Featured',
-                        style: TextStyle(
+                        'Top 10',
+                        style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
                     const SizedBox(height: 10),
-                    buildHorizontalList(featuredBuilds),
+                    buildHorizontalList(topFavoritedBuilds),
+                    const Divider(),
                   ],
-                  const Divider(),
                   // Favorite Builds Section with pagination.
                   Padding(
                     padding: const EdgeInsets.only(left: 8.0),
                     child: Text(
-                      'Favorite Builds',
-                      style: TextStyle(
+                      'Your Favorite Builds',
+                      style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
@@ -283,9 +282,9 @@ void initState() {
                   ),
                   const SizedBox(height: 10),
                   if (favoriteBuilds.isEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(left: 8.0),
-                      child: const Text("You haven't favorited any builds yet."),
+                    const Padding(
+                      padding: EdgeInsets.only(left: 8.0),
+                      child: Text("You haven't favorited any builds yet."),
                     )
                   else
                     InfiniteHorizontalFavoriteBuildList(
@@ -299,39 +298,18 @@ void initState() {
                       },
                     ),
                   const Divider(),
-                  // Following Builds Section.
-                  Padding(
-                    padding: const EdgeInsets.only(left: 8.0),
-                    child: Text(
-                      'Garages You Follow',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  if (followingBuilds.isEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(left: 8.0),
-                      child: const Text('You are not following anyone yet.'),
-                    )
-                  else
-                    buildHorizontalList(followingBuilds),
-                  const Divider(),
                   // Recently Updated Builds Section.
                   Padding(
                     padding: const EdgeInsets.only(left: 8.0),
                     child: Text(
-                      'Recently Updated',
-                      style: TextStyle(
+                      'Your Feed',
+                      style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
                   const SizedBox(height: 10),
-                  // The InfiniteVerticalBuildList is non-scrollable so that the outer scroll view controls scrolling.
                   InfiniteVerticalBuildList(
                     key: verticalListKey,
                     initialBuilds: [],
