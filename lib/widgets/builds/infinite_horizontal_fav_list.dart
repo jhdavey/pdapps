@@ -45,30 +45,39 @@ class _InfiniteHorizontalFavoriteBuildListState
   }
 
   Future<void> _loadMore() async {
-    if (_isLoadingMore || !_hasMore) return;
-    setState(() {
-      _isLoadingMore = true;
-    });
-    try {
-      final newBuilds = await widget.fetchMoreBuilds(_currentPage);
-      if (newBuilds.isEmpty) {
-        _hasMore = false;
-      } else {
+  if (_isLoadingMore || !_hasMore) return;
+  setState(() {
+    _isLoadingMore = true;
+  });
+  try {
+    final newBuilds = await widget.fetchMoreBuilds(_currentPage);
+    if (newBuilds.isEmpty) {
+      _hasMore = false;
+    } else {
+      // Filter out duplicates (assume each build has a unique 'id').
+      final uniqueNewBuilds = newBuilds.where((build) {
+        return !_builds.any((existing) => existing['id'] == build['id']);
+      }).toList();
+      if (uniqueNewBuilds.isNotEmpty) {
         setState(() {
-          _builds.addAll(newBuilds);
+          _builds.addAll(uniqueNewBuilds);
           _currentPage++;
         });
+      } else {
+        // If all new items are duplicates, assume no more unique items.
+        _hasMore = false;
       }
-    } catch (e) {
-      debugPrint("Error loading favorites page $_currentPage: $e");
-      _hasMore = false;
     }
-    if (mounted) {
-      setState(() {
-        _isLoadingMore = false;
-      });
-    }
+  } catch (e) {
+    debugPrint("Error loading favorites page $_currentPage: $e");
+    _hasMore = false;
   }
+  if (mounted) {
+    setState(() {
+      _isLoadingMore = false;
+    });
+  }
+}
 
   @override
   void dispose() {
