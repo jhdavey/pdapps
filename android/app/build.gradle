@@ -50,12 +50,6 @@ android {
     buildTypes {
         release {
             signingConfig = signingConfigs.getByName("release")
-            // For Android to recognize native error symbols
-            shrinkResources true
-            minifyEnabled true
-            ndk {
-                debugSymbolLevel "FULL"
-            }
         }
     }
 }
@@ -63,5 +57,3 @@ android {
 flutter {
     source = "../.."
 }
-
-android.buildTypes.release.ndk.debugSymbolLevel = { SYMBOL_TABLE | FULL }

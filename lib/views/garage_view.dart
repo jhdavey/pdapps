@@ -10,7 +10,8 @@ import 'package:pd/widgets/garage_profile_section.dart';
 import 'package:pd/widgets/builds/build_card.dart';
 
 class GarageView extends StatefulWidget {
-  const GarageView({super.key});
+  final int userId;
+  const GarageView({required this.userId, super.key});
 
   @override
   _GarageViewState createState() => _GarageViewState();
@@ -18,33 +19,28 @@ class GarageView extends StatefulWidget {
 
 class _GarageViewState extends State<GarageView> {
   late Future<Map<String, dynamic>> _garageData;
-  int? _currentUserId;
   late Future<List<dynamic>> _followers;
   late Future<List<dynamic>> _following;
+  int? _currentUserId;
   bool _isFollowing = false;
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final profileUserId = ModalRoute.of(context)?.settings.arguments as int?;
-    if (profileUserId != null) {
-      _garageData = fetchGarageData(context: context, userId: profileUserId);
-      _followers = fetchFollowers(context: context, userId: profileUserId);
-      _following = fetchFollowing(context: context, userId: profileUserId);
+  void initState() {
+    super.initState();
+    _garageData = fetchGarageData(context: context, userId: widget.userId);
+    _followers   = fetchFollowers(context: context, userId: widget.userId);
+    _following   = fetchFollowing(context: context, userId: widget.userId);
 
-      RepositoryProvider.of<ApiAuthService>(context)
-          .getCurrentUser()
-          .then((currentUser) {
-        if (mounted) {
-          setState(() {
-            _currentUserId = int.tryParse(currentUser?.id.toString() ?? '');
-            debugPrint("DEBUG: Current User ID: $_currentUserId");
-          });
-        }
-      });
-    } else {
-      throw Exception('User ID not provided');
-    }
+    // Get the logged-in user’s ID
+    RepositoryProvider.of<ApiAuthService>(context)
+        .getCurrentUser()
+        .then((user) {
+      if (mounted) {
+        setState(() {
+          _currentUserId = user != null ? int.tryParse(user.id) : null;
+        });
+      }
+    });
   }
 
   Future<void> _toggleFollow(int profileUserId) async {

@@ -1,14 +1,9 @@
 // ignore_for_file: library_private_types_in_public_api, use_build_context_synchronously
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:pd/services/api/auth/auth_service.dart';
-import 'package:pd/services/api/auth/bloc/auth_bloc.dart';
-import 'package:pd/services/api/auth/bloc/auth_event.dart';
 import 'package:pd/services/api/build/get_all_builds.dart';
 import 'package:pd/data/build_categories.dart';
 import 'package:pd/main.dart';
 import 'package:pd/services/api/build/get_paginated_fav_builds_controller.dart';
-import 'package:pd/utilities/dialogs/search_dialog.dart';
 import 'package:pd/widgets/builds/build_horizontal_list.dart';
 import 'package:pd/widgets/builds/build_vertical_list.dart';
 import 'package:pd/widgets/builds/infinite_horizontal_fav_list.dart';
@@ -70,65 +65,7 @@ class _HomeViewState extends State<HomeView> with RouteAware {
 
   @override
   Widget build(BuildContext context) {
-    final authService = RepositoryProvider.of<ApiAuthService>(context);
-
     return Scaffold(
-      appBar: AppBar(
-        title: Image.asset(
-          'assets/images/logoFull.png',
-          height: 36,
-        ),
-        actions: [
-          // Garage Button
-          IconButton(
-            icon: const Icon(Icons.garage),
-            onPressed: () async {
-              final user = await authService.getCurrentUser();
-              if (user != null) {
-                final result = await Navigator.of(context).pushNamed(
-                  '/garage',
-                  arguments: int.tryParse(user.id),
-                );
-                if (result == true && mounted) {
-                  setState(() {
-                    _buildData = fetchBuildData(context: context);
-                  });
-                }
-              }
-            },
-          ),
-          // Search Button
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {
-              showSearchDialog(context);
-            },
-          ),
-          PopupMenuButton<String>(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20.0),
-            ),
-            onSelected: (value) {
-              if (value == 'logout') {
-                context.read<AuthBloc>().add(const AuthEventLogOut());
-              } else if (value == 'feedback') {
-                Navigator.pushNamed(context, '/feedback');
-              }
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'feedback',
-                child: Text('Feedback'),
-              ),
-              const PopupMenuItem(
-                value: 'logout',
-                child: Text('Logout'),
-              ),
-            ],
-            icon: const Icon(Icons.more_vert),
-          ),
-        ],
-      ),
       body: RefreshableContent(
         controller: _outerScrollController,
         onRefresh: () async {
@@ -174,6 +111,14 @@ class _HomeViewState extends State<HomeView> with RouteAware {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  const SizedBox(height: 60),
+                  // Logo at top of scroll
+                  Center(
+                    child: Image.asset(
+                      'assets/images/logoFull.png',
+                      height: 40,
+                    ),
+                  ),
                   const Divider(),
                   // Categories section.
                   SizedBox(

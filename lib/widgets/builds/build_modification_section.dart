@@ -17,6 +17,24 @@ class BuildModificationsSection extends StatelessWidget {
     required this.reloadBuildData,
   });
 
+  void _zoomImage(BuildContext context, String imageUrl) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: GestureDetector(
+          onTap: () => Navigator.pop(context),
+          child: InteractiveViewer(
+            child: Image.network(
+              imageUrl,
+              fit: BoxFit.contain,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final bool hasModifications = modificationsByCategory.isNotEmpty;
@@ -38,35 +56,37 @@ class BuildModificationsSection extends StatelessWidget {
                     style: const TextStyle(color: Colors.white),
                   ),
                   children: mods.map((modification) {
-                    // Build a widget to display modification images if available.
+                    // Build the images widget.
                     Widget imagesWidget = const SizedBox.shrink();
                     if (modification['images'] != null &&
                         modification['images'] is List &&
                         (modification['images'] as List).isNotEmpty) {
                       imagesWidget = SizedBox(
-                        height: 100,
+                        height: 200, // Increased height for larger display.
                         child: ListView.builder(
                           scrollDirection: Axis.horizontal,
                           itemCount: (modification['images'] as List).length,
                           itemBuilder: (context, index) {
                             final imageUrl = modification['images'][index];
-                            return Padding(
-                              padding: const EdgeInsets.only(right: 8.0),
-                              child: Image.network(
-                                imageUrl,
-                                width: 100,
-                                height: 100,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) =>
-                                    const Icon(Icons.broken_image,
-                                        color: Colors.white),
+                            return GestureDetector(
+                              onTap: () => _zoomImage(context, imageUrl),
+                              child: Padding(
+                                padding: const EdgeInsets.only(right: 8.0),
+                                child: Image.network(
+                                  imageUrl,
+                                  width: 200,
+                                  height: 200,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      const Icon(Icons.broken_image, color: Colors.white),
+                                ),
                               ),
                             );
                           },
                         ),
                       );
                     }
-                    
+
                     return Container(
                       padding: const EdgeInsets.all(8.0),
                       decoration: const BoxDecoration(
@@ -77,6 +97,9 @@ class BuildModificationsSection extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          // Display modification images above details.
+                          imagesWidget,
+                          const SizedBox(height: 8),
                           // Row with modification name, "Not Installed" indicator, and edit icon.
                           Row(
                             children: [
@@ -130,7 +153,7 @@ class BuildModificationsSection extends StatelessWidget {
                             ],
                           ),
                           const SizedBox(height: 8),
-                          // Full width modification details.
+                          // Modification details.
                           if (modification['brand'] != null &&
                               modification['brand'].toString().trim().isNotEmpty)
                             Text(
@@ -159,8 +182,6 @@ class BuildModificationsSection extends StatelessWidget {
                                   : "Installed by: ${modification['installed_by']}",
                               style: const TextStyle(color: Colors.white70),
                             ),
-                          const SizedBox(height: 10),
-                          imagesWidget,
                         ],
                       ),
                     );

@@ -14,7 +14,6 @@ import 'package:pd/views/auth/login_view.dart';
 import 'package:pd/views/edit_profile_view.dart';
 import 'package:pd/views/feedback_view.dart';
 import 'package:pd/views/home_view.dart';
-import 'package:pd/views/garage_view.dart';
 import 'package:pd/views/builds/build_view.dart';
 import 'package:pd/views/auth/register_view.dart';
 import 'package:pd/views/search_results_view.dart';
@@ -24,6 +23,7 @@ import 'package:pd/widgets/user_list.dart';
 import 'package:pd/helpers/loading/loading_screen.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
+import 'package:pd/views/main_scaffold.dart';
 
 final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
 
@@ -131,7 +131,13 @@ class MyApp extends StatelessWidget {
               }
               return const BuildView();
             },
-            '/garage': (context) => const GarageView(),
+            '/garage': (ctx) {
+              // Pull the userId you passed in:
+              final userId = ModalRoute.of(ctx)!.settings.arguments as int;
+              // Wrap it in your MainScaffold so the bottom bar appears:
+              return MainScaffold(
+              );
+            },
             '/edit-profile': (context) {
               final args = ModalRoute.of(context)!.settings.arguments
                   as Map<String, dynamic>?;
@@ -237,7 +243,9 @@ class AppNavigator extends StatelessWidget {
       },
       builder: (context, state) {
         if (state is AuthStateLoggedIn) {
-          return HomeView();
+          return MainScaffold(
+
+          );
         } else if (state is AuthStateRegistering) {
           return RegisterView();
         } else {

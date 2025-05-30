@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-Future<void> showSearchDialog(BuildContext context) async {
+Future<String?> showSearchDialog(BuildContext context) {
   String? searchQuery;
 
-  await showDialog(
+  return showDialog<String>(
     context: context,
     builder: (context) {
       return AlertDialog(
@@ -17,15 +17,15 @@ Future<void> showSearchDialog(BuildContext context) async {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.of(context).pop(null),
             child: const Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () {
-              if (searchQuery != null && searchQuery!.trim().isNotEmpty) {
-                Navigator.pop(context);
-                Navigator.pushNamed(context, '/search-results', arguments: searchQuery);
-              }
+              final trimmed = searchQuery?.trim();
+              Navigator.of(context).pop(
+                (trimmed != null && trimmed.isNotEmpty) ? trimmed : null,
+              );
             },
             child: const Text('Search'),
           ),
