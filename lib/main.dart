@@ -12,8 +12,6 @@ import 'package:pd/views/builds/create_build_view.dart';
 import 'package:pd/views/builds/edit_build_view.dart';
 import 'package:pd/views/auth/login_view.dart';
 import 'package:pd/views/edit_profile_view.dart';
-import 'package:pd/views/feedback_view.dart';
-import 'package:pd/views/home_view.dart';
 import 'package:pd/views/builds/build_view.dart';
 import 'package:pd/views/auth/register_view.dart';
 import 'package:pd/views/search_results_view.dart';
@@ -24,6 +22,8 @@ import 'package:pd/helpers/loading/loading_screen.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:pd/views/main_scaffold.dart';
+
+import 'views/garage_view.dart';
 
 final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
 
@@ -113,57 +113,65 @@ class MyApp extends StatelessWidget {
             ),
           ),
           debugShowCheckedModeBanner: false,
-          home: AppNavigator(),
+          home: const AppNavigator(),
           routes: {
             '/register': (context) => RegisterView(),
             '/login': (context) => LoginView(),
-            '/home': (context) => HomeView(),
-            '/feedback': (context) => FeedbackView(),
+
+            // Tapping /home or initial logged‐in state → show the bottom‐tab scaffold itself
+            '/home': (context) => const MainScaffold(),
+            '/feedback': (context) => const MainScaffold(),
+
+            // Whenever we push '/build-view', wrap BuildView in the same MainScaffold.
             '/build-view': (context) {
               final args = ModalRoute.of(context)!.settings.arguments
                   as Map<String, dynamic>?;
               if (args == null || !args.containsKey('id')) {
                 return const Scaffold(
-                  body: Center(
-                    child: Text('Invalid build ID'),
-                  ),
+                  body: Center(child: Text('Invalid build ID')),
                 );
               }
-              return const BuildView();
-            },
-            '/garage': (ctx) {
-              // Pull the userId you passed in:
-              final userId = ModalRoute.of(ctx)!.settings.arguments as int;
-              // Wrap it in your MainScaffold so the bottom bar appears:
-              return MainScaffold(
+              // We still pass the arguments into BuildView via routeArgumentsHelper internally.
+              return const MainScaffold(
+                overrideChild: BuildView(),
               );
             },
+
+            '/garage': (ctx) {
+              // Pull the userId out of the route arguments:
+              final int userId = ModalRoute.of(ctx)!.settings.arguments as int;
+
+              // Wrap that user’s GarageView in MainScaffold.overrideChild:
+              return MainScaffold(
+                overrideChild: GarageView(userId: userId),
+              );
+            },
+
             '/edit-profile': (context) {
               final args = ModalRoute.of(context)!.settings.arguments
                   as Map<String, dynamic>?;
               if (args == null || !args.containsKey('id')) {
                 return const Scaffold(
-                  body: Center(
-                    child: Text('Invalid profile data'),
-                  ),
+                  body: Center(child: Text('Invalid profile data')),
                 );
               }
               return EditProfileView(user: args);
             },
+
             '/create-update-build': (context) => CreateBuildView(),
+
             '/edit-build-view': (context) {
               final args = ModalRoute.of(context)!.settings.arguments
                   as Map<String, dynamic>?;
               if (args == null || !args.containsKey('build')) {
                 return const Scaffold(
-                  body: Center(
-                    child: Text('Invalid build data'),
-                  ),
+                  body: Center(child: Text('Invalid build data')),
                 );
               }
               final build = args['build'];
               return EditBuildView(build: build);
             },
+
             '/tag-view': (context) {
               final args = ModalRoute.of(context)!.settings.arguments
                   as Map<String, dynamic>?;
@@ -175,6 +183,7 @@ class MyApp extends StatelessWidget {
               final tag = args['tag'];
               return TagView(tag: tag);
             },
+
             '/categories-view': (context) {
               final args = ModalRoute.of(context)!.settings.arguments
                   as Map<String, dynamic>?;
@@ -186,11 +195,13 @@ class MyApp extends StatelessWidget {
               final category = args['category'] as String;
               return CategoriesView(category: category);
             },
+
             '/search-results': (context) {
               final query =
                   ModalRoute.of(context)!.settings.arguments as String;
               return SearchResultsView(query: query);
             },
+
             '/manage-note': (context) {
               final args = ModalRoute.of(context)!.settings.arguments
                   as Map<String, dynamic>?;
@@ -205,6 +216,7 @@ class MyApp extends StatelessWidget {
                 reloadBuildData: args['reloadBuildData'] ?? () {},
               );
             },
+
             '/user-list': (context) {
               final args = ModalRoute.of(context)!.settings.arguments
                   as Map<String, dynamic>?;
@@ -220,6 +232,7 @@ class MyApp extends StatelessWidget {
                 title: args['title'],
               );
             },
+
             '/verify-email': (context) => const VerifyEmailView(),
           },
         ),
@@ -228,6 +241,7 @@ class MyApp extends StatelessWidget {
   }
 }
 
+/// Chooses between login/registration and the MainScaffold itself.
 class AppNavigator extends StatelessWidget {
   const AppNavigator({super.key});
 
@@ -243,9 +257,8 @@ class AppNavigator extends StatelessWidget {
       },
       builder: (context, state) {
         if (state is AuthStateLoggedIn) {
-          return MainScaffold(
-
-          );
+          // Once logged in, show MainScaffold (which by default lands on Home tab).
+          return const MainScaffold();
         } else if (state is AuthStateRegistering) {
           return RegisterView();
         } else {

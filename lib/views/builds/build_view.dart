@@ -154,7 +154,7 @@ class _BuildViewState extends State<BuildView> with RouteAware {
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 4),
         ClipRRect(
           borderRadius: BorderRadius.circular(8),
           child: (_build['image'] != null &&
@@ -185,7 +185,7 @@ class _BuildViewState extends State<BuildView> with RouteAware {
                   width: double.infinity,
                 ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 4),
         buildAdditionalMediaSection(_build,
             reloadBuildData: _loadBuildData, isOwner: isOwner),
         const SizedBox(height: 8),

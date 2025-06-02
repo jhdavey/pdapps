@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:pd/utilities/dialogs/additional_media_dialog.dart';
 import 'package:pd/utilities/dialogs/show_image_dialog.dart';
 import 'package:pd/utilities/dialogs/video_dialog.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -41,7 +40,8 @@ Widget buildAdditionalMediaSection(
       : [];
 
   // Reverse the media order so that the most recently added media shows up first.
-  final List<Map<String, dynamic>> reversedMediaList = mediaList.reversed.toList();
+  final List<Map<String, dynamic>> reversedMediaList =
+      mediaList.reversed.toList();
 
   return Builder(
     builder: (BuildContext outerContext) {
@@ -53,28 +53,7 @@ Widget buildAdditionalMediaSection(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                if (isOwner)
-                  IconButton(
-                    icon: const Icon(Icons.add, color: Colors.white, size: 30),
-                    onPressed: () async {
-                      final bool? result = await showDialog<bool>(
-                        context: outerContext,
-                        builder: (BuildContext dialogContext) {
-                          return AdditionalMediaDialog(
-                            buildId: int.parse(build['id'].toString()),
-                            reloadBuildData: reloadBuildData,
-                          );
-                        },
-                      );
-                      if (result == true) {
-                        ScaffoldMessenger.of(outerContext).showSnackBar(
-                          const SnackBar(
-                            content: Text('Additional media added successfully.'),
-                          ),
-                        );
-                      }
-                    },
-                  ),
+                if (isOwner) const SizedBox.shrink(),
               ],
             ),
           ),
@@ -87,7 +66,7 @@ Widget buildAdditionalMediaSection(
                   ),
                 )
               : SizedBox(
-                  height: 200,
+                  height: 300,
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -113,8 +92,8 @@ Widget buildAdditionalMediaSection(
                             reloadBuildData: reloadBuildData,
                           ),
                           child: Container(
-                            width: 200,
-                            height: 200,
+                            width: 300,
+                            height: 300,
                             decoration: BoxDecoration(
                               color: Colors.black12,
                               borderRadius: BorderRadius.circular(8),
@@ -142,16 +121,17 @@ Widget buildAdditionalMediaSection(
                             borderRadius: BorderRadius.circular(8),
                             child: CachedNetworkImage(
                               imageUrl: url,
-                              width: 200,
-                              height: 200,
+                              width: 300,
+                              height: 300,
                               fit: BoxFit.cover,
                               placeholder: (context, url) => Container(
-                                width: 200,
-                                height: 200,
+                                width: 300,
+                                height: 300,
                                 color: Colors.black12,
                                 child: const Center(
                                   child: CircularProgressIndicator(
-                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white),
                                   ),
                                 ),
                               ),
@@ -175,7 +155,8 @@ Widget buildAdditionalMediaSection(
                                 height: 40,
                                 color: Colors.black.withOpacity(0.8),
                                 alignment: Alignment.centerLeft,
-                                padding: const EdgeInsets.symmetric(horizontal: 8),
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 8),
                                 child: Text(
                                   (media['caption'] as String).length > 30
                                       ? "${(media['caption'] as String).substring(0, 30)}..."
