@@ -50,6 +50,7 @@ class _TagViewState extends State<TagView> {
           return builds.isEmpty
               ? const Center(child: Text('No builds found for this tag.'))
               : InfiniteVerticalBuildList(
+                shrinkWrap: true, 
                   initialBuilds: builds,
                   // For tag view, we assume no additional pagination (pages > 1 return empty)
                   isScrollable: true,

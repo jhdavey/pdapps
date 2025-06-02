@@ -1,4 +1,6 @@
+// lib/views/home_view.dart
 // ignore_for_file: library_private_types_in_public_api, use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:pd/services/api/build/get_all_builds.dart';
 import 'package:pd/data/build_categories.dart';
@@ -18,10 +20,12 @@ class HomeView extends StatefulWidget {
 
 class _HomeViewState extends State<HomeView> with RouteAware {
   late Future<Map<String, dynamic>> _buildData;
-  // GlobalKey to access the state of the vertical infinite list.
+
+  // GlobalKey to access the state of the vertical infinite list for “load more.”
   final GlobalKey<InfiniteVerticalBuildListState> verticalListKey =
       GlobalKey<InfiniteVerticalBuildListState>();
-  // Outer scroll controller for the entire page.
+
+  // Outer scroll controller drives the entire page’s scrolling.
   final ScrollController _outerScrollController = ScrollController();
 
   @override
@@ -56,6 +60,7 @@ class _HomeViewState extends State<HomeView> with RouteAware {
 
   @override
   void didPopNext() {
+    // Refresh data when returning to this screen
     if (mounted) {
       setState(() {
         _buildData = fetchBuildData(context: context);
@@ -112,15 +117,18 @@ class _HomeViewState extends State<HomeView> with RouteAware {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 60),
-                  // Logo at top of scroll
+
+                  // Logo at the top
                   Center(
                     child: Image.asset(
                       'assets/images/logoFull.png',
                       height: 40,
                     ),
                   ),
+
                   const Divider(),
-                  // Categories section.
+
+                  // Categories row
                   SizedBox(
                     height: 40,
                     child: ListView.builder(
@@ -158,8 +166,10 @@ class _HomeViewState extends State<HomeView> with RouteAware {
                       },
                     ),
                   ),
+
                   const Divider(),
-                  // Tags section.
+
+                  // Tags row
                   SizedBox(
                     height: 40,
                     child: ListView.builder(
@@ -197,14 +207,16 @@ class _HomeViewState extends State<HomeView> with RouteAware {
                       },
                     ),
                   ),
+
                   const Divider(),
-                  // Top 10 Most Favorited Builds Section.
+
+                  // Top 10 favorited builds (if any)
                   if (topFavoritedBuilds.isNotEmpty) ...[
-                    Padding(
-                      padding: const EdgeInsets.only(left: 8.0),
+                    const Padding(
+                      padding: EdgeInsets.only(left: 8.0),
                       child: Text(
                         'Top 10',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                         ),
@@ -214,12 +226,13 @@ class _HomeViewState extends State<HomeView> with RouteAware {
                     buildHorizontalList(topFavoritedBuilds),
                     const Divider(),
                   ],
-                  // Favorite Builds Section with pagination.
-                  Padding(
-                    padding: const EdgeInsets.only(left: 8.0),
+
+                  // “Your Favorite Builds” section
+                  const Padding(
+                    padding: EdgeInsets.only(left: 8.0),
                     child: Text(
                       'Your Favorite Builds',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
@@ -229,7 +242,8 @@ class _HomeViewState extends State<HomeView> with RouteAware {
                   if (favoriteBuilds.isEmpty)
                     const Padding(
                       padding: EdgeInsets.only(left: 8.0),
-                      child: Text("You haven't favorited any builds yet."),
+                      child:
+                          Text("You haven't favorited any builds yet."),
                     )
                   else
                     InfiniteHorizontalFavoriteBuildList(
@@ -242,31 +256,41 @@ class _HomeViewState extends State<HomeView> with RouteAware {
                         );
                       },
                     ),
+
                   const Divider(),
-                  // Recently Updated Builds Section.
-                  Padding(
-                    padding: const EdgeInsets.only(left: 8.0),
+
+                  // “Your Feed” header
+                  const Padding(
+                    padding: EdgeInsets.only(left: 8.0),
                     child: Text(
                       'Your Feed',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
+
                   const SizedBox(height: 10),
-                  InfiniteVerticalBuildList(
-                    key: verticalListKey,
-                    initialBuilds: [],
-                    fetchMoreBuilds: (page) async {
-                      return await fetchPaginatedBuilds(
-                        page: page,
-                        pageSize: 10,
-                        context: context,
-                      );
-                    },
-                    isScrollable: false,
+
+                  MediaQuery.removePadding(
+                    context: context,
+                    removeTop: true,
+                    child: InfiniteVerticalBuildList(
+                      key: verticalListKey,
+                      shrinkWrap: true,
+                      initialBuilds: [],
+                      fetchMoreBuilds: (page) async {
+                        return await fetchPaginatedBuilds(
+                          page: page,
+                          pageSize: 10,
+                          context: context,
+                        );
+                      },
+                      isScrollable: false,
+                    ),
                   ),
+
                   const SizedBox(height: 20),
                 ],
               ),

@@ -11,7 +11,7 @@ class InfiniteVerticalBuildList extends StatefulWidget {
     Key? key,
     required this.initialBuilds,
     required this.fetchMoreBuilds,
-    this.isScrollable = false,
+    this.isScrollable = false, required bool shrinkWrap,
   }) : super(key: key);
 
   @override
