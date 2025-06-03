@@ -175,7 +175,6 @@ class BuildNotesSection extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 10),
           ],
         ),
       ),

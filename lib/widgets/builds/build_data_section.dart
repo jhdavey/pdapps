@@ -17,24 +17,21 @@ Widget buildSection({
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ...filteredData.map((data) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6),
-              child: Text.rich(
-                TextSpan(
-                  children: [
-                    TextSpan(
-                      text: "${data['label']}: ",
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
+            return Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(
+                    text: "${data['label']}: ",
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
                     ),
-                    TextSpan(
-                      text: "${data['value']}",
-                      style: const TextStyle(fontSize: 16),
-                    ),
-                  ],
-                ),
+                  ),
+                  TextSpan(
+                    text: "${data['value']}",
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                ],
               ),
             );
           }).toList(),

@@ -187,19 +187,12 @@ class _BuildViewState extends State<BuildView> with RouteAware {
       body: CustomScrollView(
         controller: _scrollController,
         slivers: [
-          // ────────────────────────────────────────────────
-          // 1) Header + comments all together in one SliverToBoxAdapter
-          // ────────────────────────────────────────────────
           SliverToBoxAdapter(
             child: _buildHeaderAndComments(isOwner),
           ),
-
-          // ────────────────────────────────────────────────
-          // 2) “Build Thread” header
-          // ────────────────────────────────────────────────
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8.0),
+              padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8),
               child: Text(
                 'Build Thread',
                 style: const TextStyle(
@@ -210,10 +203,6 @@ class _BuildViewState extends State<BuildView> with RouteAware {
               ),
             ),
           ),
-
-          // ────────────────────────────────────────────────
-          // 3) SliverList showing posts + loader at bottom
-          // ────────────────────────────────────────────────
           SliverList(
             delegate: SliverChildBuilderDelegate(
               (context, index) {
@@ -259,7 +248,6 @@ class _BuildViewState extends State<BuildView> with RouteAware {
             ),
           ],
         ),
-        const SizedBox(height: 4),
 
         // Main image / placeholder
         ClipRRect(
@@ -276,8 +264,7 @@ class _BuildViewState extends State<BuildView> with RouteAware {
                     color: Colors.black12,
                     child: const Center(
                       child: CircularProgressIndicator(
-                        valueColor:
-                            AlwaysStoppedAnimation<Color>(Colors.white),
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                       ),
                     ),
                   ),
@@ -308,109 +295,128 @@ class _BuildViewState extends State<BuildView> with RouteAware {
           scrollDirection: Axis.horizontal,
           child: BuildTags(buildData: _build),
         ),
-        const SizedBox(height: 8),
 
-        // “Build Sheet” dropdown (Specs → Mods → Notes)
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.transparent,
-            borderRadius: BorderRadius.circular(16.0),
-          ),
-          child: Theme(
-            data: ThemeData(dividerColor: Colors.transparent),
-            child: ExpansionTile(
-              backgroundColor: Colors.transparent,
-              collapsedBackgroundColor: Colors.transparent,
-              iconColor: Colors.white,
-              collapsedIconColor: Colors.white,
-              tilePadding: const EdgeInsets.symmetric(horizontal: 6.0),
-              title: const Text(
-                'Build Sheet',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
+        Padding(
+          padding: const EdgeInsets.all(4.0),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            clipBehavior: Clip.hardEdge,
+            child: Theme(
+              data: ThemeData(
+                dividerColor: Colors.transparent,
               ),
-              children: [
-                const SizedBox(height: 10),
-
-                // 1) Specs
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                  child: ExpansionTile(
-                    backgroundColor: Colors.transparent,
-                    collapsedBackgroundColor: Colors.transparent,
-                    iconColor: Colors.white,
-                    collapsedIconColor: Colors.white,
-                    tilePadding: const EdgeInsets.symmetric(horizontal: 6.0),
-                    title: const Text(
-                      'Specs',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+              child: ExpansionTile(
+                collapsedBackgroundColor: Theme.of(context).cardTheme.color,
+                backgroundColor: Theme.of(context).cardTheme.color,
+                iconColor: Colors.white,
+                collapsedIconColor: Colors.white,
+                tilePadding:
+                    const EdgeInsets.symmetric(horizontal: 6, vertical: 0),
+                title: const Text(
+                  'Build Sheet',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8.0, vertical: 0),
+                    child: ExpansionTile(
+                      iconColor: Colors.white,
+                      collapsedIconColor: Colors.white,
+                      tilePadding: const EdgeInsets.symmetric(
+                          horizontal: 6.0, vertical: 0),
+                      title: const Text(
+                        'Specs',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
+                      childrenPadding:
+                          EdgeInsets.symmetric(horizontal: 6.0, vertical: 0),
+                      children: [
+                        buildSection(
+                          title: 'Specs',
+                          dataPoints: [
+                            {'label': 'Horsepower', 'value': _build['hp']},
+                            {'label': 'Wheel HP', 'value': _build['whp']},
+                            {'label': 'Torque', 'value': _build['torque']},
+                            {'label': 'Weight', 'value': _build['weight']},
+                            {'label': '0-60 mph', 'value': _build['zeroSixty']},
+                            {
+                              'label': '0-100 mph',
+                              'value': _build['zeroOneHundred']
+                            },
+                            {
+                              'label': 'Quarter Mile',
+                              'value': _build['quarterMile']
+                            },
+                            {
+                              'label': 'Vehicle Layout',
+                              'value': _build['vehicleLayout']
+                            },
+                            {'label': 'Transmission', 'value': _build['trans']},
+                            {
+                              'label': 'Engine Type',
+                              'value': _build['engineType']
+                            },
+                            {
+                              'label': 'Engine Code',
+                              'value': _build['engineCode']
+                            },
+                            {
+                              'label': 'Forced Induction',
+                              'value': _build['forcedInduction']
+                            },
+                            {'label': 'Fuel Type', 'value': _build['fuel']},
+                            {
+                              'label': 'Suspension',
+                              'value': _build['suspension']
+                            },
+                            {'label': 'Brakes', 'value': _build['brakes']},
+                          ],
+                        ),
+                      ],
                     ),
-                    childrenPadding: EdgeInsets.zero,
-                    children: [
-                      buildSection(
-                        title: 'Specs',
-                        dataPoints: [
-                          {'label': 'Horsepower', 'value': _build['hp']},
-                          {'label': 'Wheel HP', 'value': _build['whp']},
-                          {'label': 'Torque', 'value': _build['torque']},
-                          {'label': 'Weight', 'value': _build['weight']},
-                          {'label': '0-60 mph', 'value': _build['zeroSixty']},
-                          {'label': '0-100 mph', 'value': _build['zeroOneHundred']},
-                          {'label': 'Quarter Mile', 'value': _build['quarterMile']},
-                          {'label': 'Vehicle Layout', 'value': _build['vehicleLayout']},
-                          {'label': 'Transmission', 'value': _build['trans']},
-                          {'label': 'Engine Type', 'value': _build['engineType']},
-                          {'label': 'Engine Code', 'value': _build['engineCode']},
-                          {'label': 'Forced Induction', 'value': _build['forcedInduction']},
-                          {'label': 'Fuel Type', 'value': _build['fuel']},
-                          {'label': 'Suspension', 'value': _build['suspension']},
-                          {'label': 'Brakes', 'value': _build['brakes']},
-                        ],
-                      ),
-                    ],
                   ),
-                ),
 
-                // 2) Modifications
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                  child: BuildModificationsSection(
-                    modificationsByCategory:
-                        _build['modificationsByCategory'] is Map<String, dynamic>
-                            ? _build['modificationsByCategory'] as Map<String, dynamic>
-                            : {},
-                    buildId: _build['id'],
-                    isOwner: isOwner,
-                    reloadBuildData: _loadBuildData,
+                  // 2) Modifications
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: BuildModificationsSection(
+                      modificationsByCategory: _build['modificationsByCategory']
+                              is Map<String, dynamic>
+                          ? _build['modificationsByCategory']
+                              as Map<String, dynamic>
+                          : {},
+                      buildId: _build['id'],
+                      isOwner: isOwner,
+                      reloadBuildData: _loadBuildData,
+                    ),
                   ),
-                ),
 
-                // 3) Notes
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                  child: BuildNotesSection(
-                    notes: _build['notes'] as List<dynamic>? ?? [],
-                    buildId: _build['id'],
-                    isOwner: isOwner,
-                    reloadBuildData: _loadBuildData,
+                  // 3) Notes
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: BuildNotesSection(
+                      notes: _build['notes'] as List<dynamic>? ?? [],
+                      buildId: _build['id'],
+                      isOwner: isOwner,
+                      reloadBuildData: _loadBuildData,
+                    ),
                   ),
-                ),
-
-                const SizedBox(height: 10),
-              ],
+                ],
+              ),
             ),
           ),
         ),
-
-        const SizedBox(height: 8),
-
         // Comments (flat tree) – still part of the same scroll
         BuildCommentsSection(
           comments: _build['comments'] as List<dynamic>? ?? [],
@@ -418,8 +424,6 @@ class _BuildViewState extends State<BuildView> with RouteAware {
           currentUserId: _currentUserId,
           reloadBuildData: _loadBuildData,
         ),
-
-        const SizedBox(height: 8),
       ],
     );
   }
