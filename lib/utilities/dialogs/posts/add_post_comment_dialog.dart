@@ -1,12 +1,12 @@
 // ignore_for_file: use_build_context_synchronously
 import 'package:flutter/material.dart';
-import 'package:pd/services/api/build/build_comment.dart';
+import 'package:pd/services/api/post/post_comment.dart';
 import 'package:pd/utilities/dialogs/create_dialog.dart';
 
-Future<void> showAddCommentDialog(
+Future<void> showAddPostCommentDialog(
   BuildContext context,
-  String buildId,
-  VoidCallback reloadBuildData, {
+  String postId,
+  VoidCallback reloadPostData, {
   int? parentId,
 }) async {
   await showCreateDialog(
@@ -14,14 +14,14 @@ Future<void> showAddCommentDialog(
     title: 'Add Comment',
     label: 'Comment',
     onSubmit: (commentBody) async {
-      final success = await postComment(
-        context, 
-        buildId, 
+      final success = await postCommentOnPost(
+        context,
+        postId,
         commentBody,
         parentId: parentId,
       );
       if (success) {
-        reloadBuildData();
+        reloadPostData();
       }
     },
   );

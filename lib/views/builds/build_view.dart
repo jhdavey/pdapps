@@ -14,8 +14,8 @@ import 'package:pd/widgets/builds/build_modification_section.dart';
 import 'package:pd/widgets/builds/build_note_section.dart';
 import 'package:pd/widgets/builds/build_tag_section.dart';
 import 'package:pd/widgets/favorite_button.dart';
-import 'package:pd/widgets/post_card.dart';
-import 'package:pd/services/api/post_controller.dart';
+import 'package:pd/widgets/posts/post_card.dart';
+import 'package:pd/services/api/post/post_controller.dart';
 
 class BuildView extends StatefulWidget {
   const BuildView({super.key});
@@ -221,7 +221,18 @@ class _BuildViewState extends State<BuildView> with RouteAware {
                 (context, index) {
                   if (index < _posts.length) {
                     final postData = _posts[index] as Map<String, dynamic>;
-                    return PostCard(postData: postData);
+                    return PostCard(
+                      postData: postData,
+                      currentUserId: _currentUserId,
+                      onPostUpdatedOrDeleted: () {
+                        setState(() {
+                          _posts.clear();
+                          _currentPage = 1;
+                          _hasMorePosts = true;
+                        });
+                        _loadNextPageOfPosts();
+                      },
+                    );
                   }
                   return Padding(
                     padding: const EdgeInsets.symmetric(vertical: 16),

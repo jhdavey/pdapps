@@ -3,44 +3,43 @@ import 'package:flutter/material.dart';
 import 'package:pd/services/api/report_user.dart';
 import 'package:pd/utilities/dialogs/comments/add_comment_dialog.dart';
 import 'package:pd/utilities/dialogs/comments/manage_comment_dialogs.dart';
+import 'package:pd/utilities/dialogs/posts/add_post_comment_dialog.dart';
+import 'package:pd/utilities/dialogs/posts/manage_post_comment_dialog.dart';
+
+enum CommentType { build, post }
 
 class CommentTile extends StatelessWidget {
   final Map<String, dynamic> comment;
   final List<dynamic> replies;
-  final String buildId;
+  final String contextId;
   final String? currentUserId;
-  final VoidCallback reloadBuildData;
-  // The level parameter is retained for potential styling, but will not affect horizontal alignment.
+  final VoidCallback reloadData;
   final int level;
+  final CommentType type;
 
   const CommentTile({
-    Key? key,
+    super.key,
     required this.comment,
     required this.replies,
-    required this.buildId,
+    required this.contextId,
     required this.currentUserId,
-    required this.reloadBuildData,
+    required this.reloadData,
+    required this.type,
     this.level = 0,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
-    final bool commentIsOwner = comment['user_id'] != null &&
-        comment['user_id'].toString() == currentUserId?.toString();
-
-    // No extra horizontal indentation.
-    const double indent = 0.0;
+    final bool commentIsOwner = comment['user_id']?.toString() == currentUserId;
 
     return Padding(
-      padding: const EdgeInsets.only(left: indent, bottom: 8.0),
+      padding: const EdgeInsets.only(left: 0.0, bottom: 8.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ListTile(
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 8.0, vertical: 0),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 8.0),
             dense: true,
-            // Re-add reporting functionality on long press:
             onLongPress: () {
               if (!commentIsOwner && comment['user'] != null) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -55,20 +54,14 @@ class CommentTile extends StatelessWidget {
                             ScaffoldMessenger.of(context).hideCurrentSnackBar();
                             reportUser(comment['user'], context);
                           },
-                          child: const Text(
-                            "Report",
-                            style: TextStyle(color: Colors.redAccent),
-                          ),
+                          child: const Text("Report", style: TextStyle(color: Colors.redAccent)),
                         ),
                         TextButton(
                           onPressed: () {
                             ScaffoldMessenger.of(context).hideCurrentSnackBar();
                             blockUser(comment['user'], context);
                           },
-                          child: const Text(
-                            "Block",
-                            style: TextStyle(color: Colors.orange),
-                          ),
+                          child: const Text("Block", style: TextStyle(color: Colors.orange)),
                         ),
                       ],
                     ),
@@ -78,35 +71,25 @@ class CommentTile extends StatelessWidget {
             },
             leading: CircleAvatar(
               radius: 20,
-              backgroundImage: (comment['user'] != null &&
-                      comment['user']['profile_image'] != null &&
-                      (comment['user']['profile_image'] as String).isNotEmpty &&
-                      !(comment['user']['profile_image'] as String)
-                          .contains("assets/images"))
+              backgroundImage: (comment['user']?['profile_image']?.isNotEmpty == true &&
+                      !(comment['user']['profile_image'] as String).contains("assets/images"))
                   ? NetworkImage(comment['user']['profile_image'])
-                  : const AssetImage('assets/images/profile_placeholder.png'),
+                  : const AssetImage('assets/images/profile_placeholder.png') as ImageProvider,
             ),
-
             title: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // If this is a reply, display a small indicator icon.
                 if (comment['parent_id'] != null)
-                  Padding(
-                    padding: const EdgeInsets.only(right: 4.0),
-                    child: Icon(
-                      Icons.subdirectory_arrow_right,
-                      size: 16,
-                      color: Colors.white70,
-                    ),
+                  const Padding(
+                    padding: EdgeInsets.only(right: 4.0),
+                    child: Icon(Icons.subdirectory_arrow_right, size: 16, color: Colors.white70),
                   ),
                 Expanded(
                   child: Text.rich(
                     TextSpan(
                       children: [
                         TextSpan(
-                          text:
-                              "${comment['user'] != null ? comment['user']['name'] : 'User ${comment['user_id']}'}\n",
+                          text: "${comment['user']?['name'] ?? 'User ${comment['user_id']}'}\n",
                           style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
@@ -115,13 +98,8 @@ class CommentTile extends StatelessWidget {
                           ),
                           recognizer: TapGestureRecognizer()
                             ..onTap = () {
-                              if (comment['user'] != null &&
-                                  comment['user']['id'] != null) {
-                                Navigator.pushNamed(
-                                  context,
-                                  '/garage',
-                                  arguments: comment['user']['id'],
-                                );
+                              if (comment['user']?['id'] != null) {
+                                Navigator.pushNamed(context, '/garage', arguments: comment['user']['id']);
                               }
                             },
                         ),
@@ -143,12 +121,21 @@ class CommentTile extends StatelessWidget {
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                   onPressed: () async {
-                    await showAddCommentDialog(
-                      context,
-                      buildId,
-                      reloadBuildData,
-                      parentId: comment['id'],
-                    );
+                    if (type == CommentType.build) {
+                      await showAddCommentDialog(
+                        context,
+                        contextId,
+                        reloadData,
+                        parentId: comment['id'],
+                      );
+                    } else {
+                      await showAddPostCommentDialog(
+                        context,
+                        contextId,
+                        reloadData,
+                        parentId: comment['id'],
+                      );
+                    }
                   },
                 ),
                 if (commentIsOwner)
@@ -157,28 +144,27 @@ class CommentTile extends StatelessWidget {
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
                     onPressed: () async {
-                      final result = await showManageCommentDialog(
-                        context,
-                        comment,
-                        reloadBuildData,
-                      );
+                      final bool result = (type == CommentType.build)
+                          ? await showManageCommentDialog(context, comment, reloadData)
+                          : await showManagePostCommentDialog(context, comment, reloadData);
+
                       if (result == true) {
-                        reloadBuildData();
+                        reloadData(); // Only refresh if update/delete was successful
                       }
                     },
                   ),
               ],
             ),
           ),
-          // Render nested replies recursively.
           ...replies.map(
             (reply) => CommentTile(
               comment: reply,
               replies: reply['replies'] ?? [],
-              buildId: buildId,
+              contextId: contextId,
               currentUserId: currentUserId,
-              reloadBuildData: reloadBuildData,
-              level: 0, // All nested replies use level 0 for alignment.
+              reloadData: reloadData,
+              type: type,
+              level: 0,
             ),
           ),
         ],

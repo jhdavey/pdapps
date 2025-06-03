@@ -98,4 +98,117 @@ class PostService {
       );
     }
   }
+
+  Future<void> updatePost({
+    required int postId,
+    required String caption,
+    required List<String> tags,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('auth_token');
+    if (token == null) throw Exception('No auth token.');
+
+    final uri = Uri.parse('$_endpoint/$postId');
+
+    final response = await http.put(
+      uri,
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'caption': caption,
+        'tags': tags.join(','),
+      }),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to update post: ${response.body}');
+    }
+  }
+
+  Future<void> deletePost({required int postId}) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('auth_token');
+    if (token == null) throw Exception('No auth token.');
+
+    final uri = Uri.parse('$_endpoint/$postId');
+    final response = await http.delete(
+      uri,
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to delete post: ${response.body}');
+    }
+  }
+
+  Future<bool> likePost(int postId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('auth_token');
+    if (token == null) return false;
+
+    final response = await http.post(
+      Uri.parse('$_endpoint/$postId/like'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      },
+    );
+
+    return response.statusCode == 200;
+  }
+
+  Future<bool> unlikePost(int postId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('auth_token');
+    if (token == null) return false;
+
+    final response = await http.delete(
+      Uri.parse('$_endpoint/$postId/like'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+      },
+    );
+
+    return response.statusCode == 200;
+  }
+
+  Future<List<dynamic>> getPostComments(int postId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('auth_token');
+    if (token == null) {
+      debugPrint('No auth token found');
+      return [];
+    }
+
+    final uri =
+        Uri.parse('https://passiondrivenbuilds.com/api/posts/$postId/comments');
+
+    try {
+      final response = await http.get(
+        uri,
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        return data;
+      } else {
+        debugPrint('Failed to load post comments: ${response.statusCode}');
+        return [];
+      }
+    } catch (e) {
+      debugPrint('Error fetching post comments: $e');
+      return [];
+    }
+  }
 }

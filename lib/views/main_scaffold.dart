@@ -5,10 +5,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pd/services/api/auth/auth_service.dart';
 import 'package:pd/services/api/auth/bloc/auth_bloc.dart';
 import 'package:pd/services/api/auth/bloc/auth_event.dart';
+import 'package:pd/services/api/auth/bloc/auth_state.dart';
 import 'package:pd/services/api/garage_controller.dart';
 import 'package:pd/services/api/maintenance_controller.dart';
 import 'package:pd/utilities/dialogs/search_dialog.dart';
-import 'package:pd/utilities/dialogs/post_dialog.dart';
+import 'package:pd/utilities/dialogs/posts/post_dialog.dart';
 import 'package:pd/views/home_view.dart';
 import 'package:pd/views/garage_view.dart';
 import 'package:pd/views/feedback_view.dart';
@@ -329,86 +330,91 @@ class _MainScaffoldState extends State<MainScaffold> {
   Widget build(BuildContext context) {
     final bg = Theme.of(context).appBarTheme.backgroundColor!;
 
-    final Widget bodyContent = _overrideChild ??
-        IndexedStack(
-          index: _currentIndex,
-          children: [
-            const HomeView(),
-            if (_garageUserId != null)
-              GarageView(userId: _garageUserId!)
-            else
-              const Center(child: CircularProgressIndicator()),
-            // (empty for index 2, since the “Post” button lives here)
-            if (_searchQuery != null)
-              SearchResultsView(
-                key: ValueKey(_searchQuery),
-                query: _searchQuery!,
-              )
-            else
-              const Center(child: Text('No search yet')),
-            const FeedbackView(),
-          ],
-        );
-
-    return Scaffold(
-      body: bodyContent,
-      bottomNavigationBar: SizedBox(
-        height: 80,
-        child: BottomNavigationBar(
-          type: BottomNavigationBarType.fixed,
-          backgroundColor: bg,
-          selectedItemColor: Colors.white,
-          unselectedItemColor: Colors.white70,
-          iconSize: 20,
-          selectedFontSize: 0,
-          unselectedFontSize: 0,
-          currentIndex: _currentIndex,
-          onTap: (i) async {
-            switch (i) {
-              case 0:
-                setState(() {
-                  _overrideChild = null;
-                  _currentIndex = 0;
-                });
-                break;
-              case 1:
-                if (_garageUserId == null) return;
-                setState(() {
-                  _overrideChild = null;
-                  _currentIndex = 1;
-                });
-                break;
-              case 2:
-                await _showPostOptions();
-                break;
-              case 3:
-                final result = await showSearchDialog(context);
-                if (result != null && result.isNotEmpty) {
+    return BlocListener<AuthBloc, AuthState>(
+      listener: (context, state) {
+        if (state is AuthStateLoggedOut) {
+          Navigator.of(context)
+              .pushNamedAndRemoveUntil('/login', (route) => false);
+        }
+      },
+      child: Scaffold(
+        body: _overrideChild ??
+            IndexedStack(
+              index: _currentIndex,
+              children: [
+                const HomeView(),
+                if (_garageUserId != null)
+                  GarageView(userId: _garageUserId!)
+                else
+                  const Center(child: CircularProgressIndicator()),
+                const SizedBox.shrink(),
+                (_searchQuery != null)
+                    ? SearchResultsView(
+                        key: ValueKey(_searchQuery),
+                        query: _searchQuery!,
+                      )
+                    : const Center(child: Text('No search yet')),
+                const FeedbackView(),
+              ],
+            ),
+        bottomNavigationBar: SizedBox(
+          height: 80,
+          child: BottomNavigationBar(
+            type: BottomNavigationBarType.fixed,
+            backgroundColor: bg,
+            selectedItemColor: Colors.white,
+            unselectedItemColor: Colors.white70,
+            iconSize: 20,
+            selectedFontSize: 0,
+            unselectedFontSize: 0,
+            currentIndex: _currentIndex,
+            onTap: (i) async {
+              switch (i) {
+                case 0:
                   setState(() {
                     _overrideChild = null;
-                    _searchQuery = result;
-                    _currentIndex = 3;
+                    _currentIndex = 0;
                   });
-                }
-                break;
-              case 4:
-                _showMoreMenu();
-                break;
-            }
-          },
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home), label: ''),
-            BottomNavigationBarItem(icon: Icon(Icons.garage), label: ''),
-            BottomNavigationBarItem(
-              icon: Padding(
-                padding: EdgeInsets.all(4),
-                child: Icon(Icons.add, size: 32, color: Colors.white),
+                  break;
+                case 1:
+                  if (_garageUserId == null) return;
+                  setState(() {
+                    _overrideChild = null;
+                    _currentIndex = 1;
+                  });
+                  break;
+                case 2:
+                  await _showPostOptions();
+                  break;
+                case 3:
+                  final result = await showSearchDialog(context);
+                  if (result != null && result.isNotEmpty) {
+                    setState(() {
+                      _overrideChild = null;
+                      _searchQuery = result;
+                      _currentIndex = 3;
+                    });
+                  }
+                  break;
+                case 4:
+                  _showMoreMenu();
+                  break;
+              }
+            },
+            items: const [
+              BottomNavigationBarItem(icon: Icon(Icons.home), label: ''),
+              BottomNavigationBarItem(icon: Icon(Icons.garage), label: ''),
+              BottomNavigationBarItem(
+                icon: Padding(
+                  padding: EdgeInsets.all(4),
+                  child: Icon(Icons.add, size: 32, color: Colors.white),
+                ),
+                label: '',
               ),
-              label: '',
-            ),
-            BottomNavigationBarItem(icon: Icon(Icons.search), label: ''),
-            BottomNavigationBarItem(icon: Icon(Icons.more_vert), label: ''),
-          ],
+              BottomNavigationBarItem(icon: Icon(Icons.search), label: ''),
+              BottomNavigationBarItem(icon: Icon(Icons.more_vert), label: ''),
+            ],
+          ),
         ),
       ),
     );

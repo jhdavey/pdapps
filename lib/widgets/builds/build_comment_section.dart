@@ -1,6 +1,3 @@
-// lib/widgets/builds/build_comment_section.dart
-// ignore_for_file: library_private_types_in_public_api
-
 import 'package:flutter/material.dart';
 import 'package:pd/utilities/dialogs/comments/add_comment_dialog.dart';
 import 'package:pd/widgets/comment_tile.dart';
@@ -19,7 +16,6 @@ class BuildCommentsSection extends StatelessWidget {
     required this.reloadBuildData,
   });
 
-  // Convert flat list into a nested tree
   List<Map<String, dynamic>> buildCommentTree(List<dynamic> comments) {
     final Map<int, Map<String, dynamic>> commentMap = {};
     for (var comment in comments) {
@@ -31,12 +27,10 @@ class BuildCommentsSection extends StatelessWidget {
     for (var comment in comments) {
       if (comment['parent_id'] == null) {
         tree.add(comment);
+      } else if (commentMap.containsKey(comment['parent_id'])) {
+        commentMap[comment['parent_id']]!['replies'].add(comment);
       } else {
-        if (commentMap.containsKey(comment['parent_id'])) {
-          commentMap[comment['parent_id']]!['replies'].add(comment);
-        } else {
-          tree.add(comment);
-        }
+        tree.add(comment);
       }
     }
     return tree;
@@ -58,7 +52,7 @@ class BuildCommentsSection extends StatelessWidget {
         child: Theme(
           data: ThemeData(dividerColor: Colors.transparent),
           child: ExpansionTile(
-            // Use the same collapsedBackgroundColor as “Build Sheet”
+            initiallyExpanded: true,
             collapsedBackgroundColor: Theme.of(context).cardTheme.color,
             backgroundColor: Colors.transparent,
             iconColor: Colors.white,
@@ -91,25 +85,41 @@ class BuildCommentsSection extends StatelessWidget {
             ),
             children: [
               const SizedBox(height: 8),
-              if (topLevelComments.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 12.0),
-                  child: Text(
-                    'No comments have been added yet.',
-                    style: TextStyle(color: Colors.white70),
+              Container(
+                constraints: const BoxConstraints(maxHeight: 300),
+                child: Scrollbar(
+                  thumbVisibility: true,
+                  thickness: 3,
+                  radius: const Radius.circular(4),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (topLevelComments.isEmpty)
+                          const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 12.0),
+                            child: Text(
+                              'No comments have been added yet.',
+                              style: TextStyle(color: Colors.white70),
+                            ),
+                          )
+                        else
+                          ...topLevelComments.map((comment) {
+                            return CommentTile(
+                              comment: comment,
+                              replies: comment['replies'] as List<dynamic>,
+                              contextId: buildId,
+                              currentUserId: currentUserId,
+                              reloadData: reloadBuildData,
+                              type: CommentType.build,
+                            );
+                          }).toList(),
+                        const SizedBox(height: 8),
+                      ],
+                    ),
                   ),
-                )
-              else
-                ...topLevelComments.map((comment) {
-                  return CommentTile(
-                    comment: comment,
-                    replies: comment['replies'] as List<dynamic>,
-                    buildId: buildId,
-                    currentUserId: currentUserId,
-                    reloadBuildData: reloadBuildData,
-                  );
-                }).toList(),
-              const SizedBox(height: 8),
+                ),
+              ),
             ],
           ),
         ),

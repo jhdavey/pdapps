@@ -3,18 +3,20 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:pd/services/api/post_controller.dart';
+import 'package:pd/services/api/post/post_controller.dart';
 import 'package:http/http.dart' as http;
 
 class PostDialog extends StatefulWidget {
   final int buildId;
   final Future<void> Function() reloadBuildData;
+  final Map<String, dynamic>? existingPostData;
 
   const PostDialog({
-    Key? key,
+    super.key,
     required this.buildId,
     required this.reloadBuildData,
-  }) : super(key: key);
+    this.existingPostData,
+  });
 
   @override
   _PostDialogState createState() => _PostDialogState();
@@ -27,6 +29,21 @@ class _PostDialogState extends State<PostDialog> {
   final TextEditingController _captionController = TextEditingController();
   final TextEditingController _tagInputController = TextEditingController();
   final List<String> _tags = [];
+
+  bool get isEditing => widget.existingPostData != null;
+
+  @override
+  void initState() {
+    super.initState();
+    if (isEditing) {
+      _captionController.text =
+          widget.existingPostData?['caption']?.toString() ?? '';
+      final existingTags = widget.existingPostData?['tags'] as List<dynamic>?;
+      if (existingTags != null) {
+        _tags.addAll(existingTags.map((t) => t['name'].toString()));
+      }
+    }
+  }
 
   Future<void> _pickMedia() async {
     final XFile? pickedFile = await _picker.pickImage(
@@ -55,49 +72,61 @@ class _PostDialogState extends State<PostDialog> {
   }
 
   Future<void> _savePost() async {
-    if (_selectedMedia == null) {
+    final captionText = _captionController.text.trim();
+
+    if (!isEditing && _selectedMedia == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please select an image or video first.')),
       );
       return;
     }
 
-    final captionText = _captionController.text.trim();
-
     try {
       final service = PostService();
-      final streamedResponse = await service.createPost(
-        mediaFile: _selectedMedia!,
-        buildId: widget.buildId,
-        caption: captionText,
-        tags: _tags,
-      );
 
-      final response = await http.Response.fromStream(streamedResponse);
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
+      if (isEditing) {
+        await service.updatePost(
+          postId: widget.existingPostData!['id'],
+          caption: captionText,
+          tags: _tags,
+        );
         await widget.reloadBuildData();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Post created successfully.')),
+          const SnackBar(content: Text('Post updated successfully.')),
         );
         Navigator.of(context).pop(true);
       } else {
-        // Instead of showing the raw HTML dump, send it to console:
-        debugPrint(
-            '❌ POST /api/build-posts failed → status=${response.statusCode}');
-        debugPrint('❌ Response body: ${response.body}');
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to create post. See console for details.'),
-          ),
+        final streamedResponse = await service.createPost(
+          mediaFile: _selectedMedia!,
+          buildId: widget.buildId,
+          caption: captionText,
+          tags: _tags,
         );
+
+        final response = await http.Response.fromStream(streamedResponse);
+
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          await widget.reloadBuildData();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Post created successfully.')),
+          );
+          Navigator.of(context).pop(true);
+        } else {
+          debugPrint(
+              '❌ POST /api/build-posts failed → status=${response.statusCode}');
+          debugPrint('❌ Response body: ${response.body}');
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Failed to create post. See console for details.'),
+            ),
+          );
+        }
       }
     } catch (e, stack) {
-      // Print exception + stack trace to the debug console:
-      debugPrint('Error uploading post: $e');
+      debugPrint('Error saving post: $e');
       debugPrint('$stack');
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error uploading post. Check console.')),
+        const SnackBar(content: Text('Error saving post. Check console.')),
       );
     }
   }
@@ -112,12 +141,12 @@ class _PostDialogState extends State<PostDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Create New Post'),
+      title: Text(isEditing ? 'Edit Post' : 'Create New Post'),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (_selectedMedia != null) ...[
+            if (!isEditing && _selectedMedia != null) ...[
               Stack(
                 children: [
                   ClipRRect(
@@ -146,7 +175,7 @@ class _PostDialogState extends State<PostDialog> {
                   ),
                 ],
               ),
-            ] else ...[
+            ] else if (!isEditing) ...[
               ElevatedButton.icon(
                 onPressed: _pickMedia,
                 icon: const Icon(Icons.add_a_photo),
