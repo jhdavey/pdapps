@@ -60,7 +60,6 @@ class _HomeViewState extends State<HomeView> with RouteAware {
 
   @override
   void didPopNext() {
-    // Refresh data when returning to this screen
     if (mounted) {
       setState(() {
         _buildData = fetchBuildData(context: context);

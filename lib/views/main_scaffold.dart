@@ -7,7 +7,7 @@ import 'package:pd/services/api/auth/bloc/auth_bloc.dart';
 import 'package:pd/services/api/auth/bloc/auth_event.dart';
 import 'package:pd/services/api/garage_controller.dart';
 import 'package:pd/utilities/dialogs/search_dialog.dart';
-import 'package:pd/utilities/dialogs/additional_media_dialog.dart';
+import 'package:pd/utilities/dialogs/post_dialog.dart';
 import 'package:pd/views/home_view.dart';
 import 'package:pd/views/garage_view.dart';
 import 'package:pd/views/feedback_view.dart';
@@ -152,7 +152,7 @@ class _MainScaffoldState extends State<MainScaffold> {
           final bool? result = await showDialog<bool>(
             context: context,
             builder: (dialogContext) {
-              return AdditionalMediaDialog(
+              return PostDialog(
                 buildId: chosenId,
                 reloadBuildData: () async {}, // no-op
               );

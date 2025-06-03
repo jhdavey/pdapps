@@ -1,3 +1,4 @@
+// lib/views/builds/build_view.dart
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:cached_network_image/cached_network_image.dart';
@@ -13,6 +14,8 @@ import 'package:pd/widgets/builds/build_modification_section.dart';
 import 'package:pd/widgets/builds/build_note_section.dart';
 import 'package:pd/widgets/builds/build_tag_section.dart';
 import 'package:pd/widgets/favorite_button.dart';
+import 'package:pd/widgets/post_card.dart';
+import 'package:pd/services/api/post_controller.dart';
 
 class BuildView extends StatefulWidget {
   const BuildView({super.key});
@@ -25,6 +28,14 @@ class _BuildViewState extends State<BuildView> with RouteAware {
   late Map<String, dynamic> _build;
   bool _initialized = false;
   String? _currentUserId;
+
+  // For paginated posts:
+  final ScrollController _scrollController = ScrollController();
+  final List<dynamic> _posts = [];
+  bool _isLoadingPosts = false;
+  bool _hasMorePosts = true;
+  int _currentPage = 1;
+  static const int _pageSize = 10;
 
   @override
   void didChangeDependencies() {
@@ -40,6 +51,20 @@ class _BuildViewState extends State<BuildView> with RouteAware {
         _currentUserId = userId;
         setState(() {});
       });
+
+      // Attach listener to load more posts when near bottom:
+      _scrollController.addListener(() {
+        if (_scrollController.position.pixels >=
+                _scrollController.position.maxScrollExtent - 200 &&
+            !_isLoadingPosts &&
+            _hasMorePosts) {
+          _loadNextPageOfPosts();
+        }
+      });
+
+      // Kick off first page of posts:
+      _loadNextPageOfPosts();
+
       _initialized = true;
     }
   }
@@ -47,6 +72,7 @@ class _BuildViewState extends State<BuildView> with RouteAware {
   @override
   void dispose() {
     routeObserver.unsubscribe(this);
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -69,6 +95,40 @@ class _BuildViewState extends State<BuildView> with RouteAware {
           _build['files'] = data['build']['files'];
         });
       }
+    }
+  }
+
+  Future<void> _loadNextPageOfPosts() async {
+    if (_isLoadingPosts || !_hasMorePosts) return;
+    setState(() => _isLoadingPosts = true);
+
+    try {
+      final newPosts = await PostService().fetchPaginatedPostsForBuild(
+        buildId: _build['id'].toString(),
+        page: _currentPage,
+        pageSize: _pageSize,
+        context: context,
+      );
+
+      setState(() {
+        _posts.addAll(newPosts);
+        _currentPage += 1;
+        if (newPosts.length < _pageSize) {
+          _hasMorePosts = false;
+        }
+        _isLoadingPosts = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoadingPosts = false;
+        _hasMorePosts = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to load more posts: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -96,9 +156,10 @@ class _BuildViewState extends State<BuildView> with RouteAware {
               Text(
                 'Click here to view profile',
                 style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.white70,
-                    fontStyle: FontStyle.italic),
+                  fontSize: 14,
+                  color: Colors.white70,
+                  fontStyle: FontStyle.italic,
+                ),
               ),
             ],
           ),
@@ -108,14 +169,14 @@ class _BuildViewState extends State<BuildView> with RouteAware {
                 IconButton(
                   icon: const Icon(Icons.edit),
                   onPressed: () async {
-                    final updatedBuild = await Navigator.pushNamed(
+                    final updated = await Navigator.pushNamed(
                       context,
                       '/edit-build-view',
                       arguments: {'build': _build},
                     );
-                    if (updatedBuild != null && mounted) {
+                    if (updated != null && mounted) {
                       setState(() {
-                        _build = updatedBuild as Map<String, dynamic>;
+                        _build = updated as Map<String, dynamic>;
                       });
                     }
                   },
@@ -123,18 +184,63 @@ class _BuildViewState extends State<BuildView> with RouteAware {
               ]
             : null,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: _buildContent(isOwner),
+      body: CustomScrollView(
+        controller: _scrollController,
+        slivers: [
+          // ────────────────────────────────────────────────
+          // 1) Header + comments all together in one SliverToBoxAdapter
+          // ────────────────────────────────────────────────
+          SliverToBoxAdapter(
+            child: _buildHeaderAndComments(isOwner),
+          ),
+
+          // ────────────────────────────────────────────────
+          // 2) “Build Thread” header
+          // ────────────────────────────────────────────────
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8.0),
+              child: Text(
+                'Build Thread',
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+
+          // ────────────────────────────────────────────────
+          // 3) SliverList showing posts + loader at bottom
+          // ────────────────────────────────────────────────
+          SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                if (index < _posts.length) {
+                  final postData = _posts[index] as Map<String, dynamic>;
+                  return PostCard(postData: postData);
+                }
+                // Show a loading spinner if we still expect more pages
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              },
+              // childCount = number of posts + 1 extra when _hasMorePosts is true
+              childCount: _posts.length + (_hasMorePosts ? 1 : 0),
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildContent(bool isOwner) {
+  Widget _buildHeaderAndComments(bool isOwner) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Row with build title and favorite button.
+        // Row with build title + favorite
         Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
@@ -146,7 +252,6 @@ class _BuildViewState extends State<BuildView> with RouteAware {
                     const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
-            // Use the extracted FavoriteButton widget.
             FavoriteButton(
               buildId: _build['id'],
               initialFavoriteCount: _build['favorite_count'] ?? 0,
@@ -155,6 +260,8 @@ class _BuildViewState extends State<BuildView> with RouteAware {
           ],
         ),
         const SizedBox(height: 4),
+
+        // Main image / placeholder
         ClipRRect(
           borderRadius: BorderRadius.circular(8),
           child: (_build['image'] != null &&
@@ -169,7 +276,8 @@ class _BuildViewState extends State<BuildView> with RouteAware {
                     color: Colors.black12,
                     child: const Center(
                       child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        valueColor:
+                            AlwaysStoppedAnimation<Color>(Colors.white),
                       ),
                     ),
                   ),
@@ -186,67 +294,132 @@ class _BuildViewState extends State<BuildView> with RouteAware {
                 ),
         ),
         const SizedBox(height: 4),
-        buildAdditionalMediaSection(_build,
-            reloadBuildData: _loadBuildData, isOwner: isOwner),
+
+        // Additional Media
+        buildAdditionalMediaSection(
+          _build,
+          reloadBuildData: _loadBuildData,
+          isOwner: isOwner,
+        ),
         const SizedBox(height: 8),
+
+        // Tag chips
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
-          child: BuildTags(buildData: _build,),
+          child: BuildTags(buildData: _build),
         ),
-        buildSection(
-          title: 'Specs',
-          dataPoints: [
-            {'label': 'Horsepower', 'value': _build['hp']},
-            {'label': 'Wheel HP', 'value': _build['whp']},
-            {'label': 'Torque', 'value': _build['torque']},
-            {'label': 'Weight', 'value': _build['weight']},
-          ],
+        const SizedBox(height: 8),
+
+        // “Build Sheet” dropdown (Specs → Mods → Notes)
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(16.0),
+          ),
+          child: Theme(
+            data: ThemeData(dividerColor: Colors.transparent),
+            child: ExpansionTile(
+              backgroundColor: Colors.transparent,
+              collapsedBackgroundColor: Colors.transparent,
+              iconColor: Colors.white,
+              collapsedIconColor: Colors.white,
+              tilePadding: const EdgeInsets.symmetric(horizontal: 6.0),
+              title: const Text(
+                'Build Sheet',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              children: [
+                const SizedBox(height: 10),
+
+                // 1) Specs
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: ExpansionTile(
+                    backgroundColor: Colors.transparent,
+                    collapsedBackgroundColor: Colors.transparent,
+                    iconColor: Colors.white,
+                    collapsedIconColor: Colors.white,
+                    tilePadding: const EdgeInsets.symmetric(horizontal: 6.0),
+                    title: const Text(
+                      'Specs',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    childrenPadding: EdgeInsets.zero,
+                    children: [
+                      buildSection(
+                        title: 'Specs',
+                        dataPoints: [
+                          {'label': 'Horsepower', 'value': _build['hp']},
+                          {'label': 'Wheel HP', 'value': _build['whp']},
+                          {'label': 'Torque', 'value': _build['torque']},
+                          {'label': 'Weight', 'value': _build['weight']},
+                          {'label': '0-60 mph', 'value': _build['zeroSixty']},
+                          {'label': '0-100 mph', 'value': _build['zeroOneHundred']},
+                          {'label': 'Quarter Mile', 'value': _build['quarterMile']},
+                          {'label': 'Vehicle Layout', 'value': _build['vehicleLayout']},
+                          {'label': 'Transmission', 'value': _build['trans']},
+                          {'label': 'Engine Type', 'value': _build['engineType']},
+                          {'label': 'Engine Code', 'value': _build['engineCode']},
+                          {'label': 'Forced Induction', 'value': _build['forcedInduction']},
+                          {'label': 'Fuel Type', 'value': _build['fuel']},
+                          {'label': 'Suspension', 'value': _build['suspension']},
+                          {'label': 'Brakes', 'value': _build['brakes']},
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+
+                // 2) Modifications
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: BuildModificationsSection(
+                    modificationsByCategory:
+                        _build['modificationsByCategory'] is Map<String, dynamic>
+                            ? _build['modificationsByCategory'] as Map<String, dynamic>
+                            : {},
+                    buildId: _build['id'],
+                    isOwner: isOwner,
+                    reloadBuildData: _loadBuildData,
+                  ),
+                ),
+
+                // 3) Notes
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: BuildNotesSection(
+                    notes: _build['notes'] as List<dynamic>? ?? [],
+                    buildId: _build['id'],
+                    isOwner: isOwner,
+                    reloadBuildData: _loadBuildData,
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+              ],
+            ),
+          ),
         ),
-        buildSection(
-          title: 'Performance',
-          dataPoints: [
-            {'label': '0-60 mph', 'value': _build['zeroSixty']},
-            {'label': '0-100 mph', 'value': _build['zeroOneHundred']},
-            {'label': 'Quarter Mile', 'value': _build['quarterMile']},
-          ],
-        ),
-        buildSection(
-          title: 'Platform',
-          dataPoints: [
-            {'label': 'Vehicle Layout', 'value': _build['vehicleLayout']},
-            {'label': 'Transmission', 'value': _build['trans']},
-            {'label': 'Engine Type', 'value': _build['engineType']},
-            {'label': 'Engine Code', 'value': _build['engineCode']},
-            {'label': 'Forced Induction', 'value': _build['forcedInduction']},
-            {'label': 'Fuel Type', 'value': _build['fuel']},
-            {'label': 'Suspension', 'value': _build['suspension']},
-            {'label': 'Brakes', 'value': _build['brakes']},
-          ],
-        ),
-        const SizedBox(height: 5),
-        BuildModificationsSection(
-          modificationsByCategory:
-              _build['modificationsByCategory'] is Map<String, dynamic>
-                  ? _build['modificationsByCategory'] as Map<String, dynamic>
-                  : {},
-          buildId: _build['id'],
-          isOwner: isOwner,
-          reloadBuildData: _loadBuildData,
-        ),
-        const SizedBox(height: 10),
-        BuildNotesSection(
-          notes: _build['notes'] as List<dynamic>? ?? [],
-          buildId: _build['id'],
-          isOwner: isOwner,
-          reloadBuildData: _loadBuildData,
-        ),
-        const SizedBox(height: 10),
+
+        const SizedBox(height: 8),
+
+        // Comments (flat tree) – still part of the same scroll
         BuildCommentsSection(
           comments: _build['comments'] as List<dynamic>? ?? [],
           buildId: _build['id'].toString(),
           currentUserId: _currentUserId,
           reloadBuildData: _loadBuildData,
         ),
+
+        const SizedBox(height: 8),
       ],
     );
   }

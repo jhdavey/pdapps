@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
@@ -23,15 +25,21 @@ class BuildNotesSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(10.0),
       decoration: BoxDecoration(
-        color: const Color(0xFF1F242C),
+        color: Colors.transparent,
         borderRadius: BorderRadius.circular(16.0),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+      child: Theme(
+        data: ThemeData(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          // ↓ SAME PADDING/COLOR SETTINGS AS Modifications ↓
+          backgroundColor: Colors.transparent,
+          collapsedBackgroundColor: Colors.transparent,
+          iconColor: Colors.white,
+          collapsedIconColor: Colors.white,
+          tilePadding: const EdgeInsets.symmetric(horizontal: 6.0),
+          childrenPadding: const EdgeInsets.symmetric(horizontal: 6.0),
+          title: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Row(
@@ -45,18 +53,21 @@ class BuildNotesSection extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 20),
-                  // Wrap the icon and text in a GestureDetector for a single tap event.
                   GestureDetector(
                     onTap: () {
-                      showMaintenanceRecordsDialog(context, buildId,
-                          isOwner: isOwner);
+                      showMaintenanceRecordsDialog(
+                        context,
+                        buildId,
+                        isOwner: isOwner,
+                      );
                     },
                     child: Row(
                       children: [
-                        const Icon(Icons.build, color: Colors.white, size: 20),
+                        const Icon(Icons.build,
+                            color: Colors.white, size: 20),
                         const SizedBox(width: 4),
                         const Text(
-                          "Maintenance Record",
+                          "Maintenance",
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.white,
@@ -67,11 +78,9 @@ class BuildNotesSection extends StatelessWidget {
                   ),
                 ],
               ),
-              // Right group: "Add" icon (if owner).
               if (isOwner)
                 IconButton(
                   icon: const Icon(Icons.add, color: Colors.white),
-                  padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                   onPressed: () async {
                     final result = await Navigator.push<bool>(
@@ -91,84 +100,84 @@ class BuildNotesSection extends StatelessWidget {
                 ),
             ],
           ),
-          const SizedBox(height: 10),
-          // The scrollable area for notes.
-          ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxHeight: 500,
-            ),
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: notes.isEmpty
-                    ? [
-                        Text(
-                          'No build notes have been added yet.',
-                          style: TextStyle(color: Colors.white70),
-                        )
-                      ]
-                    : notes.reversed.toList().asMap().entries.map((entry) {
-                        final int index = entry.key;
-                        final note = entry.value;
-                        quill.Document document;
-                        try {
-                          final deltaJson = jsonDecode(note['note']);
-                          document = quill.Document.fromJson(deltaJson);
-                        } catch (e) {
-                          document = quill.Document()
-                            ..insert(0, note['note'] ?? '');
-                        }
-                        Widget noteWidget = QuillViewer(document: document);
+          children: [
+            const SizedBox(height: 10),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 500),
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: notes.isEmpty
+                      ? [
+                          const Text(
+                            'No build notes have been added yet.',
+                            style: TextStyle(color: Colors.white70),
+                          )
+                        ]
+                      : notes.reversed.toList().asMap().entries.map((entry) {
+                          final int index = entry.key;
+                          final note = entry.value;
+                          quill.Document document;
+                          try {
+                            final deltaJson = jsonDecode(note['note']);
+                            document = quill.Document.fromJson(deltaJson);
+                          } catch (e) {
+                            document = quill.Document()
+                              ..insert(0, note['note'] ?? '');
+                          }
+                          Widget noteWidget = QuillViewer(document: document);
 
-                        final String updatedAtRaw = note['updated_at'] ?? '';
-                        Widget footerWidget = Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            UpdatedDateTimeWidget(updatedAtRaw: updatedAtRaw),
-                            if (isOwner)
-                              IconButton(
-                                icon: const Icon(Icons.edit,
-                                    color: Colors.white, size: 16),
-                                padding: EdgeInsets.zero,
-                                constraints: const BoxConstraints(),
-                                onPressed: () async {
-                                  final result = await Navigator.push<bool>(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => ManageNotePage(
-                                        buildId: buildId,
-                                        note: note,
-                                        reloadBuildData: reloadBuildData,
+                          final String updatedAtRaw = note['updated_at'] ?? '';
+                          Widget footerWidget = Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              UpdatedDateTimeWidget(
+                                  updatedAtRaw: updatedAtRaw),
+                              if (isOwner)
+                                IconButton(
+                                  icon: const Icon(Icons.edit,
+                                      color: Colors.white, size: 16),
+                                  constraints: const BoxConstraints(),
+                                  onPressed: () async {
+                                    final result = await Navigator.push<bool>(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => ManageNotePage(
+                                          buildId: buildId,
+                                          note: note,
+                                          reloadBuildData: reloadBuildData,
+                                        ),
                                       ),
-                                    ),
-                                  );
-                                  if (result == true) {
-                                    reloadBuildData();
-                                  }
-                                },
-                              ),
-                          ],
-                        );
+                                    );
+                                    if (result == true) {
+                                      reloadBuildData();
+                                    }
+                                  },
+                                ),
+                            ],
+                          );
 
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            noteWidget,
-                            footerWidget,
-                            if (index != notes.length - 1)
-                              const Divider(
-                                thickness: 1,
-                                color: Colors.white,
-                              ),
-                          ],
-                        );
-                      }).toList(),
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              noteWidget,
+                              footerWidget,
+                              if (index != notes.length - 1)
+                                const Divider(
+                                  thickness: 1,
+                                  color: Colors.white,
+                                ),
+                            ],
+                          );
+                        }).toList(),
+                ),
               ),
             ),
-          ),
-        ],
+            const SizedBox(height: 10),
+          ],
+        ),
       ),
     );
   }
