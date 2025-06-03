@@ -381,11 +381,11 @@ class _EditBuildViewState extends State<EditBuildView> {
                 ),
                 const SizedBox(height: 20),
                 const Text(
-                  'Additional Media',
+                  'Additional Featured Media',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 10),
-                // Existing Additional Media Preview.
+                // Existing Additional Featured Media Preview.
                 Wrap(
                   spacing: 10,
                   runSpacing: 10,
@@ -431,7 +431,7 @@ class _EditBuildViewState extends State<EditBuildView> {
                 // Button to pick new additional media (images only).
                 ElevatedButton(
                   onPressed: _pickAdditionalMedia,
-                  child: const Text('Add Additional Media'),
+                  child: const Text('Add Additional Featured Media'),
                 ),
                 const SizedBox(height: 10),
                 // Preview of newly picked additional media.

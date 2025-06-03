@@ -55,7 +55,7 @@ class BuildModificationsSection extends StatelessWidget {
               const Text(
                 'Modifications',
                 style: TextStyle(
-                  fontSize: 20,
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                 ),

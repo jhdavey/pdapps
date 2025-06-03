@@ -3,7 +3,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
-import 'package:pd/utilities/dialogs/maintenance/maintenance_record_dialog.dart';
 import 'package:pd/views/builds/build_note_editor_view.dart';
 import 'package:pd/widgets/quill_viewer.dart';
 import 'package:pd/widgets/update_datetime.dart';
@@ -47,35 +46,12 @@ class BuildNotesSection extends StatelessWidget {
                   const Text(
                     'Build Notes',
                     style: TextStyle(
-                      fontSize: 20,
+                      fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
                   ),
                   const SizedBox(width: 20),
-                  GestureDetector(
-                    onTap: () {
-                      showMaintenanceRecordsDialog(
-                        context,
-                        buildId,
-                        isOwner: isOwner,
-                      );
-                    },
-                    child: Row(
-                      children: [
-                        const Icon(Icons.build,
-                            color: Colors.white, size: 20),
-                        const SizedBox(width: 4),
-                        const Text(
-                          "Maintenance",
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
                 ],
               ),
               if (isOwner)

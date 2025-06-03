@@ -61,8 +61,8 @@ Widget buildAdditionalMediaSection(
               ? Container(
                   alignment: Alignment.center,
                   child: const Text(
-                    "No additional media added yet...",
-                    style: TextStyle(fontSize: 16, color: Colors.white),
+                    "No additional featured images added yet.",
+                    style: TextStyle(fontSize: 14, color: Colors.white70),
                   ),
                 )
               : SizedBox(

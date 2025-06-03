@@ -6,6 +6,7 @@ import 'package:pd/services/api/auth/auth_service.dart';
 import 'package:pd/services/api/auth/bloc/auth_bloc.dart';
 import 'package:pd/services/api/auth/bloc/auth_event.dart';
 import 'package:pd/services/api/garage_controller.dart';
+import 'package:pd/services/api/maintenance_controller.dart';
 import 'package:pd/utilities/dialogs/search_dialog.dart';
 import 'package:pd/utilities/dialogs/post_dialog.dart';
 import 'package:pd/views/home_view.dart';
@@ -13,6 +14,7 @@ import 'package:pd/views/garage_view.dart';
 import 'package:pd/views/feedback_view.dart';
 import 'package:pd/views/search_results_view.dart';
 import 'package:pd/views/builds/modifications/create_modification_view.dart';
+import 'package:pd/utilities/dialogs/maintenance/create_maintenance_record_dialog.dart';
 
 class MainScaffold extends StatefulWidget {
   const MainScaffold({
@@ -26,25 +28,18 @@ class MainScaffold extends StatefulWidget {
   _MainScaffoldState createState() => _MainScaffoldState();
 }
 
-enum _PostType { uploadMedia, modification, note }
+enum _PostType { uploadMedia, modification, note, maintenance }
 
 class _MainScaffoldState extends State<MainScaffold> {
   int _currentIndex = 0;
-
-  /// “_overrideChild” starts out from widget.overrideChild but may be cleared
-  /// once the user taps “Home” or “Garage.”
   Widget? _overrideChild;
-
   int? _garageUserId;
   String? _searchQuery;
 
   @override
   void initState() {
     super.initState();
-    // Initialize our internal overrideChild from the widget parameter.
     _overrideChild = widget.overrideChild;
-
-    // Grab the current (logged-in) user ID so we can show their garage tab.
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final auth = RepositoryProvider.of<ApiAuthService>(context);
       final u = await auth.getCurrentUser();
@@ -65,7 +60,6 @@ class _MainScaffoldState extends State<MainScaffold> {
             title: const Text('Feedback'),
             onTap: () {
               Navigator.pop(context);
-              // Switch to Feedback tab (index 4). Override stays cleared.
               setState(() {
                 _overrideChild = null;
                 _currentIndex = 4;
@@ -93,7 +87,7 @@ class _MainScaffoldState extends State<MainScaffold> {
         children: [
           ListTile(
             leading: const Icon(Icons.image),
-            title: const Text('Create Post'),
+            title: const Text('Post to Thread'),
             onTap: () => Navigator.pop(context, _PostType.uploadMedia),
           ),
           ListTile(
@@ -106,6 +100,11 @@ class _MainScaffoldState extends State<MainScaffold> {
             title: const Text('Add Build Note'),
             onTap: () => Navigator.pop(context, _PostType.note),
           ),
+          ListTile(
+            leading: const Icon(Icons.build_circle), // wrench icon
+            title: const Text('Record Maintenance'),
+            onTap: () => Navigator.pop(context, _PostType.maintenance),
+          ),
         ],
       ),
     );
@@ -113,14 +112,12 @@ class _MainScaffoldState extends State<MainScaffold> {
 
     switch (choice) {
       case _PostType.uploadMedia:
-        // --- First choose a build, then show AdditionalMediaDialog ---
         if (_garageUserId == null) return;
         final data = await fetchGarageData(
           context: context,
           userId: _garageUserId!,
         );
         final builds = data['builds'] as List<dynamic>? ?? [];
-
         final chosenId = await showModalBottomSheet<int>(
           context: context,
           builder: (_) => ListView(
@@ -154,7 +151,7 @@ class _MainScaffoldState extends State<MainScaffold> {
             builder: (dialogContext) {
               return PostDialog(
                 buildId: chosenId,
-                reloadBuildData: () async {}, // no-op
+                reloadBuildData: () async {},
               );
             },
           );
@@ -253,6 +250,78 @@ class _MainScaffoldState extends State<MainScaffold> {
           );
         }
         break;
+
+      case _PostType.maintenance:
+        if (_garageUserId == null) return;
+
+        // 1) Fetch the user’s garage builds (same as mods/notes)
+        final data4 = await fetchGarageData(
+          context: context,
+          userId: _garageUserId!,
+        );
+        final builds4 = data4['builds'] as List<dynamic>? ?? [];
+
+        // 2) Present a bottom sheet to pick one build
+        final chosenId4 = await showModalBottomSheet<int>(
+          context: context,
+          builder: (_) => ListView(
+            children: builds4.map((b) {
+              final buildMap = (b is Map)
+                  ? Map<String, dynamic>.from(b)
+                  : <String, dynamic>{};
+              final year = buildMap['year']?.toString() ?? '';
+              final make = buildMap['make']?.toString() ?? '';
+              final model = buildMap['model']?.toString() ?? '';
+              final trim = buildMap['trim']?.toString() ?? '';
+              final title = [year, make, model, trim]
+                  .where((s) => s.isNotEmpty)
+                  .join(' ')
+                  .trim();
+              return ListTile(
+                title: Text(title.isNotEmpty ? title : 'Unknown Build'),
+                onTap: () => Navigator.pop(
+                  context,
+                  buildMap['id'] is int
+                      ? (buildMap['id'] as int)
+                      : int.tryParse(buildMap['id'].toString()) ?? -1,
+                ),
+              );
+            }).toList(),
+          ),
+        );
+
+        if (chosenId4 != null && chosenId4 != -1) {
+          // 3) Show the existing dialog widget
+          final result = await showDialog<Map<String, dynamic>>(
+            context: context,
+            builder: (dialogContext) {
+              return MaintenanceRecordFormDialog();
+            },
+          );
+
+          if (result != null) {
+            final success = await MaintenanceRecordService(
+              baseUrl: "https://passiondrivenbuilds.com/api",
+            ).createMaintenanceRecord(
+              context,
+              buildId: chosenId4,
+              date: result['date'] is DateTime
+                  ? result['date']
+                  : DateTime.tryParse(result['date'] ?? ''),
+              description: result['description']!,
+              odometer: result['odometer'],
+              servicedBy: result['servicedBy'],
+              cost: result['cost'],
+            );
+
+            if (success) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Maintenance record saved.')),
+              );
+            }
+          }
+        }
+        break;
     }
   }
 
@@ -260,30 +329,23 @@ class _MainScaffoldState extends State<MainScaffold> {
   Widget build(BuildContext context) {
     final bg = Theme.of(context).appBarTheme.backgroundColor!;
 
-    // If overrideChild is non-null, show it full screen (with bottom bar still visible).
     final Widget bodyContent = _overrideChild ??
         IndexedStack(
           index: _currentIndex,
           children: [
-            // index 0 → Home
             const HomeView(),
-
-            // index 1 → Garage (if logged in)
             if (_garageUserId != null)
               GarageView(userId: _garageUserId!)
             else
               const Center(child: CircularProgressIndicator()),
-
-            // index 2 → (unused slot)
-
-            // index 3 → SearchResultsView (once a query exists)
+            // (empty for index 2, since the “Post” button lives here)
             if (_searchQuery != null)
               SearchResultsView(
-                  key: ValueKey(_searchQuery), query: _searchQuery!)
+                key: ValueKey(_searchQuery),
+                query: _searchQuery!,
+              )
             else
               const Center(child: Text('No search yet')),
-
-            // index 4 → Feedback
             const FeedbackView(),
           ],
         );
@@ -297,24 +359,19 @@ class _MainScaffoldState extends State<MainScaffold> {
           backgroundColor: bg,
           selectedItemColor: Colors.white,
           unselectedItemColor: Colors.white70,
-
-          // shrink icon/text sizes to fit in 48 px
           iconSize: 20,
           selectedFontSize: 0,
           unselectedFontSize: 0,
-
           currentIndex: _currentIndex,
           onTap: (i) async {
             switch (i) {
               case 0:
-                // Home
                 setState(() {
                   _overrideChild = null;
                   _currentIndex = 0;
                 });
                 break;
               case 1:
-                // Garage (if logged in)
                 if (_garageUserId == null) return;
                 setState(() {
                   _overrideChild = null;
@@ -322,11 +379,9 @@ class _MainScaffoldState extends State<MainScaffold> {
                 });
                 break;
               case 2:
-                // “Post” in the middle
                 await _showPostOptions();
                 break;
               case 3:
-                // Search
                 final result = await showSearchDialog(context);
                 if (result != null && result.isNotEmpty) {
                   setState(() {
@@ -337,53 +392,22 @@ class _MainScaffoldState extends State<MainScaffold> {
                 }
                 break;
               case 4:
-                // More (Feedback / Logout)
                 _showMoreMenu();
-                break;
-              default:
                 break;
             }
           },
-          items: [
-            // Home
-            const BottomNavigationBarItem(
-              icon: Icon(Icons.home),
-              label: '',
-            ),
-
-            // Garage
-            const BottomNavigationBarItem(
-              icon: Icon(Icons.garage),
-              label: '',
-            ),
-
-            // Post (larger & colored circle)
+          items: const [
+            BottomNavigationBarItem(icon: Icon(Icons.home), label: ''),
+            BottomNavigationBarItem(icon: Icon(Icons.garage), label: ''),
             BottomNavigationBarItem(
-              icon: Container(
-                margin: const EdgeInsets.only(bottom: 4),
-                child: const Padding(
-                  padding: EdgeInsets.all(4),
-                  child: Icon(
-                    Icons.add,
-                    size: 32,
-                    color: Colors.white,
-                  ),
-                ),
+              icon: Padding(
+                padding: EdgeInsets.all(4),
+                child: Icon(Icons.add, size: 32, color: Colors.white),
               ),
               label: '',
             ),
-
-            // Search
-            const BottomNavigationBarItem(
-              icon: Icon(Icons.search),
-              label: '',
-            ),
-
-            // More (Feedback / Logout)
-            const BottomNavigationBarItem(
-              icon: Icon(Icons.more_vert),
-              label: '',
-            ),
+            BottomNavigationBarItem(icon: Icon(Icons.search), label: ''),
+            BottomNavigationBarItem(icon: Icon(Icons.more_vert), label: ''),
           ],
         ),
       ),

@@ -203,23 +203,34 @@ class _BuildViewState extends State<BuildView> with RouteAware {
               ),
             ),
           ),
-          SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                if (index < _posts.length) {
-                  final postData = _posts[index] as Map<String, dynamic>;
-                  return PostCard(postData: postData);
-                }
-                // Show a loading spinner if we still expect more pages
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  child: Center(child: CircularProgressIndicator()),
-                );
-              },
-              // childCount = number of posts + 1 extra when _hasMorePosts is true
-              childCount: _posts.length + (_hasMorePosts ? 1 : 0),
+          if (_posts.isEmpty && !_isLoadingPosts)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Center(
+                  child: Text(
+                    'No posts have been added yet.',
+                    style: TextStyle(color: Colors.white70, fontSize: 14),
+                  ),
+                ),
+              ),
+            )
+          else
+            SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                  if (index < _posts.length) {
+                    final postData = _posts[index] as Map<String, dynamic>;
+                    return PostCard(postData: postData);
+                  }
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                },
+                childCount: _posts.length + (_hasMorePosts ? 1 : 0),
+              ),
             ),
-          ),
         ],
       ),
     );
@@ -334,7 +345,7 @@ class _BuildViewState extends State<BuildView> with RouteAware {
                       title: const Text(
                         'Specs',
                         style: TextStyle(
-                          fontSize: 20,
+                          fontSize: 18,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
                         ),

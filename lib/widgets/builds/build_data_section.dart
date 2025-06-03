@@ -7,8 +7,18 @@ Widget buildSection({
   final filteredData =
       dataPoints.where((data) => data['value'] != null).toList();
   if (filteredData.isEmpty) {
-    return const SizedBox();
+    return const Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Text(
+        'No specs have been added yet.',
+        style: TextStyle(
+          fontSize: 14,
+          color: Colors.white70,
+        ),
+      ),
+    );
   }
+
   return SizedBox(
     width: double.infinity,
     child: Padding(
