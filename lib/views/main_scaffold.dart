@@ -18,11 +18,7 @@ import 'package:pd/views/builds/modifications/create_modification_view.dart';
 import 'package:pd/utilities/dialogs/maintenance/create_maintenance_record_dialog.dart';
 
 class MainScaffold extends StatefulWidget {
-  const MainScaffold({
-    super.key,
-    this.overrideChild,
-  });
-
+  const MainScaffold({super.key, this.overrideChild});
   final Widget? overrideChild;
 
   @override
@@ -80,6 +76,36 @@ class _MainScaffoldState extends State<MainScaffold> {
     );
   }
 
+  Future<int?> _selectBuild(List<dynamic> builds) {
+    return showModalBottomSheet<int>(
+      context: context,
+      builder: (_) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.4,
+        minChildSize: 0.3,
+        maxChildSize: 0.8,
+        builder: (context, scrollController) => ListView(
+          controller: scrollController,
+          children: builds.map((b) {
+            final buildMap = Map<String, dynamic>.from(b as Map);
+            final year = buildMap['year']?.toString() ?? '';
+            final make = buildMap['make']?.toString() ?? '';
+            final model = buildMap['model']?.toString() ?? '';
+            final trim = buildMap['trim']?.toString() ?? '';
+            final title = [year, make, model, trim].where((s) => s.isNotEmpty).join(' ').trim();
+            return ListTile(
+              title: Text(title.isNotEmpty ? title : 'Unknown Build'),
+              onTap: () => Navigator.pop(
+                context,
+                buildMap['id'] is int ? buildMap['id'] as int : int.tryParse(buildMap['id'].toString()) ?? -1,
+              ),
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+
   Future<void> _showPostOptions() async {
     final choice = await showModalBottomSheet<_PostType>(
       context: context,
@@ -102,224 +128,71 @@ class _MainScaffoldState extends State<MainScaffold> {
             onTap: () => Navigator.pop(context, _PostType.note),
           ),
           ListTile(
-            leading: const Icon(Icons.build_circle), // wrench icon
+            leading: const Icon(Icons.build_circle),
             title: const Text('Record Maintenance'),
             onTap: () => Navigator.pop(context, _PostType.maintenance),
           ),
         ],
       ),
     );
-    if (choice == null) return;
+    if (choice == null || _garageUserId == null) return;
+
+    final data = await fetchGarageData(context: context, userId: _garageUserId!);
+    final builds = data['builds'] as List<dynamic>? ?? [];
+    final chosenId = await _selectBuild(builds);
+    if (chosenId == null || chosenId == -1) return;
 
     switch (choice) {
       case _PostType.uploadMedia:
-        if (_garageUserId == null) return;
-        final data = await fetchGarageData(
+        final result = await showDialog<bool>(
           context: context,
-          userId: _garageUserId!,
+          builder: (dialogContext) => PostDialog(buildId: chosenId, reloadBuildData: () async {}),
         );
-        final builds = data['builds'] as List<dynamic>? ?? [];
-        final chosenId = await showModalBottomSheet<int>(
-          context: context,
-          builder: (_) => ListView(
-            children: builds.map((b) {
-              final buildMap = (b is Map)
-                  ? Map<String, dynamic>.from(b)
-                  : <String, dynamic>{};
-              final year = buildMap['year']?.toString() ?? '';
-              final make = buildMap['make']?.toString() ?? '';
-              final model = buildMap['model']?.toString() ?? '';
-              final trim = buildMap['trim']?.toString() ?? '';
-              final title = [year, make, model, trim]
-                  .where((s) => s.isNotEmpty)
-                  .join(' ')
-                  .trim();
-              return ListTile(
-                title: Text(title.isNotEmpty ? title : 'Unknown Build'),
-                onTap: () => Navigator.pop(
-                  context,
-                  buildMap['id'] is int
-                      ? (buildMap['id'] as int)
-                      : int.tryParse(buildMap['id'].toString()) ?? -1,
-                ),
-              );
-            }).toList(),
-          ),
-        );
-        if (chosenId != null && chosenId != -1) {
-          final bool? result = await showDialog<bool>(
-            context: context,
-            builder: (dialogContext) {
-              return PostDialog(
-                buildId: chosenId,
-                reloadBuildData: () async {},
-              );
-            },
+        if (result == true) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Additional media added successfully.')),
           );
-          if (result == true) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                  content: Text('Additional media added successfully.')),
-            );
-          }
         }
         break;
 
       case _PostType.modification:
-        if (_garageUserId == null) return;
-        final data2 = await fetchGarageData(
-          context: context,
-          userId: _garageUserId!,
-        );
-        final builds2 = data2['builds'] as List<dynamic>? ?? [];
-        await showModalBottomSheet<void>(
-          context: context,
-          builder: (_) => ListView(
-            children: builds2.map((b) {
-              final buildMap = (b is Map)
-                  ? Map<String, dynamic>.from(b)
-                  : <String, dynamic>{};
-              final year = buildMap['year']?.toString() ?? '';
-              final make = buildMap['make']?.toString() ?? '';
-              final model = buildMap['model']?.toString() ?? '';
-              final trim = buildMap['trim']?.toString() ?? '';
-              final title = [year, make, model, trim]
-                  .where((s) => s.isNotEmpty)
-                  .join(' ')
-                  .trim();
-              return ListTile(
-                title: Text(title.isNotEmpty ? title : 'Unknown Build'),
-                onTap: () {
-                  Navigator.pop(context);
-                  final buildId = buildMap['id'] is int
-                      ? (buildMap['id'] as int)
-                      : int.tryParse(buildMap['id'].toString()) ?? -1;
-                  if (buildId != -1) {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            CreateModificationView(buildId: buildId),
-                      ),
-                    );
-                  }
-                },
-              );
-            }).toList(),
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => CreateModificationView(buildId: chosenId),
           ),
         );
         break;
 
       case _PostType.note:
-        if (_garageUserId == null) return;
-        final data3 = await fetchGarageData(
-          context: context,
-          userId: _garageUserId!,
+        Navigator.pushNamed(
+          context,
+          '/manage-note',
+          arguments: {'buildId': chosenId},
         );
-        final builds3 = data3['builds'] as List<dynamic>? ?? [];
-        final chosenId3 = await showModalBottomSheet<int>(
-          context: context,
-          builder: (_) => ListView(
-            children: builds3.map((b) {
-              final buildMap = (b is Map)
-                  ? Map<String, dynamic>.from(b)
-                  : <String, dynamic>{};
-              final year = buildMap['year']?.toString() ?? '';
-              final make = buildMap['make']?.toString() ?? '';
-              final model = buildMap['model']?.toString() ?? '';
-              final trim = buildMap['trim']?.toString() ?? '';
-              final title = [year, make, model, trim]
-                  .where((s) => s.isNotEmpty)
-                  .join(' ')
-                  .trim();
-              return ListTile(
-                title: Text(title.isNotEmpty ? title : 'Unknown Build'),
-                onTap: () => Navigator.pop(
-                  context,
-                  buildMap['id'] is int
-                      ? (buildMap['id'] as int)
-                      : int.tryParse(buildMap['id'].toString()) ?? -1,
-                ),
-              );
-            }).toList(),
-          ),
-        );
-        if (chosenId3 != null && chosenId3 != -1) {
-          Navigator.pushNamed(
-            context,
-            '/manage-note',
-            arguments: {'buildId': chosenId3},
-          );
-        }
         break;
 
       case _PostType.maintenance:
-        if (_garageUserId == null) return;
-
-        // 1) Fetch the user’s garage builds (same as mods/notes)
-        final data4 = await fetchGarageData(
+        final result = await showDialog<Map<String, dynamic>>(
           context: context,
-          userId: _garageUserId!,
-        );
-        final builds4 = data4['builds'] as List<dynamic>? ?? [];
-
-        // 2) Present a bottom sheet to pick one build
-        final chosenId4 = await showModalBottomSheet<int>(
-          context: context,
-          builder: (_) => ListView(
-            children: builds4.map((b) {
-              final buildMap = (b is Map)
-                  ? Map<String, dynamic>.from(b)
-                  : <String, dynamic>{};
-              final year = buildMap['year']?.toString() ?? '';
-              final make = buildMap['make']?.toString() ?? '';
-              final model = buildMap['model']?.toString() ?? '';
-              final trim = buildMap['trim']?.toString() ?? '';
-              final title = [year, make, model, trim]
-                  .where((s) => s.isNotEmpty)
-                  .join(' ')
-                  .trim();
-              return ListTile(
-                title: Text(title.isNotEmpty ? title : 'Unknown Build'),
-                onTap: () => Navigator.pop(
-                  context,
-                  buildMap['id'] is int
-                      ? (buildMap['id'] as int)
-                      : int.tryParse(buildMap['id'].toString()) ?? -1,
-                ),
-              );
-            }).toList(),
-          ),
+          builder: (dialogContext) => MaintenanceRecordFormDialog(),
         );
 
-        if (chosenId4 != null && chosenId4 != -1) {
-          // 3) Show the existing dialog widget
-          final result = await showDialog<Map<String, dynamic>>(
-            context: context,
-            builder: (dialogContext) {
-              return MaintenanceRecordFormDialog();
-            },
+        if (result != null) {
+          final success = await MaintenanceRecordService(baseUrl: "https://passiondrivenbuilds.com/api")
+              .createMaintenanceRecord(
+            context,
+            buildId: chosenId,
+            date: result['date'] is DateTime ? result['date'] : DateTime.tryParse(result['date'] ?? ''),
+            description: result['description']!,
+            odometer: result['odometer'],
+            servicedBy: result['servicedBy'],
+            cost: result['cost'],
           );
 
-          if (result != null) {
-            final success = await MaintenanceRecordService(
-              baseUrl: "https://passiondrivenbuilds.com/api",
-            ).createMaintenanceRecord(
-              context,
-              buildId: chosenId4,
-              date: result['date'] is DateTime
-                  ? result['date']
-                  : DateTime.tryParse(result['date'] ?? ''),
-              description: result['description']!,
-              odometer: result['odometer'],
-              servicedBy: result['servicedBy'],
-              cost: result['cost'],
+          if (success) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Maintenance record saved.')),
             );
-
-            if (success) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Maintenance record saved.')),
-              );
-            }
           }
         }
         break;
@@ -333,8 +206,7 @@ class _MainScaffoldState extends State<MainScaffold> {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthStateLoggedOut) {
-          Navigator.of(context)
-              .pushNamedAndRemoveUntil('/login', (route) => false);
+          Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
         }
       },
       child: Scaffold(
@@ -349,10 +221,7 @@ class _MainScaffoldState extends State<MainScaffold> {
                   const Center(child: CircularProgressIndicator()),
                 const SizedBox.shrink(),
                 (_searchQuery != null)
-                    ? SearchResultsView(
-                        key: ValueKey(_searchQuery),
-                        query: _searchQuery!,
-                      )
+                    ? SearchResultsView(key: ValueKey(_searchQuery), query: _searchQuery!)
                     : const Center(child: Text('No search yet')),
                 const FeedbackView(),
               ],

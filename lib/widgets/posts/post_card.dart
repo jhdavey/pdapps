@@ -167,7 +167,7 @@ class PostCard extends StatelessWidget {
                               if (isOwner) ...[
                                 IconButton(
                                   icon: const Icon(Icons.edit,
-                                      color: Color.fromARGB(255, 16, 2, 2), size: 20),
+                                      color: Colors.white70, size: 20),
                                   onPressed: () async {
                                     final updated = await showDialog<bool>(
                                       context: context,

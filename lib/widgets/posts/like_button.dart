@@ -53,13 +53,13 @@ class _LikeButtonState extends State<LikeButton> {
       },
       child: const Icon(
         Icons.favorite,
-        color: Colors.white,
+        color: Colors.white70,
       ),
     );
   }
 
   Widget _buildUnlikedIcon() {
-    return const Icon(Icons.favorite_border, color: Colors.white);
+    return const Icon(Icons.favorite_border, color: Colors.white70);
   }
 
   Future<void> _toggleLike() async {
@@ -110,7 +110,7 @@ class _LikeButtonState extends State<LikeButton> {
       children: [
         Text(
           likeCount.toString(),
-          style: const TextStyle(fontSize: 16, color: Colors.white),
+          style: const TextStyle(fontSize: 16, color: Colors.white70),
         ),
         IconButton(
           onPressed: _toggleLike,
