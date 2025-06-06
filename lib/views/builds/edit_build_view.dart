@@ -56,6 +56,9 @@ class _EditBuildViewState extends State<EditBuildView> {
   List<String> removedAdditionalMedia = [];
   List<AdditionalMedia> newAdditionalMedia = [];
 
+  bool _isSubmitting = false;
+  bool _isPickingMedia = false;
+
   @override
   void initState() {
     super.initState();
@@ -142,93 +145,101 @@ class _EditBuildViewState extends State<EditBuildView> {
   }
 
   Future<void> _pickAdditionalMedia() async {
-    final picker = ImagePicker();
-    // Only allow picking images.
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      final String lowerCasePath = pickedFile.path.toLowerCase();
-      final String extension = lowerCasePath.split('.').last;
-      // Validate the file extension to allow only image files.
-      final allowedExtensions = ['jpg', 'jpeg', 'png', 'gif'];
-      if (!allowedExtensions.contains(extension)) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Only image files are allowed.')),
-        );
-        return;
+    if (_isPickingMedia) return;
+    setState(() => _isPickingMedia = true);
+
+    try {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+      if (pickedFile != null) {
+        final extension = pickedFile.path.toLowerCase().split('.').last;
+        const allowed = ['jpg', 'jpeg', 'png', 'gif'];
+        if (!allowed.contains(extension)) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Only image files are allowed.')),
+            );
+          }
+          return;
+        }
+
+        setState(() {
+          newAdditionalMedia.add(
+            AdditionalMedia(
+              file: File(pickedFile.path),
+              type: "image",
+              extension: extension,
+            ),
+          );
+        });
       }
-      setState(() {
-        newAdditionalMedia.add(
-          AdditionalMedia(
-            file: File(pickedFile.path),
-            type: "image",
-            extension: extension,
-          ),
-        );
-      });
+    } finally {
+      if (mounted) setState(() => _isPickingMedia = false);
     }
   }
 
   Future<void> _updateBuild() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (_isSubmitting || !_formKey.currentState!.validate()) return;
 
-    // Use Map<String, dynamic> so that arrays are preserved.
-    final fields = <String, dynamic>{
-      'year': _yearController.text.trim(),
-      'make': _makeController.text.trim(),
-      'model': _modelController.text.trim(),
-      'trim': _trimController.text.trim(),
-      'build_category': _selectedCategory ?? '',
-      'whp': _whpController.text.trim(),
-      'torque': _torqueController.text.trim(),
-      'weight': _weightController.text.trim(),
-      'zeroSixty': _zeroSixtyController.text.trim(),
-      'quarterMile': _quarterMileController.text.trim(),
-      'engineType': _engineTypeController.text.trim(),
-      'forcedInduction': _forcedInductionController.text.trim(),
-      'trans': _transController.text.trim(),
-    };
+    setState(() => _isSubmitting = true);
 
-    final tagsInput = _tagsController.text;
-    final List<String> tags = tagsInput
-        .split(',')
-        .map((tag) => tag.trim())
-        .where((tag) => tag.isNotEmpty)
-        .toList();
-    if (tags.isNotEmpty) {
-      fields['tags'] = tags;
-    }
+    try {
+      final fields = <String, dynamic>{
+        'year': _yearController.text.trim(),
+        'make': _makeController.text.trim(),
+        'model': _modelController.text.trim(),
+        'trim': _trimController.text.trim(),
+        'build_category': _selectedCategory ?? '',
+        'whp': _whpController.text.trim(),
+        'torque': _torqueController.text.trim(),
+        'weight': _weightController.text.trim(),
+        'zeroSixty': _zeroSixtyController.text.trim(),
+        'quarterMile': _quarterMileController.text.trim(),
+        'engineType': _engineTypeController.text.trim(),
+        'forcedInduction': _forcedInductionController.text.trim(),
+        'trans': _transController.text.trim(),
+      };
 
-    Uint8List? imageBytes;
-    if (_selectedImage != null) {
-      imageBytes = await _selectedImage!.readAsBytes();
-    }
+      final tagsInput = _tagsController.text;
+      final tags = tagsInput
+          .split(',')
+          .map((t) => t.trim())
+          .where((t) => t.isNotEmpty)
+          .toList();
+      if (tags.isNotEmpty) fields['tags'] = tags;
 
-    List<Uint8List>? additionalMediaBytes;
-    List<String>? additionalMediaTypes;
-    if (newAdditionalMedia.isNotEmpty) {
-      additionalMediaBytes = [];
-      additionalMediaTypes = [];
-      for (final media in newAdditionalMedia) {
-        additionalMediaBytes.add(await media.file.readAsBytes());
-        additionalMediaTypes.add(media.type);
+      Uint8List? imageBytes =
+          _selectedImage != null ? await _selectedImage!.readAsBytes() : null;
+
+      List<Uint8List>? additionalMediaBytes;
+      List<String>? additionalMediaTypes;
+      if (newAdditionalMedia.isNotEmpty) {
+        additionalMediaBytes = [];
+        additionalMediaTypes = [];
+        for (final media in newAdditionalMedia) {
+          additionalMediaBytes.add(await media.file.readAsBytes());
+          additionalMediaTypes.add(media.type);
+        }
       }
-    }
 
-    final removedMedia =
-        removedAdditionalMedia.isNotEmpty ? removedAdditionalMedia : null;
+      final removedMedia =
+          removedAdditionalMedia.isNotEmpty ? removedAdditionalMedia : null;
 
-    final updatedBuild = await updateBuild(
-      context,
-      buildId: widget.build['id'].toString(),
-      fields: fields,
-      imageBytes: imageBytes,
-      additionalMediaBytes: additionalMediaBytes,
-      additionalMediaTypes: additionalMediaTypes,
-      removedImages: removedMedia,
-    );
+      final updatedBuild = await updateBuild(
+        context,
+        buildId: widget.build['id'].toString(),
+        fields: fields,
+        imageBytes: imageBytes,
+        additionalMediaBytes: additionalMediaBytes,
+        additionalMediaTypes: additionalMediaTypes,
+        removedImages: removedMedia,
+      );
 
-    if (updatedBuild != null) {
-      Navigator.pop(context, updatedBuild);
+      if (updatedBuild != null && mounted) {
+        Navigator.pop(context, updatedBuild);
+      }
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
     }
   }
 
@@ -430,9 +441,16 @@ class _EditBuildViewState extends State<EditBuildView> {
                 const SizedBox(height: 10),
                 // Button to pick new additional media (images only).
                 ElevatedButton(
-                  onPressed: _pickAdditionalMedia,
-                  child: const Text('Add Additional Featured Media'),
+                  onPressed: _isPickingMedia ? null : _pickAdditionalMedia,
+                  child: _isPickingMedia
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Add Additional Featured Media'),
                 ),
+
                 const SizedBox(height: 10),
                 // Preview of newly picked additional media.
                 Wrap(
@@ -480,8 +498,14 @@ class _EditBuildViewState extends State<EditBuildView> {
                 ),
                 const SizedBox(height: 10),
                 ElevatedButton(
-                  onPressed: _updateBuild,
-                  child: const Text('Update Build'),
+                  onPressed: _isSubmitting ? null : _updateBuild,
+                  child: _isSubmitting
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Update Build'),
                 ),
               ],
             ),

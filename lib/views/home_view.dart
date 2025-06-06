@@ -1,14 +1,16 @@
-// lib/views/home_view.dart
 // ignore_for_file: library_private_types_in_public_api, use_build_context_synchronously
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pd/services/api/auth/auth_service.dart';
 import 'package:pd/services/api/build/get_all_builds.dart';
 import 'package:pd/data/build_categories.dart';
 import 'package:pd/main.dart';
 import 'package:pd/services/api/build/get_paginated_fav_builds_controller.dart';
+import 'package:pd/services/api/build/infinite_feed_controller.dart';
 import 'package:pd/widgets/builds/build_horizontal_list.dart';
-import 'package:pd/widgets/builds/build_vertical_list.dart';
 import 'package:pd/widgets/builds/infinite_horizontal_fav_list.dart';
+import 'package:pd/widgets/infinite_feed.dart';
 import 'package:pd/widgets/refreshable_content.dart';
 
 class HomeView extends StatefulWidget {
@@ -20,10 +22,11 @@ class HomeView extends StatefulWidget {
 
 class _HomeViewState extends State<HomeView> with RouteAware {
   late Future<Map<String, dynamic>> _buildData;
+  late String _currentUserId;
 
   // GlobalKey to access the state of the vertical infinite list for “load more.”
-  final GlobalKey<InfiniteVerticalBuildListState> verticalListKey =
-      GlobalKey<InfiniteVerticalBuildListState>();
+final GlobalKey<InfiniteVerticalFeedListState> verticalListKey =
+    GlobalKey<InfiniteVerticalFeedListState>();
 
   // Outer scroll controller drives the entire page’s scrolling.
   final ScrollController _outerScrollController = ScrollController();
@@ -32,7 +35,18 @@ class _HomeViewState extends State<HomeView> with RouteAware {
   void initState() {
     super.initState();
     _buildData = fetchBuildData(context: context);
+    _initializeCurrentUser();
     _outerScrollController.addListener(_onOuterScroll);
+  }
+
+  void _initializeCurrentUser() async {
+    final authService = RepositoryProvider.of<ApiAuthService>(context);
+    final user = await authService.getCurrentUser();
+    if (mounted && user != null) {
+      setState(() {
+        _currentUserId = user.id.toString();
+      });
+    }
   }
 
   void _onOuterScroll() {
@@ -241,8 +255,7 @@ class _HomeViewState extends State<HomeView> with RouteAware {
                   if (favoriteBuilds.isEmpty)
                     const Padding(
                       padding: EdgeInsets.only(left: 8.0),
-                      child:
-                          Text("You haven't favorited any builds yet."),
+                      child: Text("You haven't favorited any builds yet."),
                     )
                   else
                     InfiniteHorizontalFavoriteBuildList(
@@ -272,22 +285,17 @@ class _HomeViewState extends State<HomeView> with RouteAware {
 
                   const SizedBox(height: 10),
 
-                  MediaQuery.removePadding(
-                    context: context,
-                    removeTop: true,
-                    child: InfiniteVerticalBuildList(
-                      key: verticalListKey,
-                      shrinkWrap: true,
-                      initialBuilds: [],
-                      fetchMoreBuilds: (page) async {
-                        return await fetchPaginatedBuilds(
-                          page: page,
-                          pageSize: 10,
-                          context: context,
-                        );
-                      },
-                      isScrollable: false,
-                    ),
+                  InfiniteVerticalFeedList(
+                    key: verticalListKey,
+                    initialItems: const [],
+                    fetchMoreItems: (page) async {
+                      return await fetchPaginatedFeedItems(
+                        context: context,
+                        page: page,
+                      );
+                    },
+                    currentUserId: _currentUserId,
+                    isScrollable: false,
                   ),
 
                   const SizedBox(height: 20),

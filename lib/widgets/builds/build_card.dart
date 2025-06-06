@@ -9,6 +9,11 @@ class BuildCard extends StatelessWidget {
 
   const BuildCard({Key? key, required this.buildData}) : super(key: key);
 
+  String _resolveImageUrl(String? raw) {
+    if (raw == null || raw.isEmpty) return '';
+    return raw.startsWith('http') ? raw : 'https://passiondrivenbuilds.com$raw';
+  }
+
   @override
   Widget build(BuildContext context) {
     final bool hasTags =
@@ -66,7 +71,7 @@ class BuildCard extends StatelessWidget {
               child: (buildData['image'] != null &&
                       buildData['image'].toString().isNotEmpty)
                   ? CachedNetworkImage(
-                      imageUrl: buildData['image'],
+                      imageUrl: _resolveImageUrl(buildData['image']),
                       fit: BoxFit.cover,
                       placeholder: (context, url) => Container(
                         color: Colors.black12,
