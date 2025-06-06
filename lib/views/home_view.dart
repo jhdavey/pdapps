@@ -7,7 +7,7 @@ import 'package:pd/services/api/build/get_all_builds.dart';
 import 'package:pd/data/build_categories.dart';
 import 'package:pd/main.dart';
 import 'package:pd/services/api/build/get_paginated_fav_builds_controller.dart';
-import 'package:pd/services/api/build/infinite_feed_controller.dart';
+import 'package:pd/services/infinite_feed_controller.dart';
 import 'package:pd/widgets/builds/build_horizontal_list.dart';
 import 'package:pd/widgets/builds/infinite_horizontal_fav_list.dart';
 import 'package:pd/widgets/infinite_feed.dart';

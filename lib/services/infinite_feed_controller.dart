@@ -14,7 +14,8 @@ Future<Map<String, dynamic>> fetchPaginatedFeedItems({
   final token = await authService.getToken();
 
   final response = await http.get(
-    Uri.parse('https://passiondrivenbuilds.com/api/feed?page=$page&limit=$pageSize'),
+    Uri.parse(
+        'https://passiondrivenbuilds.com/api/feed?page=$page&limit=$pageSize'),
     headers: {
       'Accept': 'application/json',
       'Content-Type': 'application/json',
@@ -26,10 +27,11 @@ Future<Map<String, dynamic>> fetchPaginatedFeedItems({
 
   if (response.statusCode == 200) {
     final decoded = json.decode(response.body);
-    final List<dynamic> data = decoded['data'] ?? [];
+    final List<dynamic> itemsRaw = decoded['data'] ?? [];
     final bool hasMore = decoded['has_more'] ?? false;
 
-    final items = data.map<FeedItem>((item) => FeedItem.fromJson(item)).toList();
+    final items =
+        itemsRaw.map<FeedItem>((item) => FeedItem.fromJson(item)).toList();
 
     return {
       'items': items,
