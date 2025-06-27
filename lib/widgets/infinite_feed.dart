@@ -18,7 +18,8 @@ class InfiniteVerticalFeedList extends StatefulWidget {
   });
 
   @override
-  InfiniteVerticalFeedListState createState() => InfiniteVerticalFeedListState();
+  InfiniteVerticalFeedListState createState() =>
+      InfiniteVerticalFeedListState();
 }
 
 // Made class public so it can be accessed by GlobalKey<>
@@ -33,6 +34,15 @@ class InfiniteVerticalFeedListState extends State<InfiniteVerticalFeedList> {
   bool get isLoadingMore => _isLoadingMore;
   bool get hasMore => _hasMore;
   void loadMore() => _loadMore();
+
+  void refreshFeed() {
+    setState(() {
+      _items.clear();
+      _currentPage = 1;
+      _hasMore = true;
+    });
+    _loadMore();
+  }
 
   @override
   void initState() {

@@ -26,7 +26,7 @@ class BuildCard extends StatelessWidget {
       onLongPress: () {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            backgroundColor: Colors.grey[900],
+            backgroundColor: Color(0xFF0F141D),
             duration: const Duration(seconds: 5),
             content: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -62,7 +62,13 @@ class BuildCard extends StatelessWidget {
       },
       child: Card(
         clipBehavior: Clip.hardEdge,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+          side: const BorderSide(
+            color: Color.fromARGB(255, 63, 65, 70),
+            width: .5,
+          ),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [

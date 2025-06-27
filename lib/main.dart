@@ -75,7 +75,10 @@ class MyApp extends StatelessWidget {
             ),
             scaffoldBackgroundColor: const Color(0xFF0F141D),
             cardTheme: const CardTheme(
-              color: Color(0xFF1F242C),
+              color: Color(0xFF0F141D),
+            ),
+            dialogTheme: const DialogTheme(
+              backgroundColor: Color(0xFF0F141D),
             ),
             chipTheme: ChipThemeData(
               backgroundColor: const Color(0xFF1F242C),

@@ -98,7 +98,6 @@ class ProfileSection extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(10.0),
         decoration: BoxDecoration(
-          color: const Color(0xFF1F242C),
           borderRadius: BorderRadius.circular(16.0),
         ),
         child: Stack(

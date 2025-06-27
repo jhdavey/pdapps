@@ -25,8 +25,8 @@ class _HomeViewState extends State<HomeView> with RouteAware {
   late String _currentUserId;
 
   // GlobalKey to access the state of the vertical infinite list for “load more.”
-final GlobalKey<InfiniteVerticalFeedListState> verticalListKey =
-    GlobalKey<InfiniteVerticalFeedListState>();
+  final GlobalKey<InfiniteVerticalFeedListState> verticalListKey =
+      GlobalKey<InfiniteVerticalFeedListState>();
 
   // Outer scroll controller drives the entire page’s scrolling.
   final ScrollController _outerScrollController = ScrollController();
@@ -63,6 +63,12 @@ final GlobalKey<InfiniteVerticalFeedListState> verticalListKey =
   void didChangeDependencies() {
     super.didChangeDependencies();
     routeObserver.subscribe(this, ModalRoute.of(context)! as PageRoute);
+
+    if (mounted) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        verticalListKey.currentState?.refreshFeed();
+      });
+    }
   }
 
   @override
@@ -70,15 +76,6 @@ final GlobalKey<InfiniteVerticalFeedListState> verticalListKey =
     routeObserver.unsubscribe(this);
     _outerScrollController.dispose();
     super.dispose();
-  }
-
-  @override
-  void didPopNext() {
-    if (mounted) {
-      setState(() {
-        _buildData = fetchBuildData(context: context);
-      });
-    }
   }
 
   @override
@@ -285,17 +282,21 @@ final GlobalKey<InfiniteVerticalFeedListState> verticalListKey =
 
                   const SizedBox(height: 10),
 
-                  InfiniteVerticalFeedList(
-                    key: verticalListKey,
-                    initialItems: const [],
-                    fetchMoreItems: (page) async {
-                      return await fetchPaginatedFeedItems(
-                        context: context,
-                        page: page,
-                      );
-                    },
-                    currentUserId: _currentUserId,
-                    isScrollable: false,
+                  MediaQuery.removePadding(
+                    context: context,
+                    removeTop: true,
+                    child: InfiniteVerticalFeedList(
+                      key: verticalListKey,
+                      initialItems: const [],
+                      fetchMoreItems: (page) async {
+                        return await fetchPaginatedFeedItems(
+                          context: context,
+                          page: page,
+                        );
+                      },
+                      currentUserId: _currentUserId,
+                      isScrollable: false,
+                    ),
                   ),
 
                   const SizedBox(height: 20),
